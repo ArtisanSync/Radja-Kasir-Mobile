@@ -5,6 +5,7 @@ import 'package:kasir/core/use_store.dart';
 import 'package:kasir/helpers/colors_theme.dart';
 import 'package:kasir/screens/home_page.dart';
 import 'package:kasir/screens/register_page.dart';
+import 'package:kasir/screens/reset_password_page.dart'; // Import baru
 import 'package:kasir/services/auth_services.dart';
 import 'package:loader_overlay/loader_overlay.dart';
 
@@ -143,14 +144,17 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              // Tambahkan teks "Lupa Password" di sini
+              // Teks "Lupa Password" dengan navigasi
               Align(
                 alignment: Alignment.centerRight,
                 child: Padding(
                   padding: const EdgeInsets.only(right: 30.0),
                   child: TextButton(
                     onPressed: () {
-                      // Tambahkan fungsi lupa password di sini
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ResetPasswordPage()),
+                      );
                     },
                     child: Text(
                       'Lupa Password',
@@ -195,8 +199,6 @@ class _LoginPageState extends State<LoginPage> {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () {
-                    // Tambahkan fungsi navigasi ke halaman pendaftaran di sini
-
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => const RegisterPage()),
