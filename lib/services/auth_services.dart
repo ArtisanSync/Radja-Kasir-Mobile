@@ -37,4 +37,6 @@ class AuthServices {
       // return e.response;
     }
   }
+
+  Future register(Map<String, String> map, BuildContext context) async {}
 }

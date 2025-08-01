@@ -1,73 +1,78 @@
 // ignore_for_file: use_build_context_synchronously, prefer_const_constructors
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:kasir/core/use_store.dart';
 import 'package:kasir/helpers/colors_theme.dart';
-import 'package:kasir/screens/home_page.dart';
-import 'package:kasir/screens/register_page.dart';
 import 'package:kasir/services/auth_services.dart';
+import 'package:kasir/screens/login_page.dart';
 import 'package:loader_overlay/loader_overlay.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
   final api = AuthServices();
-  final storage = Store;
+  final TextEditingController _name = TextEditingController();
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
 
-  Future submit() async {
-    final resp = await api.login({
-      "email": _email.text.trim(),
-      "password": _password.text.trim(),
-    }, context);
+  Future<void> submit() async {
+    if (_name.text.isEmpty || _email.text.isEmpty || _password.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Semua field harus diisi'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
-    if (resp == 201) {
+    context.loaderOverlay.show();
+
+    try {
+      final resp = await api.register({
+        "name": _name.text.trim(),
+        "email": _email.text.trim(),
+        "password": _password.text.trim(),
+      }, context);
+
+      context.loaderOverlay.hide();
+
+      if (resp == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Registrasi berhasil'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Registrasi gagal. Silakan coba lagi.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      context.loaderOverlay.hide();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Berhasil'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const MyHomePage()),
-      );
-    } else if (resp == 401) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Email atau password salah'),
-          backgroundColor: Colors.black87,
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Terjadi kesalahan sistem ! coba lagi.'),
+          content: Text('Terjadi kesalahan: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
     }
   }
 
-  void checkToken(BuildContext context) async {
-    final token = await Store.getToken();
-    if (token != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const MyHomePage()),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    checkToken(context);
     return Scaffold(
       body: LoaderOverlay(
         overlayOpacity: 0.2,
@@ -86,100 +91,106 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Logo
               Image.asset(
                 'assets/images/logo_no_bg.png',
                 height: 100,
                 width: 100,
               ),
-              const SizedBox(height: 20),
-              const Text(
-                'Radja Kasir',
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 40),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 30,
+              SizedBox(height: 20),
+              // Judul
+              Text(
+                'Registrasi',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
+              SizedBox(height: 40),
+              // Field Nama
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 30),
                 child: TextField(
-                  controller: _email,
+                  controller: _name,
                   decoration: InputDecoration(
-                    labelText: "Email",
-                    labelStyle: const TextStyle(color: AppColor.secondary),
+                    labelText: "Name",
+                    labelStyle: TextStyle(color: AppColor.secondary),
                     filled: true,
                     fillColor: Colors.white,
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColor.light),
+                      borderSide: BorderSide(color: AppColor.light),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColor.primary),
+                      borderSide: BorderSide(color: AppColor.primary),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
+              // Field Email
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 30,
+                padding: EdgeInsets.symmetric(horizontal: 30),
+                child: TextField(
+                  controller: _email,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: "Email",
+                    labelStyle: TextStyle(color: AppColor.secondary),
+                    filled: true,
+                    fillColor: Colors.white,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: AppColor.light),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: AppColor.primary),
+                    ),
+                  ),
                 ),
+              ),
+              SizedBox(height: 20),
+              // Field Password
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 30),
                 child: TextField(
                   controller: _password,
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: "Password",
+                    labelStyle: TextStyle(color: AppColor.secondary),
                     filled: true,
                     fillColor: Colors.white,
-                    labelStyle: const TextStyle(color: AppColor.secondary),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColor.light),
+                      borderSide: BorderSide(color: AppColor.light),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColor.primary),
+                      borderSide: BorderSide(color: AppColor.primary),
                     ),
                   ),
                 ),
               ),
-              // Tambahkan teks "Lupa Password" di sini
-              Align(
-                alignment: Alignment.centerRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 30.0),
-                  child: TextButton(
-                    onPressed: () {
-                      // Tambahkan fungsi lupa password di sini
-                    },
-                    child: Text(
-                      'Lupa Password',
-                      style: TextStyle(
-                        color: AppColor.primary,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Tombol Masuk
+              SizedBox(height: 40),
+              // Tombol Daftar
               Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => submit(),
+                  onPressed: submit,
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                     elevation: 0,
                     backgroundColor: AppColor.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    padding: EdgeInsets.symmetric(vertical: 15),
                   ),
                   child: Text(
-                    'Masuk',
+                    'Daftar',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -188,18 +199,15 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              // Tombol Daftar
+              // Tombol Kembali
               Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () {
-                    // Tambahkan fungsi navigasi ke halaman pendaftaran di sini
-
-                    Navigator.push(
+                    Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => const RegisterPage()),
+                      MaterialPageRoute(builder: (context) => const LoginPage()),
                     );
                   },
                   style: OutlinedButton.styleFrom(
@@ -207,10 +215,10 @@ class _LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                     side: BorderSide(color: AppColor.primary),
-                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    padding: EdgeInsets.symmetric(vertical: 15),
                   ),
                   child: Text(
-                    'Daftar',
+                    'Kembali',
                     style: TextStyle(
                       color: AppColor.primary,
                       fontWeight: FontWeight.bold,
