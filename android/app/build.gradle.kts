@@ -6,7 +6,7 @@
 
     android {
         namespace = "com.example.kasir_baru"
-        compileSdk = 35
+        compileSdk = 35  // Updated to 35 as required by plugins
         ndkVersion = "27.0.12077973"
 
         compileOptions {
@@ -21,7 +21,7 @@
         defaultConfig {
             applicationId = "com.example.kasir_baru"
             minSdk = 21  // Pastikan minSdk minimal 21 atau sesuai kebutuhan
-            targetSdk = 34  // Pastikan targetSdk versi terbaru (minimal 31, disarankan 34)
+            targetSdk = 34  // Target SDK terbaru
             versionCode = flutter.versionCode
             versionName = flutter.versionName
         }

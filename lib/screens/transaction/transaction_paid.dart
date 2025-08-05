@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:kasir/core/print_function.dart';
+// import 'package:kasir/core/print_function.dart'; // Temporarily disabled
 import 'package:kasir/helpers/colors_theme.dart';
 import 'package:kasir/helpers/currency_format.dart';
 import 'package:kasir/screens/home_page.dart';
@@ -264,8 +264,9 @@ class ActionsWidget extends StatelessWidget {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    Print print = const Print();
-                    print.base(order);
+                    // Print print = const Print(); // Temporarily disabled
+                    // print.base(order); // Temporarily disabled
+                    print("Print function temporarily disabled");
                   },
                   style: ElevatedButton.styleFrom(
                     elevation: 0,

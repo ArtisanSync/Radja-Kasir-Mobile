@@ -19,12 +19,12 @@ class AuthServices {
   Future<dynamic> login(Map<String, dynamic> body, BuildContext context) async {
     context.loaderOverlay.show();
     try {
-      final response = await _dio.post("$_baseUrl/login", data: body);
+      final response = await _dio.post("$_baseUrl/users/login", data: body);
       if (response.statusCode == 201) {
         await Store.saveUser(response.data!['data']['user']);
         await Store.setToken(response.data!['data']['access_token']);
         await Store.saveStore(response.data!['data']['store']);
-        // await Store.saveSubscribe(response.data!['data']['subscribe']);
+        await Store.saveSubscribe(response.data!['data']['subscribe']);
         return response.statusCode;
       }
       // ignore: use_build_context_synchronously

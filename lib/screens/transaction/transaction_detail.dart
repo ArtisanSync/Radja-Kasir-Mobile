@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kasir/core/print_function.dart';
+// import 'package:kasir/core/print_function.dart'; // Temporarily disabled
 import 'package:kasir/helpers/currency_format.dart';
 import 'package:kasir/screens/sandbox/share_transaction.dart';
 import 'package:kasir/screens/transaction/transaction_payment.dart';
@@ -284,8 +284,9 @@ class ActionsTransactionDetail extends StatelessWidget {
           Expanded(
             child: ElevatedButton(
               onPressed: () {
-                Print print = const Print();
-                print.base(order);
+                // Print print = const Print(); // Temporarily disabled
+                // print.base(order); // Temporarily disabled
+                print("Print function temporarily disabled");
               },
               style: ElevatedButton.styleFrom(
                 elevation: 0,
