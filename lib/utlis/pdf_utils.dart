@@ -15,11 +15,12 @@ class PDFUtils {
   static Future<XFile> generateReceipt(Map<String, dynamic> order) async {
     // Temporarily disabled: PDF generation requires printing package
     // For now, return a simple text file
-    
+
     final Directory tempDir = await getTemporaryDirectory();
     final String tempPath = tempDir.path;
-    final File file = File('$tempPath/receipt_${DateTime.now().millisecondsSinceEpoch}.txt');
-    
+    final File file =
+        File('$tempPath/receipt_${DateTime.now().millisecondsSinceEpoch}.txt');
+
     String receiptContent = '''
 RECEIPT
 =======
@@ -48,11 +49,12 @@ Thank you for your purchase!
   static Future<XFile> generateInvoice(Map<String, dynamic> order) async {
     // Temporarily disabled: PDF generation requires printing package
     // For now, return a simple text file similar to receipt
-    
+
     final Directory tempDir = await getTemporaryDirectory();
     final String tempPath = tempDir.path;
-    final File file = File('$tempPath/invoice_${DateTime.now().millisecondsSinceEpoch}.txt');
-    
+    final File file =
+        File('$tempPath/invoice_${DateTime.now().millisecondsSinceEpoch}.txt');
+
     String invoiceContent = '''
 INVOICE
 =======

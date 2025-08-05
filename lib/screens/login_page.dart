@@ -28,14 +28,14 @@ class _LoginPageState extends State<LoginPage> {
       "password": _password.text.trim(),
     }, context);
 
-    if (resp == 201) {
+    if (resp == 200 || resp == 201) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Berhasil'),
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MyHomePage()),
       );
@@ -153,7 +153,8 @@ class _LoginPageState extends State<LoginPage> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const ResetPasswordPage()),
+                        MaterialPageRoute(
+                            builder: (context) => const ResetPasswordPage()),
                       );
                     },
                     child: Text(
@@ -170,7 +171,7 @@ class _LoginPageState extends State<LoginPage> {
               // Tombol Masuk
               Container(
                 padding:
-                const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                    const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => submit(),
@@ -195,13 +196,14 @@ class _LoginPageState extends State<LoginPage> {
               // Tombol Daftar
               Container(
                 padding:
-                const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                    const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const RegisterPage()),
+                      MaterialPageRoute(
+                          builder: (context) => const RegisterPage()),
                     );
                   },
                   style: OutlinedButton.styleFrom(
