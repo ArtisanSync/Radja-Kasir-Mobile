@@ -28,10 +28,10 @@ class _LoginPageState extends State<LoginPage> {
       "password": _password.text.trim(),
     }, context);
 
-    if (resp == 200 || resp == 201) {
+    if (resp['success'] == true) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Berhasil'),
+          content: Text(resp['message'] ?? 'Login berhasil'),
           backgroundColor: Colors.green,
         ),
       );
@@ -39,17 +39,18 @@ class _LoginPageState extends State<LoginPage> {
         context,
         MaterialPageRoute(builder: (_) => const MyHomePage()),
       );
-    } else if (resp == 401) {
+    } else if (resp['statusCode'] == 401) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Email atau password salah'),
+          content: Text(resp['message'] ?? 'Email atau password salah'),
           backgroundColor: Colors.black87,
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Terjadi kesalahan sistem ! coba lagi.'),
+          content:
+              Text(resp['message'] ?? 'Terjadi kesalahan sistem! Coba lagi.'),
           backgroundColor: Colors.red,
         ),
       );

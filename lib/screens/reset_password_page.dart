@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:kasir/helpers/colors_theme.dart';
 import 'package:kasir/screens/login_page.dart';
+import 'package:kasir/screens/password_reset_verify_page.dart';
+import 'package:kasir/services/auth_services.dart';
 import 'package:loader_overlay/loader_overlay.dart';
 
 class ResetPasswordPage extends StatefulWidget {
@@ -13,6 +15,7 @@ class ResetPasswordPage extends StatefulWidget {
 }
 
 class _ResetPasswordPageState extends State<ResetPasswordPage> {
+  final api = AuthServices();
   final TextEditingController _email = TextEditingController();
 
   Future<void> submit() async {
@@ -26,30 +29,29 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       return;
     }
 
-    context.loaderOverlay.show();
+    final resp = await api.forgotPassword({
+      "email": _email.text.trim(),
+    }, context);
 
-    try {
-      // Implementasi logika reset password disini
-      await Future.delayed(Duration(seconds: 2)); // Simulasi proses
-
-      context.loaderOverlay.hide();
-
+    if (resp['success'] == true) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Link reset password telah dikirim ke email Anda'),
+          content: Text(resp['message'] ??
+              'Link reset password telah dikirim ke email Anda'),
           backgroundColor: Colors.green,
         ),
       );
 
-      Navigator.pushReplacement(
+      Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const LoginPage()),
+        MaterialPageRoute(
+            builder: (_) => PasswordResetVerifyPage(email: _email.text.trim())),
       );
-    } catch (e) {
-      context.loaderOverlay.hide();
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Terjadi kesalahan: ${e.toString()}'),
+          content:
+              Text(resp['message'] ?? 'Gagal mengirim email reset password'),
           backgroundColor: Colors.red,
         ),
       );
@@ -161,7 +163,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   onPressed: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => const LoginPage()),
+                      MaterialPageRoute(
+                          builder: (context) => const LoginPage()),
                     );
                   },
                   style: OutlinedButton.styleFrom(

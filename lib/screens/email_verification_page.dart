@@ -2,61 +2,81 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:kasir/helpers/colors_theme.dart';
-import 'package:kasir/services/auth_services.dart';
 import 'package:kasir/screens/login_page.dart';
-import 'package:kasir/screens/email_verification_page.dart';
+import 'package:kasir/screens/home_page.dart';
+import 'package:kasir/services/auth_services.dart';
 import 'package:loader_overlay/loader_overlay.dart';
 
-class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+class EmailVerificationPage extends StatefulWidget {
+  final String email;
+
+  const EmailVerificationPage({super.key, required this.email});
 
   @override
-  State<RegisterPage> createState() => _RegisterPageState();
+  State<EmailVerificationPage> createState() => _EmailVerificationPageState();
 }
 
-class _RegisterPageState extends State<RegisterPage> {
+class _EmailVerificationPageState extends State<EmailVerificationPage> {
   final api = AuthServices();
-  final TextEditingController _name = TextEditingController();
-  final TextEditingController _email = TextEditingController();
-  final TextEditingController _password = TextEditingController();
+  final TextEditingController _tokenController = TextEditingController();
 
-  Future<void> submit() async {
-    if (_name.text.isEmpty || _email.text.isEmpty || _password.text.isEmpty) {
+  Future<void> verifyEmail() async {
+    if (_tokenController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Semua field harus diisi'),
+          content: Text('Masukkan kode verifikasi'),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
 
-    final resp = await api.register({
-      "name": _name.text.trim(),
-      "email": _email.text.trim(),
-      "password": _password.text.trim(),
+    final resp = await api.verifyEmail({
+      "email": widget.email,
+      "token": _tokenController.text.trim(),
     }, context);
 
     if (resp['success'] == true) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(resp['message'] ??
-              'Registrasi berhasil! Silakan cek email untuk verifikasi.'),
+          content: Text(resp['message'] ?? 'Email berhasil diverifikasi!'),
           backgroundColor: Colors.green,
         ),
       );
 
-      // Navigate to email verification page or login page
+      // Navigate to home page since user is now logged in
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-            builder: (_) => EmailVerificationPage(email: _email.text.trim())),
+        MaterialPageRoute(builder: (_) => const MyHomePage()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content:
-              Text(resp['message'] ?? 'Registrasi gagal. Silakan coba lagi.'),
+              Text(resp['message'] ?? 'Verifikasi gagal. Silakan coba lagi.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> resendVerification() async {
+    final resp = await api.resendVerification({
+      "email": widget.email,
+    }, context);
+
+    if (resp['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(resp['message'] ?? 'Kode verifikasi baru telah dikirim!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(resp['message'] ?? 'Gagal mengirim kode verifikasi.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -90,22 +110,28 @@ class _RegisterPageState extends State<RegisterPage> {
                 width: 100,
               ),
               SizedBox(height: 20),
-              // Judul
               Text(
-                'Registrasi',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
+                'Verifikasi Email',
+                style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 20),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 30),
+                child: Text(
+                  'Kami telah mengirim kode verifikasi ke ${widget.email}. Silakan masukkan kode tersebut di bawah ini.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                 ),
               ),
               SizedBox(height: 40),
-              // Field Nama
+
+              // Token Input
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 30),
                 child: TextField(
-                  controller: _name,
+                  controller: _tokenController,
                   decoration: InputDecoration(
-                    labelText: "Name",
+                    labelText: "Kode Verifikasi",
                     labelStyle: TextStyle(color: AppColor.secondary),
                     filled: true,
                     fillColor: Colors.white,
@@ -121,58 +147,13 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
               ),
               SizedBox(height: 20),
-              // Field Email
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 30),
-                child: TextField(
-                  controller: _email,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: "Email",
-                    labelStyle: TextStyle(color: AppColor.secondary),
-                    filled: true,
-                    fillColor: Colors.white,
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: AppColor.light),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: AppColor.primary),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
-              // Field Password
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 30),
-                child: TextField(
-                  controller: _password,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: "Password",
-                    labelStyle: TextStyle(color: AppColor.secondary),
-                    filled: true,
-                    fillColor: Colors.white,
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: AppColor.light),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: AppColor.primary),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 40),
-              // Tombol Daftar
+
+              // Verify Button
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: submit,
+                  onPressed: () => verifyEmail(),
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
@@ -182,7 +163,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     padding: EdgeInsets.symmetric(vertical: 15),
                   ),
                   child: Text(
-                    'Daftar',
+                    'Verifikasi Email',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -191,18 +172,13 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
               ),
-              // Tombol Kembali
+
+              // Resend Button
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                 width: double.infinity,
                 child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const LoginPage()),
-                    );
-                  },
+                  onPressed: () => resendVerification(),
                   style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
@@ -211,12 +187,31 @@ class _RegisterPageState extends State<RegisterPage> {
                     padding: EdgeInsets.symmetric(vertical: 15),
                   ),
                   child: Text(
-                    'Kembali',
+                    'Kirim Ulang Kode',
                     style: TextStyle(
                       color: AppColor.primary,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 20),
+
+              // Back to Login
+              TextButton(
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                  );
+                },
+                child: Text(
+                  'Kembali ke Login',
+                  style: TextStyle(
+                    color: AppColor.primary,
+                    fontSize: 14,
                   ),
                 ),
               ),
