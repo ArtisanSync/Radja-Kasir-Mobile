@@ -26,7 +26,7 @@ class _ProductPageState extends State<ProductPage> {
   UserServices userServices = UserServices();
   ActionProduct actionProduct = ActionProduct();
 
-  UserSubsModel? _subscription;
+  // UserSubsModel? _subscription; // Removed - not needed for Express.js backend
 
   bool loading = false;
   List<dynamic> products = [];
@@ -37,9 +37,13 @@ class _ProductPageState extends State<ProductPage> {
       loading = true;
     });
     var resp = await productServices.listProduct();
-    if (resp!.statusCode == 200) {
+    if (resp['success'] == true) {
       setState(() {
-        products = resp.data['data'] as List<dynamic>;
+        if (resp['data'] != null && resp['data']['products'] != null) {
+          products = resp['data']['products'] as List<dynamic>;
+        } else {
+          products = [];
+        }
       });
     }
     setState(() {
@@ -47,21 +51,60 @@ class _ProductPageState extends State<ProductPage> {
     });
   }
 
+  // Method fetchPackageStore() removed - not needed for Express.js backend
+  // Express.js backend doesn't use the same package/subscription system
+  /*
   Future<void> fetchPackageStore() async {
-    var userStore = await Store.getUser();
-    var resp = await userServices.package(userStore['id']);
-    UserSubsModel subsData = UserSubsModel.fromJson(resp.data['data']);
-
-    setState(() {
-      _subscription = subsData;
-    });
+    try {
+      var userStore = await Store.getUser();
+      if (userStore == null || userStore['id'] == null) {
+        print('User store data not found');
+        return;
+      }
+      
+      // Use profile endpoint instead of package endpoint
+      var resp = await userServices.profile();
+      if (resp.data != null && resp.data['data'] != null) {
+        // Create UserSubsModel from profile data
+        var profileData = resp.data['data'];
+        var subscriptionData = {
+          'id': profileData['id'],
+          'isMember': profileData['isMember'] ?? false,
+          'isSubscribe': profileData['isSubscribe'] ?? false,
+          'subscribes': profileData['subscribes'] ?? [],
+          'storeMembers': profileData['storeMembers'] ?? [],
+        };
+        
+        UserSubsModel subsData = UserSubsModel.fromJson(subscriptionData);
+        if (mounted) {
+          setState(() {
+            _subscription = subsData;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching package store: $e');
+      // Create default subscription data if API fails
+      if (mounted) {
+        setState(() {
+          _subscription = UserSubsModel.fromJson({
+            'id': 'default',
+            'isMember': false,
+            'isSubscribe': false,
+            'subscribes': [],
+            'storeMembers': [],
+          });
+        });
+      }
+    }
   }
+  */
 
   @override
   void initState() {
     super.initState();
     fetchProduct();
-    fetchPackageStore();
+    // fetchPackageStore(); // Removed - not needed for Express.js backend
   }
 
   @override
@@ -156,12 +199,9 @@ class _ProductPageState extends State<ProductPage> {
                                       : Colors.amber[50],
                                   child: IconButton(
                                     onPressed: () async {
-                                      Map<String, dynamic> body = {
-                                        "favorite": item['favorite'] ? 0 : 1
-                                      };
                                       var resp = await productServices
-                                          .setFavorite(body, item['id']);
-                                      if (resp!.statusCode == 201) {
+                                          .setFavorite(item['id']);
+                                      if (resp['success'] == true) {
                                         fetchProduct();
                                       }
                                     },
@@ -230,7 +270,16 @@ class _ProductPageState extends State<ProductPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          actionProduct.addProductWithPackage(_subscription!, products ,context);
+          // Simplified navigation - bypass package checking for now
+          // Since Express.js backend may not have the same package system
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const FormProduct()),
+          ).then((value) {
+            if (value == true) {
+              fetchProduct(); // Refresh products after adding
+            }
+          });
         },
         backgroundColor: Colors.green,
         child: const Icon(

@@ -81,7 +81,7 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
     var resp = await productServices.uploadPhotoProduct(widget.id, formData);
     context.loaderOverlay.hide();
     print(resp);
-    if (resp!.statusCode == 201) {
+    if (resp['success'] == true) {
       setState(() {
         _imageValue = null;
       });
@@ -201,7 +201,6 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                     controller: _name,
                   ),
                   const SizedBox(height: 10),
-
                   TextInput(
                     label: "Kode",
                     validate: false,
@@ -246,9 +245,10 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                       );
                       if (result != null) {
                         context.loaderOverlay.show();
-                        var resp = await productServices.changeCategoryProduct(widget.id, {"category_id" : result['id'] as String});
+                        var resp = await productServices.changeCategoryProduct(
+                            widget.id, {"categoryId": result['id'] as String});
                         context.loaderOverlay.hide();
-                        if(resp!.statusCode == 201){
+                        if (resp['success'] == true) {
                           setState(() {
                             categoryId = result['id'] as String;
                             categoryLable = result['name'] as String;
@@ -257,7 +257,11 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                       }
                     },
                   ),
-                  Text("Data kategory otomatis tersimpan.", style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12.sp),),
+                  Text(
+                    "Data kategory otomatis tersimpan.",
+                    style:
+                        TextStyle(fontStyle: FontStyle.italic, fontSize: 12.sp),
+                  ),
                   const SizedBox(height: 20),
                   ButtonPrimary(
                     label: "Simpan",
@@ -268,7 +272,6 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                     },
                   ),
                   const SizedBox(height: 10),
-
                   ButtonLight(
                       label: "Batal",
                       onTap: () {

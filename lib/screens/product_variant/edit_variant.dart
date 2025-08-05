@@ -35,15 +35,20 @@ class _VariantEditPageState extends State<VariantEditPage> {
   Future<void> fetch() async {
     var resp = await productServices.detailVariant(widget.id);
     print(resp);
-    if (resp!.statusCode == 200) {
+    if (resp['success'] == true) {
+      var productData = resp['data'];
+      var variant = productData['variants']?.isNotEmpty == true
+          ? productData['variants'][0]
+          : {};
+
       setState(() {
-        _name.text = resp.data['data']['name'];
-        _quantity.text = resp.data['data']['quantity'].toString();
-        _capitalPrice.text = resp.data['data']['capital_price'].toString();
-        _price.text = resp.data['data']['price'].toString();
-        _tax.text = resp.data['data']['tax'].toString();
-        _dicRp.text = resp.data['data']['dic_rp'].toString();
-        _dicPercent.text = resp.data['data']['dic_percent'].toString();
+        _name.text = variant['name'] ?? productData['name'] ?? '';
+        _quantity.text = (variant['quantity'] ?? 0).toString();
+        _capitalPrice.text = (variant['capitalPrice'] ?? 0).toString();
+        _price.text = (variant['price'] ?? 0).toString();
+        _tax.text = '0'; // Tax not in current backend structure
+        _dicRp.text = (variant['discountRp'] ?? 0).toString();
+        _dicPercent.text = (variant['discountPercent'] ?? 0).toString();
       });
     }
   }
@@ -55,13 +60,12 @@ class _VariantEditPageState extends State<VariantEditPage> {
       "quantity": _quantity.text,
       "qty_type": _qtyType.text,
       "price": _price.text,
-      "capital_price": _capitalPrice.text,
-      "tax": _tax.text,
-      "dic_rp": _dicRp.text,
-      "dic_percent": _dicPercent.text,
+      "capitalPrice": _capitalPrice.text, // Updated field name
+      "discountRp": _dicRp.text, // Updated field name
+      "discountPercent": _dicPercent.text, // Updated field name
     };
     var resp = await productServices.updateVariant(widget.id, body);
-    if (resp!.statusCode == 201) {
+    if (resp['success'] == true) {
       Navigator.pop(context);
     }
     context.loaderOverlay.hide();
