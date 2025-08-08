@@ -48,6 +48,15 @@ class UserServices {
     }
   }
 
+  // GET USER PROFILE
+  Future<dynamic> profile() async {
+    try {
+      return await _dio.get("$_baseUrl/users/profile");
+    } on DioException catch (e) {
+      return e.response;
+    }
+  }
+
   // USER PACKAGE
   Future<dynamic> package(int id) async {
     try {

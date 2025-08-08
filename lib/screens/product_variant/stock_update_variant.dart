@@ -34,9 +34,11 @@ class _UpdateStockVariantState extends State<UpdateStockVariant> {
       "price": price.text,
       "tax": tax.text,
     };
-    var resp =
-        await productServices.updateStock(context, body, widget.variant['id']);
-    if (resp!.statusCode == 201) {
+    String productId = widget.variant['productId']?.toString() ??
+        widget.variant['id']?.toString() ??
+        '';
+    var resp = await productServices.updateStock(context, body, productId);
+    if (resp['success'] == true) {
       Navigator.pop(context);
     }
   }

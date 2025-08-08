@@ -1,0 +1,2980 @@
+{
+	"info": {
+		"_postman_id": "45e69414-0f50-4b7a-810c-12be6873bf00",
+		"name": "Radja Kasir",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "44476573",
+		"_collection_link": "https://artisansync-8600259.postman.co/workspace/ArtisanSync's-Workspace~d6e12f66-ebb3-43eb-8314-d939b1e04671/collection/44476573-45e69414-0f50-4b7a-810c-12be6873bf00?action=share&source=collection_link&creator=44476573"
+	},
+	"item": [
+		{
+			"name": "API",
+			"item": [
+				{
+					"name": "Users Routes",
+					"item": [
+						{
+							"name": "Register",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Rafly\",\r\n  \"email\": \"raflyazizabdillah30@gmail.com\",\r\n  \"password\": \"Password1#\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_URL_RADJA_KASIR}}/users/register",
+									"host": [
+										"{{BASE_URL_RADJA_KASIR}}"
+									],
+									"path": [
+										"users",
+										"register"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "200 OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"name\": \"Rafly\",\r\n  \"email\": \"raflyazizabdillah30@gmail.com\",\r\n  \"password\": \"password\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{BASE_URL_RADJA_KASIR}}/users/register",
+											"host": [
+												"{{BASE_URL_RADJA_KASIR}}"
+											],
+											"path": [
+												"users",
+												"register"
+											]
+										}
+									},
+									"status": "Created",
+									"code": 201,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "362"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"16a-TC0aPVU17fw3m/Ll9u/y4ZD2R2w\""
+										},
+										{
+											"key": "Date",
+											"value": "Tue, 29 Jul 2025 08:07:48 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Registration successful. Please verify your email.\",\n    \"data\": {\n        \"user\": {\n            \"id\": \"cmdo985p10000w8gws1b4bc0u\",\n            \"name\": \"Rafly\",\n            \"email\": \"raflyazizabdillah30@gmail.com\",\n            \"role\": \"USER\",\n            \"createdAt\": \"2025-07-29T08:07:45.878Z\"\n        },\n        \"message\": \"Registration successful. Please check your email to verify your account.\"\n    },\n    \"timestamp\": \"2025-07-29T08:07:48.725Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Resend Token Register",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"email\": \"raflyazizabdillah30@gmail.com\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_URL_RADJA_KASIR}}/users/resend-verification",
+									"host": [
+										"{{BASE_URL_RADJA_KASIR}}"
+									],
+									"path": [
+										"users",
+										"resend-verification"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "200 OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"email\": \"raflyazizabdillah30@gmail.com\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{BASE_URL_RADJA_KASIR}}/users/resend-verification",
+											"host": [
+												"{{BASE_URL_RADJA_KASIR}}"
+											],
+											"path": [
+												"users",
+												"resend-verification"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "117"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"75-ESDFoakr3ODTJhf4SC58P3WDE90\""
+										},
+										{
+											"key": "Date",
+											"value": "Tue, 29 Jul 2025 08:09:35 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Verification token sent to your email\",\n    \"data\": null,\n    \"timestamp\": \"2025-07-29T08:09:35.244Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Verify Token Register",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\": \"raflyazizabdillah30@gmail.com\",\r\n    \"token\": \"Y05XI5\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_URL_RADJA_KASIR}}/users/verify-email",
+									"host": [
+										"{{BASE_URL_RADJA_KASIR}}"
+									],
+									"path": [
+										"users",
+										"verify-email"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "200 OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"email\": \"raflyazizabdillah30@gmail.com\",\r\n    \"token\": \"MTNDM2\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{BASE_URL_RADJA_KASIR}}/users/verify-email",
+											"host": [
+												"{{BASE_URL_RADJA_KASIR}}"
+											],
+											"path": [
+												"users",
+												"verify-email"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "502"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"1f6-vaOkoFPgbUyBVRl/itSNIT9A0SA\""
+										},
+										{
+											"key": "Date",
+											"value": "Tue, 29 Jul 2025 18:51:21 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Email verified successfully\",\n    \"data\": {\n        \"user\": {\n            \"id\": \"cmdow6man0000w8ec3fkm1l4u\",\n            \"name\": \"Rafly\",\n            \"email\": \"raflyazizabdillah30@gmail.com\",\n            \"role\": \"USER\",\n            \"emailVerifiedAt\": \"2025-07-29T18:51:21.045Z\"\n        },\n        \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWRvdzZtYW4wMDAwdzhlYzNma20xbDR1IiwiZW1haWwiOiJyYWZseWF6aXphYmRpbGxhaDMwQGdtYWlsLmNvbSIsImlhdCI6MTc1MzgxNTA4MSwiZXhwIjoxNzUzOTAxNDgxfQ.HabTGzRGTZ5jz4umEDQhfCTna5VsZai8KKOoCCOzwJc\"\n    },\n    \"timestamp\": \"2025-07-29T18:51:21.052Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Login User",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"email\": \"raflyazizabdillah30@gmail.com\",\r\n  \"password\": \"Password1#\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_URL_RADJA_KASIR}}/users/login",
+									"host": [
+										"{{BASE_URL_RADJA_KASIR}}"
+									],
+									"path": [
+										"users",
+										"login"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "200 OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"email\": \"raflyazizabdillah30@gmail.com\",\r\n  \"password\": \"password\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{BASE_URL}}/users/login",
+											"host": [
+												"{{BASE_URL}}"
+											],
+											"path": [
+												"users",
+												"login"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "641"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"281-YD7x2yHvcmhr+BxKeN0T6+wKJLw\""
+										},
+										{
+											"key": "Date",
+											"value": "Tue, 29 Jul 2025 08:11:58 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Login successful\",\n    \"data\": {\n        \"user\": {\n            \"id\": \"cmdo985p10000w8gws1b4bc0u\",\n            \"name\": \"Rafly\",\n            \"email\": \"raflyazizabdillah30@gmail.com\",\n            \"avatar\": null,\n            \"role\": \"USER\",\n            \"isMember\": false,\n            \"isSubscribe\": false,\n            \"emailVerifiedAt\": \"2025-07-29T08:11:11.870Z\",\n            \"rememberToken\": null,\n            \"createdAt\": \"2025-07-29T08:07:45.878Z\",\n            \"updatedAt\": \"2025-07-29T08:11:11.874Z\"\n        },\n        \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWRvOTg1cDEwMDAwdzhnd3MxYjRiYzB1IiwiZW1haWwiOiJyYWZseWF6aXphYmRpbGxhaDMwQGdtYWlsLmNvbSIsImlhdCI6MTc1Mzc3NjcxOCwiZXhwIjoxNzUzODYzMTE4fQ.yKUGPsZq6Rq7i5LukorjLCLG5oBzONoCAVZlqrdB9qw\"\n    },\n    \"timestamp\": \"2025-07-29T08:11:58.498Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Get Profile User",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{BASE_URL_RADJA_KASIR}}/users/profile",
+									"host": [
+										"{{BASE_URL_RADJA_KASIR}}"
+									],
+									"path": [
+										"users",
+										"profile"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "200 OK",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{BASE_URL_RADJA_KASIR}}/users/profile",
+											"host": [
+												"{{BASE_URL_RADJA_KASIR}}"
+											],
+											"path": [
+												"users",
+												"profile"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "429"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"1ad-S2Xu70VdeTGjalX/T4d37CidBVw\""
+										},
+										{
+											"key": "Date",
+											"value": "Tue, 29 Jul 2025 08:13:04 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Profile retrieved successfully\",\n    \"data\": {\n        \"id\": \"cmdo985p10000w8gws1b4bc0u\",\n        \"name\": \"Rafly\",\n        \"email\": \"raflyazizabdillah30@gmail.com\",\n        \"avatar\": null,\n        \"role\": \"USER\",\n        \"isMember\": false,\n        \"isSubscribe\": false,\n        \"emailVerifiedAt\": \"2025-07-29T08:11:11.870Z\",\n        \"createdAt\": \"2025-07-29T08:07:45.878Z\",\n        \"updatedAt\": \"2025-07-29T08:11:11.874Z\",\n        \"stores\": [],\n        \"storeMembers\": [],\n        \"subscribes\": []\n    },\n    \"timestamp\": \"2025-07-29T08:13:04.796Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Update Profile",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "Rafly Aziz",
+											"type": "text"
+										},
+										{
+											"key": "avatar",
+											"type": "file",
+											"src": "/C:/Users/HP/Downloads/PlantSnap-featured-2.jpg"
+										},
+										{
+											"key": "password",
+											"value": "password123",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{BASE_URL_RADJA_KASIR}}/users/profile",
+									"host": [
+										"{{BASE_URL_RADJA_KASIR}}"
+									],
+									"path": [
+										"users",
+										"profile"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "200 OK",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "name",
+													"value": "Rafly Aziz",
+													"type": "text"
+												},
+												{
+													"key": "avatar",
+													"type": "file",
+													"src": "/C:/Users/HP/Downloads/PlantSnap-featured-2.jpg"
+												},
+												{
+													"key": "password",
+													"value": "password123",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{BASE_URL_RADJA_KASIR}}/users/profile",
+											"host": [
+												"{{BASE_URL_RADJA_KASIR}}"
+											],
+											"path": [
+												"users",
+												"profile"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "366"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"16e-3Soa/yVke46hYq984bZPU2sR+Ek\""
+										},
+										{
+											"key": "Date",
+											"value": "Tue, 29 Jul 2025 08:14:52 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Profile updated successfully\",\n    \"data\": {\n        \"id\": \"cmdo985p10000w8gws1b4bc0u\",\n        \"name\": \"Rafly Aziz\",\n        \"email\": \"raflyazizabdillah30@gmail.com\",\n        \"avatar\": \"https://ik.imagekit.io/72mu50jam/users/avatars/avatar_cmdo985p10000w8gws1b4bc0u_1753776885925_hbRuNklvr\",\n        \"role\": \"USER\",\n        \"updatedAt\": \"2025-07-29T08:14:52.979Z\"\n    },\n    \"timestamp\": \"2025-07-29T08:14:52.982Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Request Reset Password",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"email\": \"raflyazizabdillah30@gmail.com\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_URL_RADJA_KASIR}}/users/forgot-password",
+									"host": [
+										"{{BASE_URL_RADJA_KASIR}}"
+									],
+									"path": [
+										"users",
+										"forgot-password"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "200 OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"email\": \"raflyazizabdillah30@gmail.com\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{BASE_URL_RADJA_KASIR}}/users/forgot-password",
+											"host": [
+												"{{BASE_URL_RADJA_KASIR}}"
+											],
+											"path": [
+												"users",
+												"forgot-password"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "110"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"6e-PgkNGx1fMrm1/aRipsv3IKw1cwk\""
+										},
+										{
+											"key": "Date",
+											"value": "Tue, 29 Jul 2025 08:15:52 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Reset token sent to your email\",\n    \"data\": null,\n    \"timestamp\": \"2025-07-29T08:15:52.420Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Resend Token Reset Password",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"email\": \"raflyazizabdillah30@gmail.com\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_URL_RADJA_KASIR}}/users/resend-reset",
+									"host": [
+										"{{BASE_URL_RADJA_KASIR}}"
+									],
+									"path": [
+										"users",
+										"resend-reset"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "200 OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"email\": \"raflyazizabdillah30@gmail.com\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{BASE_URL_RADJA_KASIR}}/users/resend-reset",
+											"host": [
+												"{{BASE_URL_RADJA_KASIR}}"
+											],
+											"path": [
+												"users",
+												"resend-reset"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "110"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"6e-MDABswNuFqQ531H7Tj04AA60qcA\""
+										},
+										{
+											"key": "Date",
+											"value": "Tue, 29 Jul 2025 08:16:44 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Reset token sent to your email\",\n    \"data\": null,\n    \"timestamp\": \"2025-07-29T08:16:44.162Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Reset Password Confirm",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\": \"raflyazizabdillah30@gmail.com\",\r\n    \"token\": \"OS11BR\",\r\n    \"password\": \"Password1!\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{BASE_URL_RADJA_KASIR}}/users/reset-password",
+									"host": [
+										"{{BASE_URL_RADJA_KASIR}}"
+									],
+									"path": [
+										"users",
+										"reset-password"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "200 OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"email\": \"raflyazizabdillah30@gmail.com\",\r\n    \"token\": \"LHLV1V\",\r\n    \"password\": \"password1\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{BASE_URL_RADJA_KASIR}}/users/reset-password",
+											"host": [
+												"{{BASE_URL_RADJA_KASIR}}"
+											],
+											"path": [
+												"users",
+												"reset-password"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "107"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"6b-Op4UPXHG2KHezwUiuvba2MtiUco\""
+										},
+										{
+											"key": "Date",
+											"value": "Tue, 29 Jul 2025 18:53:48 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Password reset successfully\",\n    \"data\": null,\n    \"timestamp\": \"2025-07-29T18:53:48.414Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Delete User (Admin Only)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token_admin}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{BASE_URL_RADJA_KASIR}}/users/:userId",
+									"host": [
+										"{{BASE_URL_RADJA_KASIR}}"
+									],
+									"path": [
+										"users",
+										":userId"
+									],
+									"variable": [
+										{
+											"key": "userId",
+											"value": "cmdsyy6f30000w88odll8w8xr"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "200 OK",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{BASE_URL_RADJA_KASIR}}/users/:userId",
+											"host": [
+												"{{BASE_URL_RADJA_KASIR}}"
+											],
+											"path": [
+												"users",
+												":userId"
+											],
+											"variable": [
+												{
+													"key": "userId",
+													"value": "cmdsyy6f30000w88odll8w8xr"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "129"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"81-LhD7J/DQYQo62cQd9I4l11u1P98\""
+										},
+										{
+											"key": "Date",
+											"value": "Fri, 01 Aug 2025 15:23:36 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"User deleted successfully\",\n    \"data\": {\n        \"deletedUser\": \"Rafly Aziz\"\n    },\n    \"timestamp\": \"2025-08-01T15:23:36.897Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Get All User (Admin Only)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{token_admin}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{BASE_URL_RADJA_KASIR}}/users",
+									"host": [
+										"{{BASE_URL_RADJA_KASIR}}"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "403",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{BASE_URL_RADJA_KASIR}}/users",
+											"host": [
+												"{{BASE_URL_RADJA_KASIR}}"
+											],
+											"path": [
+												"users"
+											]
+										}
+									},
+									"status": "Forbidden",
+									"code": 403,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "123"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"7b-Ex9dO1Rer7/mCNNmM2LowjEijkU\""
+										},
+										{
+											"key": "Date",
+											"value": "Tue, 29 Jul 2025 08:19:30 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": false,\n    \"message\": \"Access denied - insufficient permissions\",\n    \"errors\": null,\n    \"timestamp\": \"2025-07-29T08:19:30.539Z\"\n}"
+								},
+								{
+									"name": "Get All User (Admin Only)",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{BASE_URL_RADJA_KASIR}}/users",
+											"host": [
+												"{{BASE_URL_RADJA_KASIR}}"
+											],
+											"path": [
+												"users"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "495"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"1ef-Wma+043mAoYanWQH68xq24B6nTg\""
+										},
+										{
+											"key": "Date",
+											"value": "Fri, 01 Aug 2025 15:07:59 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Users retrieved successfully\",\n    \"data\": [\n        {\n            \"id\": \"cmdsy4ffg00077kmgn6a2srcn\",\n            \"name\": \"Test User\",\n            \"email\": \"user@test.com\",\n            \"avatar\": null,\n            \"role\": \"USER\",\n            \"emailVerifiedAt\": \"2025-08-01T14:55:46.971Z\",\n            \"createdAt\": \"2025-08-01T14:55:46.973Z\"\n        },\n        {\n            \"id\": \"cmdsy4fdu00067kmgv0xxrurl\",\n            \"name\": \"Super Admin\",\n            \"email\": \"admin@radjakasir.com\",\n            \"avatar\": null,\n            \"role\": \"ADMIN\",\n            \"emailVerifiedAt\": \"2025-08-01T14:55:46.912Z\",\n            \"createdAt\": \"2025-08-01T14:55:46.914Z\"\n        }\n    ],\n    \"timestamp\": \"2025-08-01T15:07:59.794Z\"\n}"
+								},
+								{
+									"name": "200 OK",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{BASE_URL_RADJA_KASIR}}/users",
+											"host": [
+												"{{BASE_URL_RADJA_KASIR}}"
+											],
+											"path": [
+												"users"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "702"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"2be-WDQNP7wfHCuDogWz886cpCPbUEY\""
+										},
+										{
+											"key": "Date",
+											"value": "Fri, 01 Aug 2025 15:22:51 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Users retrieved successfully\",\n    \"data\": [\n        {\n            \"id\": \"cmdsyy6f30000w88odll8w8xr\",\n            \"name\": \"Rafly Aziz\",\n            \"email\": \"raflyazizabdillah30@gmail.com\",\n            \"avatar\": null,\n            \"role\": \"USER\",\n            \"emailVerifiedAt\": \"2025-08-01T15:19:36.385Z\",\n            \"createdAt\": \"2025-08-01T15:18:54.975Z\"\n        },\n        {\n            \"id\": \"cmdsyomwp0007w8ls933ysc4d\",\n            \"name\": \"Test User\",\n            \"email\": \"user@test.com\",\n            \"avatar\": null,\n            \"role\": \"USER\",\n            \"emailVerifiedAt\": \"2025-08-01T15:11:29.783Z\",\n            \"createdAt\": \"2025-08-01T15:11:29.785Z\"\n        },\n        {\n            \"id\": \"cmdsyomsk0006w8ls5ndrsqvc\",\n            \"name\": \"Super Admin\",\n            \"email\": \"admin@radjakasir.com\",\n            \"avatar\": null,\n            \"role\": \"ADMIN\",\n            \"emailVerifiedAt\": \"2025-08-01T15:11:29.633Z\",\n            \"createdAt\": \"2025-08-01T15:11:29.636Z\"\n        }\n    ],\n    \"timestamp\": \"2025-08-01T15:22:51.111Z\"\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Product",
+					"item": [
+						{
+							"name": "Create Product",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWRzeTRmZmcwMDA3N2ttZ242YTJzcmNuIiwiZW1haWwiOiJ1c2VyQHRlc3QuY29tIiwiaWF0IjoxNzU0MDYxOTY5LCJleHAiOjE3NTQxNDgzNjl9.yLAd34HxauDtT6nJuL9xXMO96nxpUfDueuu3Y0409y0",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "nasi telur",
+											"type": "text"
+										},
+										{
+											"key": "code",
+											"value": "test111",
+											"type": "text"
+										},
+										{
+											"key": "brand",
+											"value": "nasi",
+											"type": "text"
+										},
+										{
+											"key": "categoryId",
+											"value": "",
+											"type": "text"
+										},
+										{
+											"key": "unitId",
+											"value": "cmdsy4fc600007kmg9c9xwo8y",
+											"type": "text"
+										},
+										{
+											"key": "capitalPrice",
+											"value": "500",
+											"type": "text"
+										},
+										{
+											"key": "price",
+											"value": "8000",
+											"type": "text"
+										},
+										{
+											"key": "discountPercent",
+											"value": "5",
+											"type": "text"
+										},
+										{
+											"key": "discountRp",
+											"value": "",
+											"type": "text"
+										},
+										{
+											"key": "quantity",
+											"value": "50",
+											"type": "text"
+										},
+										{
+											"key": "storeId",
+											"value": "cmdsy4ffm000b7kmgg3u9jyx8",
+											"type": "text"
+										},
+										{
+											"key": "image",
+											"type": "file",
+											"src": "/C:/Users/msigf/Downloads/logo.png"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/products",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"products"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Create Product",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "name",
+													"value": "nasi telur",
+													"type": "text"
+												},
+												{
+													"key": "code",
+													"value": "test111",
+													"type": "text"
+												},
+												{
+													"key": "brand",
+													"value": "nasi",
+													"type": "text"
+												},
+												{
+													"key": "categoryId",
+													"value": "",
+													"type": "text"
+												},
+												{
+													"key": "unitId",
+													"value": "cmdsy4fc600007kmg9c9xwo8y",
+													"type": "text"
+												},
+												{
+													"key": "capitalPrice",
+													"value": "500",
+													"type": "text"
+												},
+												{
+													"key": "price",
+													"value": "8000",
+													"type": "text"
+												},
+												{
+													"key": "discountPercent",
+													"value": "5",
+													"type": "text"
+												},
+												{
+													"key": "discountRp",
+													"value": "",
+													"type": "text"
+												},
+												{
+													"key": "quantity",
+													"value": "50",
+													"type": "text"
+												},
+												{
+													"key": "storeId",
+													"value": "cmdsy4ffm000b7kmgg3u9jyx8",
+													"type": "text"
+												},
+												{
+													"key": "image",
+													"type": "file",
+													"src": "/C:/Users/msigf/Downloads/logo.png"
+												}
+											],
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{base_url}}/products",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"products"
+											]
+										}
+									},
+									"status": "Created",
+									"code": 201,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "1283"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"503-/dsoQHzIVcolLSxAKxKrVuMrbbw\""
+										},
+										{
+											"key": "Date",
+											"value": "Fri, 01 Aug 2025 16:03:40 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Product created successfully\",\n    \"data\": {\n        \"id\": \"cmdt0jqcn00017kcwlwohvt8t\",\n        \"categoryId\": null,\n        \"storeId\": \"cmdsy4ffm000b7kmgg3u9jyx8\",\n        \"image\": \"https://ik.imagekit.io/radjakasir/products/product_1754064215657_W_mO4eKMw\",\n        \"name\": \"nasi telur\",\n        \"code\": \"test111\",\n        \"brand\": \"nasi\",\n        \"active\": true,\n        \"isFavorite\": false,\n        \"createdAt\": \"2025-08-01T16:03:40.200Z\",\n        \"updatedAt\": \"2025-08-01T16:03:40.200Z\",\n        \"category\": null,\n        \"store\": {\n            \"id\": \"cmdsy4ffm000b7kmgg3u9jyx8\",\n            \"userId\": \"cmdsy4ffg00077kmgn6a2srcn\",\n            \"name\": \"Toko Berkah\",\n            \"storeType\": \"Retail\",\n            \"address\": \"Jl. Berkah No. 123, Bandung\",\n            \"whatsapp\": \"+628222000001\",\n            \"logo\": null,\n            \"stamp\": null,\n            \"createdAt\": \"2025-08-01T14:55:46.978Z\",\n            \"updatedAt\": \"2025-08-01T14:55:46.978Z\"\n        },\n        \"variants\": [\n            {\n                \"id\": \"cmdt0jqcp00037kcwki0r88ob\",\n                \"productId\": \"cmdt0jqcn00017kcwlwohvt8t\",\n                \"unitId\": \"cmdsy4fc600007kmg9c9xwo8y\",\n                \"image\": \"https://ik.imagekit.io/radjakasir/products/product_1754064215657_W_mO4eKMw\",\n                \"name\": \"Default\",\n                \"quantity\": 50,\n                \"capitalPrice\": \"500\",\n                \"price\": \"8000\",\n                \"tax\": 0,\n                \"discountRp\": \"0\",\n                \"discountPercent\": 5,\n                \"createdAt\": \"2025-08-01T16:03:40.202Z\",\n                \"updatedAt\": \"2025-08-01T16:03:40.202Z\",\n                \"unit\": {\n                    \"id\": \"cmdsy4fc600007kmg9c9xwo8y\",\n                    \"name\": \"PCS\",\n                    \"createdAt\": \"2025-08-01T14:55:46.854Z\",\n                    \"updatedAt\": \"2025-08-01T14:55:46.854Z\"\n                }\n            }\n        ]\n    },\n    \"timestamp\": \"2025-08-01T16:03:40.207Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Get Units",
+							"request": {
+								"method": "GET",
+								"header": []
+							},
+							"response": [
+								{
+									"name": "Get Units",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/products/units",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"products",
+												"units"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "865"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"361-05cnHSIdB6If3LLNdZqs4bAsIh4\""
+										},
+										{
+											"key": "Date",
+											"value": "Fri, 01 Aug 2025 15:20:53 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Units retrieved successfully\",\n    \"data\": [\n        {\n            \"id\": \"cmdsy4fc600047kmgs7w1rbqg\",\n            \"name\": \"BAL\",\n            \"createdAt\": \"2025-08-01T14:55:46.854Z\",\n            \"updatedAt\": \"2025-08-01T14:55:46.854Z\"\n        },\n        {\n            \"id\": \"cmdsy4fc600027kmgmdza6uun\",\n            \"name\": \"DUS\",\n            \"createdAt\": \"2025-08-01T14:55:46.854Z\",\n            \"updatedAt\": \"2025-08-01T14:55:46.854Z\"\n        },\n        {\n            \"id\": \"cmdsy4fc600017kmgg3b1v8u0\",\n            \"name\": \"KTN\",\n            \"createdAt\": \"2025-08-01T14:55:46.854Z\",\n            \"updatedAt\": \"2025-08-01T14:55:46.854Z\"\n        },\n        {\n            \"id\": \"cmdsy4fc600057kmgf073s6yk\",\n            \"name\": \"LAINNYA\",\n            \"createdAt\": \"2025-08-01T14:55:46.854Z\",\n            \"updatedAt\": \"2025-08-01T14:55:46.854Z\"\n        },\n        {\n            \"id\": \"cmdsy4fc600037kmglignafvu\",\n            \"name\": \"PAK\",\n            \"createdAt\": \"2025-08-01T14:55:46.854Z\",\n            \"updatedAt\": \"2025-08-01T14:55:46.854Z\"\n        },\n        {\n            \"id\": \"cmdsy4fc600007kmg9c9xwo8y\",\n            \"name\": \"PCS\",\n            \"createdAt\": \"2025-08-01T14:55:46.854Z\",\n            \"updatedAt\": \"2025-08-01T14:55:46.854Z\"\n        }\n    ],\n    \"timestamp\": \"2025-08-01T15:20:53.025Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Get All Product",
+							"request": {
+								"method": "GET",
+								"header": []
+							},
+							"response": [
+								{
+									"name": "Get all product",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/products/store/{{store_id}}",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"products",
+												"store",
+												"{{store_id}}"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "2560"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"a00-CW5puGe0zDoF6Y+EmcDLS+EyvXA\""
+										},
+										{
+											"key": "Date",
+											"value": "Fri, 01 Aug 2025 17:15:14 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Products retrieved successfully\",\n    \"data\": {\n        \"products\": [\n            {\n                \"id\": \"cmdt0jqcn00017kcwlwohvt8t\",\n                \"categoryId\": null,\n                \"storeId\": \"cmdsy4ffm000b7kmgg3u9jyx8\",\n                \"image\": \"https://ik.imagekit.io/radjakasir/products/product_1754064215657_W_mO4eKMw\",\n                \"name\": \"nasi pecel ayam\",\n                \"code\": \"test111\",\n                \"brand\": \"nasi\",\n                \"active\": true,\n                \"isFavorite\": false,\n                \"createdAt\": \"2025-08-01T16:03:40.200Z\",\n                \"updatedAt\": \"2025-08-01T17:09:09.364Z\",\n                \"category\": null,\n                \"variants\": [\n                    {\n                        \"id\": \"cmdt0jqcp00037kcwki0r88ob\",\n                        \"productId\": \"cmdt0jqcn00017kcwlwohvt8t\",\n                        \"unitId\": \"cmdsy4fc600007kmg9c9xwo8y\",\n                        \"image\": \"https://ik.imagekit.io/radjakasir/products/product_1754064215657_W_mO4eKMw\",\n                        \"name\": \"Default\",\n                        \"quantity\": 30,\n                        \"capitalPrice\": \"500\",\n                        \"price\": \"9000\",\n                        \"tax\": 0,\n                        \"discountRp\": \"0\",\n                        \"discountPercent\": 15,\n                        \"createdAt\": \"2025-08-01T16:03:40.202Z\",\n                        \"updatedAt\": \"2025-08-01T17:09:09.374Z\",\n                        \"unit\": {\n                            \"id\": \"cmdsy4fc600007kmg9c9xwo8y\",\n                            \"name\": \"PCS\",\n                            \"createdAt\": \"2025-08-01T14:55:46.854Z\",\n                            \"updatedAt\": \"2025-08-01T14:55:46.854Z\"\n                        }\n                    }\n                ]\n            },\n            {\n                \"id\": \"cmdt06ytq00017kqopxa3unqs\",\n                \"categoryId\": null,\n                \"storeId\": \"cmdsy4ffm000b7kmgg3u9jyx8\",\n                \"image\": null,\n                \"name\": \"nasi telur\",\n                \"code\": \"test11\",\n                \"brand\": \"nasi\",\n                \"active\": true,\n                \"isFavorite\": false,\n                \"createdAt\": \"2025-08-01T15:53:44.654Z\",\n                \"updatedAt\": \"2025-08-01T15:53:44.654Z\",\n                \"category\": null,\n                \"variants\": [\n                    {\n                        \"id\": \"cmdt06yts00037kqolcvshvnw\",\n                        \"productId\": \"cmdt06ytq00017kqopxa3unqs\",\n                        \"unitId\": \"cmdsy4fc600007kmg9c9xwo8y\",\n                        \"image\": null,\n                        \"name\": \"Default\",\n                        \"quantity\": 50,\n                        \"capitalPrice\": \"500\",\n                        \"price\": \"8000\",\n                        \"tax\": 0,\n                        \"discountRp\": \"0\",\n                        \"discountPercent\": 5,\n                        \"createdAt\": \"2025-08-01T15:53:44.656Z\",\n                        \"updatedAt\": \"2025-08-01T15:53:44.656Z\",\n                        \"unit\": {\n                            \"id\": \"cmdsy4fc600007kmg9c9xwo8y\",\n                            \"name\": \"PCS\",\n                            \"createdAt\": \"2025-08-01T14:55:46.854Z\",\n                            \"updatedAt\": \"2025-08-01T14:55:46.854Z\"\n                        }\n                    }\n                ]\n            },\n            {\n                \"id\": \"cmdszvb2800017kn4426rozhz\",\n                \"categoryId\": null,\n                \"storeId\": \"cmdsy4ffm000b7kmgg3u9jyx8\",\n                \"image\": null,\n                \"name\": \"nasi telur\",\n                \"code\": \"test1\",\n                \"brand\": \"nasi\",\n                \"active\": true,\n                \"isFavorite\": false,\n                \"createdAt\": \"2025-08-01T15:44:40.641Z\",\n                \"updatedAt\": \"2025-08-01T15:44:40.641Z\",\n                \"category\": null,\n                \"variants\": [\n                    {\n                        \"id\": \"cmdszvb2a00037kn45whyvqjs\",\n                        \"productId\": \"cmdszvb2800017kn4426rozhz\",\n                        \"unitId\": \"cmdsy4fc600007kmg9c9xwo8y\",\n                        \"image\": null,\n                        \"name\": \"Default\",\n                        \"quantity\": 50,\n                        \"capitalPrice\": \"500\",\n                        \"price\": \"8000\",\n                        \"tax\": 0,\n                        \"discountRp\": \"0\",\n                        \"discountPercent\": 5,\n                        \"createdAt\": \"2025-08-01T15:44:40.642Z\",\n                        \"updatedAt\": \"2025-08-01T15:44:40.642Z\",\n                        \"unit\": {\n                            \"id\": \"cmdsy4fc600007kmg9c9xwo8y\",\n                            \"name\": \"PCS\",\n                            \"createdAt\": \"2025-08-01T14:55:46.854Z\",\n                            \"updatedAt\": \"2025-08-01T14:55:46.854Z\"\n                        }\n                    }\n                ]\n            }\n        ],\n        \"pagination\": {\n            \"total\": 3,\n            \"page\": 1,\n            \"limit\": 20,\n            \"totalPages\": 1\n        }\n    },\n    \"timestamp\": \"2025-08-01T17:15:14.613Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Get Produt By ID",
+							"request": {
+								"method": "GET",
+								"header": []
+							},
+							"response": [
+								{
+									"name": "Get Product By ID",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "name",
+													"value": "nasi telur",
+													"type": "text",
+													"disabled": true
+												},
+												{
+													"key": "code",
+													"value": "test111",
+													"type": "text",
+													"disabled": true
+												},
+												{
+													"key": "brand",
+													"value": "nasi",
+													"type": "text",
+													"disabled": true
+												},
+												{
+													"key": "categoryId",
+													"value": "",
+													"type": "text",
+													"disabled": true
+												},
+												{
+													"key": "unitId",
+													"value": "cmdsy4fc600007kmg9c9xwo8y",
+													"type": "text",
+													"disabled": true
+												},
+												{
+													"key": "capitalPrice",
+													"value": "500",
+													"type": "text",
+													"disabled": true
+												},
+												{
+													"key": "price",
+													"value": "8000",
+													"type": "text",
+													"disabled": true
+												},
+												{
+													"key": "discountPercent",
+													"value": "5",
+													"type": "text"
+												},
+												{
+													"key": "discountRp",
+													"value": "",
+													"type": "text",
+													"disabled": true
+												},
+												{
+													"key": "quantity",
+													"value": "50",
+													"type": "text",
+													"disabled": true
+												},
+												{
+													"key": "storeId",
+													"value": "cmdsy4ffm000b7kmgg3u9jyx8",
+													"type": "text",
+													"disabled": true
+												},
+												{
+													"key": "image",
+													"type": "file",
+													"src": "/C:/Users/msigf/Downloads/logo.png",
+													"disabled": true
+												}
+											]
+										},
+										"url": {
+											"raw": "{{base_url}}/products/{{product_id}}",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"products",
+												"{{product_id}}"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "1285"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"505-JGbwbVaxIsV68CvPzDb/dXslDSw\""
+										},
+										{
+											"key": "Date",
+											"value": "Fri, 01 Aug 2025 16:16:09 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Product retrieved successfully\",\n    \"data\": {\n        \"id\": \"cmdt0jqcn00017kcwlwohvt8t\",\n        \"categoryId\": null,\n        \"storeId\": \"cmdsy4ffm000b7kmgg3u9jyx8\",\n        \"image\": \"https://ik.imagekit.io/radjakasir/products/product_1754064215657_W_mO4eKMw\",\n        \"name\": \"nasi telur\",\n        \"code\": \"test111\",\n        \"brand\": \"nasi\",\n        \"active\": true,\n        \"isFavorite\": false,\n        \"createdAt\": \"2025-08-01T16:03:40.200Z\",\n        \"updatedAt\": \"2025-08-01T16:03:40.200Z\",\n        \"category\": null,\n        \"store\": {\n            \"id\": \"cmdsy4ffm000b7kmgg3u9jyx8\",\n            \"userId\": \"cmdsy4ffg00077kmgn6a2srcn\",\n            \"name\": \"Toko Berkah\",\n            \"storeType\": \"Retail\",\n            \"address\": \"Jl. Berkah No. 123, Bandung\",\n            \"whatsapp\": \"+628222000001\",\n            \"logo\": null,\n            \"stamp\": null,\n            \"createdAt\": \"2025-08-01T14:55:46.978Z\",\n            \"updatedAt\": \"2025-08-01T14:55:46.978Z\"\n        },\n        \"variants\": [\n            {\n                \"id\": \"cmdt0jqcp00037kcwki0r88ob\",\n                \"productId\": \"cmdt0jqcn00017kcwlwohvt8t\",\n                \"unitId\": \"cmdsy4fc600007kmg9c9xwo8y\",\n                \"image\": \"https://ik.imagekit.io/radjakasir/products/product_1754064215657_W_mO4eKMw\",\n                \"name\": \"Default\",\n                \"quantity\": 50,\n                \"capitalPrice\": \"500\",\n                \"price\": \"8000\",\n                \"tax\": 0,\n                \"discountRp\": \"0\",\n                \"discountPercent\": 5,\n                \"createdAt\": \"2025-08-01T16:03:40.202Z\",\n                \"updatedAt\": \"2025-08-01T16:03:40.202Z\",\n                \"unit\": {\n                    \"id\": \"cmdsy4fc600007kmg9c9xwo8y\",\n                    \"name\": \"PCS\",\n                    \"createdAt\": \"2025-08-01T14:55:46.854Z\",\n                    \"updatedAt\": \"2025-08-01T14:55:46.854Z\"\n                }\n            }\n        ]\n    },\n    \"timestamp\": \"2025-08-01T16:16:09.933Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Update Product",
+							"request": {
+								"method": "PUT",
+								"header": []
+							},
+							"response": [
+								{
+									"name": "Update Product",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "name",
+													"value": "nasi pecel ayam",
+													"type": "text"
+												},
+												{
+													"key": "price",
+													"value": "9000",
+													"type": "text"
+												},
+												{
+													"key": "quantity",
+													"value": "30",
+													"type": "text"
+												},
+												{
+													"key": "discountPercent",
+													"value": "15",
+													"type": "text"
+												},
+												{
+													"key": "active",
+													"value": "true",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{base_url}}/products/{{product_id}}",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"products",
+												"{{product_id}}"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "997"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"3e5-2Nu+2vWkBlv1obEp10o9KqZ4Axk\""
+										},
+										{
+											"key": "Date",
+											"value": "Fri, 01 Aug 2025 17:09:09 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Product updated successfully\",\n    \"data\": {\n        \"id\": \"cmdt0jqcn00017kcwlwohvt8t\",\n        \"categoryId\": null,\n        \"storeId\": \"cmdsy4ffm000b7kmgg3u9jyx8\",\n        \"image\": \"https://ik.imagekit.io/radjakasir/products/product_1754064215657_W_mO4eKMw\",\n        \"name\": \"nasi pecel ayam\",\n        \"code\": \"test111\",\n        \"brand\": \"nasi\",\n        \"active\": true,\n        \"isFavorite\": false,\n        \"createdAt\": \"2025-08-01T16:03:40.200Z\",\n        \"updatedAt\": \"2025-08-01T17:09:09.364Z\",\n        \"category\": null,\n        \"variants\": [\n            {\n                \"id\": \"cmdt0jqcp00037kcwki0r88ob\",\n                \"productId\": \"cmdt0jqcn00017kcwlwohvt8t\",\n                \"unitId\": \"cmdsy4fc600007kmg9c9xwo8y\",\n                \"image\": \"https://ik.imagekit.io/radjakasir/products/product_1754064215657_W_mO4eKMw\",\n                \"name\": \"Default\",\n                \"quantity\": 30,\n                \"capitalPrice\": \"500\",\n                \"price\": \"9000\",\n                \"tax\": 0,\n                \"discountRp\": \"0\",\n                \"discountPercent\": 15,\n                \"createdAt\": \"2025-08-01T16:03:40.202Z\",\n                \"updatedAt\": \"2025-08-01T17:09:09.374Z\",\n                \"unit\": {\n                    \"id\": \"cmdsy4fc600007kmg9c9xwo8y\",\n                    \"name\": \"PCS\",\n                    \"createdAt\": \"2025-08-01T14:55:46.854Z\",\n                    \"updatedAt\": \"2025-08-01T14:55:46.854Z\"\n                }\n            }\n        ]\n    },\n    \"timestamp\": \"2025-08-01T17:09:09.377Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Delete Product",
+							"request": {
+								"method": "DELETE",
+								"header": []
+							},
+							"response": [
+								{
+									"name": "Delete Product",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/products/{{product_id}}",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"products",
+												"{{product_id}}"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "140"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"8c-VuqTYjwWjjT5KoTRTmuLrRbGjbU\""
+										},
+										{
+											"key": "Date",
+											"value": "Fri, 01 Aug 2025 17:20:38 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Product deleted successfully\",\n    \"data\": {\n        \"deletedProduct\": \"nasi pecel ayam\"\n    },\n    \"timestamp\": \"2025-08-01T17:20:38.827Z\"\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Category",
+					"item": [
+						{
+							"name": "Test Cases",
+							"item": [
+								{
+									"name": "❌ Create Category - Missing Name",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"pm.request.headers.add({",
+													"    key: 'Authorization',",
+													"    value: 'Bearer ' + pm.environment.get('auth_token')",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test('Status code is 400', function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test('Error message for missing name', function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.success).to.eql(false);",
+													"    pm.expect(jsonData.message).to.include('required');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"storeId\": \"{{store_id}}\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/categories",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"categories"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "❌ Create Category - Short Name",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"pm.request.headers.add({",
+													"    key: 'Authorization',",
+													"    value: 'Bearer ' + pm.environment.get('auth_token')",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test('Status code is 400', function () {",
+													"    pm.response.to.have.status(400);",
+													"});",
+													"",
+													"pm.test('Error message for short name', function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.message).to.include('at least 2 characters');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"A\",\n  \"storeId\": \"{{store_id}}\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/categories",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"categories"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "❌ Get Category - Not Found",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"pm.request.headers.add({",
+													"    key: 'Authorization',",
+													"    value: 'Bearer ' + pm.environment.get('auth_token')",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test('Status code is 404', function () {",
+													"    pm.response.to.have.status(404);",
+													"});",
+													"",
+													"pm.test('Error message for not found', function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.message).to.include('not found');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/categories/invalid-category-id",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"categories",
+												"invalid-category-id"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "❌ Unauthorized Access",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test('Status code is 401', function () {",
+													"    pm.response.to.have.status(401);",
+													"});",
+													"",
+													"pm.test('Error message for unauthorized', function () {",
+													"    var jsonData = pm.response.json();",
+													"    pm.expect(jsonData.message).to.include('token required');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/categories",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"categories"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Create Category",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.add({",
+											"    key: 'Authorization',",
+											"    value: 'Bearer ' + pm.environment.get('auth_token')",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 201', function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test('Response has success property', function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData).to.have.property('success');",
+											"    pm.expect(jsonData.success).to.eql(true);",
+											"});",
+											"",
+											"if (pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.environment.set('category_id', jsonData.data.id);",
+											"    pm.environment.set('store_id', jsonData.data.storeId);",
+											"}"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWRzeHRoYWYwMDA3ZGNwODJ2Y2R0cDhqIiwiZW1haWwiOiJ1c2VyQHRlc3QuY29tIiwiaWF0IjoxNzU0MDU5Njg1LCJleHAiOjE3NTQxNDYwODV9.CE_pUm6T1ekNhiUrQGQAj6bOhNBUNkL9Rnr-i7hYdwo",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Electronics\",\n  \"storeId\": \"cmdsxthap000bdcp8zzu27e62\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/categories",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"categories"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "200 Ok",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"Electronics\",\n  \"storeId\": \"cmdsxthap000bdcp8zzu27e62\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/categories",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"categories"
+											]
+										}
+									},
+									"status": "Created",
+									"code": 201,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "364"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"16c-vBAkAGvUc1TlBmlt2tg2BOVJmmM\""
+										},
+										{
+											"key": "Date",
+											"value": "Fri, 01 Aug 2025 14:48:48 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Category created successfully\",\n    \"data\": {\n        \"id\": \"cmdsxvgvc0001dc44yh0gyt65\",\n        \"storeId\": \"cmdsxthap000bdcp8zzu27e62\",\n        \"name\": \"Electronics\",\n        \"createdAt\": \"2025-08-01T14:48:48.936Z\",\n        \"updatedAt\": \"2025-08-01T14:48:48.936Z\",\n        \"store\": {\n            \"id\": \"cmdsxthap000bdcp8zzu27e62\",\n            \"name\": \"Toko Berkah\"\n        },\n        \"_count\": {\n            \"products\": 0\n        }\n    },\n    \"timestamp\": \"2025-08-01T14:48:48.959Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Get All Categories",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.add({",
+											"    key: 'Authorization',",
+											"    value: 'Bearer ' + pm.environment.get('auth_token')",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response has categories array', function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.data).to.be.an('array');",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWRzeHRoYWYwMDA3ZGNwODJ2Y2R0cDhqIiwiZW1haWwiOiJ1c2VyQHRlc3QuY29tIiwiaWF0IjoxNzU0MDU5Njg1LCJleHAiOjE3NTQxNDYwODV9.CE_pUm6T1ekNhiUrQGQAj6bOhNBUNkL9Rnr-i7hYdwo",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/categories",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"categories"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "200 Ok",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/categories",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"categories"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "1873"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"751-NmXCiGpuFkdhIKv4qtKSrDnUCzQ\""
+										},
+										{
+											"key": "Date",
+											"value": "Fri, 01 Aug 2025 14:52:14 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Categories retrieved successfully\",\n    \"data\": [\n        {\n            \"id\": \"cmdsxvgvc0001dc44yh0gyt65\",\n            \"storeId\": \"cmdsxthap000bdcp8zzu27e62\",\n            \"name\": \"Electronics\",\n            \"createdAt\": \"2025-08-01T14:48:48.936Z\",\n            \"updatedAt\": \"2025-08-01T14:48:48.936Z\",\n            \"store\": {\n                \"id\": \"cmdsxthap000bdcp8zzu27e62\",\n                \"name\": \"Toko Berkah\",\n                \"userId\": \"cmdsxthaf0007dcp82vcdtp8j\"\n            },\n            \"_count\": {\n                \"products\": 0\n            }\n        },\n        {\n            \"id\": \"cmdsxthbm000ndcp8o92rzbwj\",\n            \"storeId\": \"cmdsxthat000ddcp8j3neihyb\",\n            \"name\": \"Pakaian\",\n            \"createdAt\": \"2025-08-01T14:47:16.211Z\",\n            \"updatedAt\": \"2025-08-01T14:47:16.211Z\",\n            \"store\": {\n                \"id\": \"cmdsxthat000ddcp8j3neihyb\",\n                \"name\": \"Warung Maju\",\n                \"userId\": \"cmdsxthaf0007dcp82vcdtp8j\"\n            },\n            \"_count\": {\n                \"products\": 0\n            }\n        },\n        {\n            \"id\": \"cmdsxthbi000ldcp8lycqkpj7\",\n            \"storeId\": \"cmdsxthat000ddcp8j3neihyb\",\n            \"name\": \"Elektronik\",\n            \"createdAt\": \"2025-08-01T14:47:16.207Z\",\n            \"updatedAt\": \"2025-08-01T14:47:16.207Z\",\n            \"store\": {\n                \"id\": \"cmdsxthat000ddcp8j3neihyb\",\n                \"name\": \"Warung Maju\",\n                \"userId\": \"cmdsxthaf0007dcp82vcdtp8j\"\n            },\n            \"_count\": {\n                \"products\": 0\n            }\n        },\n        {\n            \"id\": \"cmdsxthbe000jdcp8lcgivgn1\",\n            \"storeId\": \"cmdsxthap000bdcp8zzu27e62\",\n            \"name\": \"Snack\",\n            \"createdAt\": \"2025-08-01T14:47:16.203Z\",\n            \"updatedAt\": \"2025-08-01T14:47:16.203Z\",\n            \"store\": {\n                \"id\": \"cmdsxthap000bdcp8zzu27e62\",\n                \"name\": \"Toko Berkah\",\n                \"userId\": \"cmdsxthaf0007dcp82vcdtp8j\"\n            },\n            \"_count\": {\n                \"products\": 0\n            }\n        },\n        {\n            \"id\": \"cmdsxthb8000hdcp8eq3966wr\",\n            \"storeId\": \"cmdsxthap000bdcp8zzu27e62\",\n            \"name\": \"Minuman\",\n            \"createdAt\": \"2025-08-01T14:47:16.197Z\",\n            \"updatedAt\": \"2025-08-01T14:47:16.197Z\",\n            \"store\": {\n                \"id\": \"cmdsxthap000bdcp8zzu27e62\",\n                \"name\": \"Toko Berkah\",\n                \"userId\": \"cmdsxthaf0007dcp82vcdtp8j\"\n            },\n            \"_count\": {\n                \"products\": 0\n            }\n        },\n        {\n            \"id\": \"cmdsxthaz000fdcp80zun9u8i\",\n            \"storeId\": \"cmdsxthap000bdcp8zzu27e62\",\n            \"name\": \"Makanan\",\n            \"createdAt\": \"2025-08-01T14:47:16.187Z\",\n            \"updatedAt\": \"2025-08-01T14:47:16.187Z\",\n            \"store\": {\n                \"id\": \"cmdsxthap000bdcp8zzu27e62\",\n                \"name\": \"Toko Berkah\",\n                \"userId\": \"cmdsxthaf0007dcp82vcdtp8j\"\n            },\n            \"_count\": {\n                \"products\": 0\n            }\n        }\n    ],\n    \"timestamp\": \"2025-08-01T14:52:14.197Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Get Categories by Store",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.add({",
+											"    key: 'Authorization',",
+											"    value: 'Bearer ' + pm.environment.get('auth_token')",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response has categories for store', function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.data).to.be.an('array');",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWRzeHRoYWYwMDA3ZGNwODJ2Y2R0cDhqIiwiZW1haWwiOiJ1c2VyQHRlc3QuY29tIiwiaWF0IjoxNzU0MDU5Njg1LCJleHAiOjE3NTQxNDYwODV9.CE_pUm6T1ekNhiUrQGQAj6bOhNBUNkL9Rnr-i7hYdwo",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/categories/store/{{store_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"categories",
+										"store",
+										"{{store_id}}"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "200 Ok",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/categories/store/{{store_id}}",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"categories",
+												"store",
+												"{{store_id}}"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "886"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"376-uex5/Ajs7S+ePEGRFK/E3Rmsank\""
+										},
+										{
+											"key": "Date",
+											"value": "Fri, 01 Aug 2025 14:53:15 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Store categories retrieved successfully\",\n    \"data\": [\n        {\n            \"id\": \"cmdsxvgvc0001dc44yh0gyt65\",\n            \"storeId\": \"cmdsxthap000bdcp8zzu27e62\",\n            \"name\": \"Electronics\",\n            \"createdAt\": \"2025-08-01T14:48:48.936Z\",\n            \"updatedAt\": \"2025-08-01T14:48:48.936Z\",\n            \"_count\": {\n                \"products\": 0\n            }\n        },\n        {\n            \"id\": \"cmdsxthaz000fdcp80zun9u8i\",\n            \"storeId\": \"cmdsxthap000bdcp8zzu27e62\",\n            \"name\": \"Makanan\",\n            \"createdAt\": \"2025-08-01T14:47:16.187Z\",\n            \"updatedAt\": \"2025-08-01T14:47:16.187Z\",\n            \"_count\": {\n                \"products\": 0\n            }\n        },\n        {\n            \"id\": \"cmdsxthb8000hdcp8eq3966wr\",\n            \"storeId\": \"cmdsxthap000bdcp8zzu27e62\",\n            \"name\": \"Minuman\",\n            \"createdAt\": \"2025-08-01T14:47:16.197Z\",\n            \"updatedAt\": \"2025-08-01T14:47:16.197Z\",\n            \"_count\": {\n                \"products\": 0\n            }\n        },\n        {\n            \"id\": \"cmdsxthbe000jdcp8lcgivgn1\",\n            \"storeId\": \"cmdsxthap000bdcp8zzu27e62\",\n            \"name\": \"Snack\",\n            \"createdAt\": \"2025-08-01T14:47:16.203Z\",\n            \"updatedAt\": \"2025-08-01T14:47:16.203Z\",\n            \"_count\": {\n                \"products\": 0\n            }\n        }\n    ],\n    \"timestamp\": \"2025-08-01T14:53:15.723Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Get Single Category",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.add({",
+											"    key: 'Authorization',",
+											"    value: 'Bearer ' + pm.environment.get('auth_token')",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response has category details', function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.data).to.have.property('id');",
+											"    pm.expect(jsonData.data).to.have.property('name');",
+											"    pm.expect(jsonData.data).to.have.property('store');",
+											"    pm.expect(jsonData.data).to.have.property('products');",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWRzeHRoYWYwMDA3ZGNwODJ2Y2R0cDhqIiwiZW1haWwiOiJ1c2VyQHRlc3QuY29tIiwiaWF0IjoxNzU0MDU5Njg1LCJleHAiOjE3NTQxNDYwODV9.CE_pUm6T1ekNhiUrQGQAj6bOhNBUNkL9Rnr-i7hYdwo",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/categories/{{category_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"categories",
+										"{{category_id}}"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "200 Ok",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/categories/{{category_id}}",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"categories",
+												"{{category_id}}"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "393"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"189-sus9rE/K3NJ0eF32yT00VkGVTCI\""
+										},
+										{
+											"key": "Date",
+											"value": "Fri, 01 Aug 2025 14:54:36 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Category retrieved successfully\",\n    \"data\": {\n        \"id\": \"cmdsxvgvc0001dc44yh0gyt65\",\n        \"storeId\": \"cmdsxthap000bdcp8zzu27e62\",\n        \"name\": \"Electronics\",\n        \"createdAt\": \"2025-08-01T14:48:48.936Z\",\n        \"updatedAt\": \"2025-08-01T14:48:48.936Z\",\n        \"store\": {\n            \"id\": \"cmdsxthap000bdcp8zzu27e62\",\n            \"name\": \"Toko Berkah\",\n            \"userId\": \"cmdsxthaf0007dcp82vcdtp8j\"\n        },\n        \"products\": []\n    },\n    \"timestamp\": \"2025-08-01T14:54:36.110Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Update Category",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.add({",
+											"    key: 'Authorization',",
+											"    value: 'Bearer ' + pm.environment.get('auth_token')",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Category name updated', function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.data.name).to.eql('Smart Electronics');",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWRzeHRoYWYwMDA3ZGNwODJ2Y2R0cDhqIiwiZW1haWwiOiJ1c2VyQHRlc3QuY29tIiwiaWF0IjoxNzU0MDU5Njg1LCJleHAiOjE3NTQxNDYwODV9.CE_pUm6T1ekNhiUrQGQAj6bOhNBUNkL9Rnr-i7hYdwo",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Smart Electronics\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/categories/{{category_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"categories",
+										"{{category_id}}"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "200 Ok",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"Smart Electronics\"\n}"
+										},
+										"url": {
+											"raw": "{{base_url}}/categories/{{category_id}}",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"categories",
+												"{{category_id}}"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "370"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"172-SSd0oNyc/LKB10UPW2uuhVOoXFU\""
+										},
+										{
+											"key": "Date",
+											"value": "Fri, 01 Aug 2025 14:55:15 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Category updated successfully\",\n    \"data\": {\n        \"id\": \"cmdsxvgvc0001dc44yh0gyt65\",\n        \"storeId\": \"cmdsxthap000bdcp8zzu27e62\",\n        \"name\": \"Smart Electronics\",\n        \"createdAt\": \"2025-08-01T14:48:48.936Z\",\n        \"updatedAt\": \"2025-08-01T14:55:15.733Z\",\n        \"store\": {\n            \"id\": \"cmdsxthap000bdcp8zzu27e62\",\n            \"name\": \"Toko Berkah\"\n        },\n        \"_count\": {\n            \"products\": 0\n        }\n    },\n    \"timestamp\": \"2025-08-01T14:55:15.747Z\"\n}"
+								}
+							]
+						},
+						{
+							"name": "Delete Category",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"pm.request.headers.add({",
+											"    key: 'Authorization',",
+											"    value: 'Bearer ' + pm.environment.get('auth_token')",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Category deleted successfully', function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.success).to.eql(true);",
+											"    pm.expect(jsonData.data).to.have.property('deletedCategory');",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWRzeHRoYWYwMDA3ZGNwODJ2Y2R0cDhqIiwiZW1haWwiOiJ1c2VyQHRlc3QuY29tIiwiaWF0IjoxNzU0MDU5Njg1LCJleHAiOjE3NTQxNDYwODV9.CE_pUm6T1ekNhiUrQGQAj6bOhNBUNkL9Rnr-i7hYdwo",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/categories/{{category_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"categories",
+										"{{category_id}}"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "200 Ok",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{base_url}}/categories/{{category_id}}",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"categories",
+												"{{category_id}}"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "X-Powered-By",
+											"value": "Express"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "http://localhost:3000"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "186"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"ba-F0DH7v1lfiJfITALSveg8rSgkgg\""
+										},
+										{
+											"key": "Date",
+											"value": "Fri, 01 Aug 2025 14:56:19 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"success\": true,\n    \"message\": \"Category deleted successfully\",\n    \"data\": {\n        \"deletedCategory\": \"Smart Electronics\",\n        \"message\": \"Category deleted successfully\"\n    },\n    \"timestamp\": \"2025-08-01T14:56:19.340Z\"\n}"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

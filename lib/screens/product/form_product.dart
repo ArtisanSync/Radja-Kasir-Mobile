@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:image_picker/image_picker.dart';
@@ -34,6 +36,7 @@ class _FormProductState extends State<FormProduct> {
 
   final _formProductKey = GlobalKey<FormState>();
   XFile? _imageValue;
+  Uint8List? _imageBytes; // For web platform
   bool loading = false;
   bool showQtyType = false;
   String? categoryId;
@@ -41,10 +44,20 @@ class _FormProductState extends State<FormProduct> {
   String? selectQtyType;
 
   // Pick Image
-  void getImage(XFile? image) {
-    setState(() {
-      _imageValue = image;
-    });
+  void getImage(XFile? image) async {
+    if (image != null) {
+      setState(() {
+        _imageValue = image;
+      });
+
+      // For web platform, we need to read bytes
+      if (kIsWeb) {
+        final bytes = await image.readAsBytes();
+        setState(() {
+          _imageBytes = bytes;
+        });
+      }
+    }
   }
 
   Future<void> submit(BuildContext context) async {
@@ -52,9 +65,25 @@ class _FormProductState extends State<FormProduct> {
 
     final store = await Store.getStore();
 
+    // Create FormData with platform-specific image handling
+    MultipartFile? imageFile;
+    if (_imageValue != null) {
+      if (kIsWeb) {
+        // For web, use bytes
+        final bytes = await _imageValue!.readAsBytes();
+        imageFile = MultipartFile.fromBytes(
+          bytes,
+          filename: _imageValue!.name,
+        );
+      } else {
+        // For mobile, use file path
+        imageFile = await MultipartFile.fromFile(_imageValue!.path);
+      }
+    }
+
     FormData formData = FormData.fromMap({
       'store_id': store['id'],
-      'image': await MultipartFile.fromFile(_imageValue!.path),
+      if (imageFile != null) 'image': imageFile,
       "name": _name.text,
       "category_id": categoryId,
       "code": _code.text,
@@ -149,12 +178,23 @@ class _FormProductState extends State<FormProduct> {
                           ),
                           clipBehavior: Clip.hardEdge,
                           child: _imageValue != null
-                              ? Image.file(
-                                  File(_imageValue!.path),
-                                  fit: BoxFit.cover,
-                                  height: 200,
-                                  width: 100,
-                                )
+                              ? kIsWeb
+                                  ? (_imageBytes != null
+                                      ? Image.memory(
+                                          _imageBytes!,
+                                          fit: BoxFit.cover,
+                                          height: 200,
+                                          width: 100,
+                                        )
+                                      : const Center(
+                                          child: CircularProgressIndicator(),
+                                        ))
+                                  : Image.file(
+                                      File(_imageValue!.path),
+                                      fit: BoxFit.cover,
+                                      height: 200,
+                                      width: 100,
+                                    )
                               : const Center(
                                   child: Icon(
                                     Icons.image,
@@ -174,9 +214,7 @@ class _FormProductState extends State<FormProduct> {
                             var image = await picker.pickImage(
                               source: ImageSource.gallery,
                             );
-                            setState(() {
-                              _imageValue = image;
-                            });
+                            getImage(image);
                           },
                           icon: const Icon(
                             Icons.camera,

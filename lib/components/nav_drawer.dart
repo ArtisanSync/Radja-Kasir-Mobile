@@ -9,6 +9,7 @@ import 'package:kasir/screens/product/product.dart';
 import 'package:kasir/screens/profile/profile_page.dart';
 import 'package:kasir/screens/setting/setting_page.dart';
 import 'package:kasir/screens/transaction_dept/dept_page.dart';
+import 'package:kasir/screens/debug_screen.dart';
 import 'package:kasir/services/service_utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -20,16 +21,28 @@ class NavDrawer extends StatefulWidget {
 }
 
 class _NavDrawerState extends State<NavDrawer> {
-  String _userName = '';
-  String _storeName = '';
+  String _userName = 'Loading...';
+  String _storeName = 'Loading...';
 
   Future setUser() async {
-    final user = await Store.getUser();
-    final store = await Store.getStore();
-    setState(() {
-      _userName = user['name'];
-      _storeName = store['name'];
-    });
+    try {
+      final user = await Store.getUser();
+      final store = await Store.getStore();
+
+      if (mounted) {
+        setState(() {
+          _userName = user?['name'] ?? 'User';
+          _storeName = store?['name'] ?? 'Store';
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _userName = 'User';
+          _storeName = 'Store';
+        });
+      }
+    }
   }
 
   @override
