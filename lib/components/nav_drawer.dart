@@ -9,6 +9,7 @@ import 'package:kasir/screens/product/product.dart';
 import 'package:kasir/screens/profile/profile_page.dart';
 import 'package:kasir/screens/setting/setting_page.dart';
 import 'package:kasir/screens/transaction_dept/dept_page.dart';
+import 'package:kasir/screens/report/report_page.dart'; // Import halaman laporan native
 import 'package:kasir/screens/debug_screen.dart';
 import 'package:kasir/services/service_utils.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -64,9 +65,11 @@ class _NavDrawerState extends State<NavDrawer> {
             store: _storeName,
           ),
           const SizedBox(height: 20),
+          
+          // Transaksi
           ListTile(
-            leading: Icon(Icons.home),
-            title: Text('Transaksi'),
+            leading: const Icon(Icons.home),
+            title: const Text('Transaksi'),
             onTap: () {
               Navigator.pushReplacement(
                 context,
@@ -74,9 +77,11 @@ class _NavDrawerState extends State<NavDrawer> {
               );
             },
           ),
+          
+          // Produk dan Stok
           ListTile(
-            leading: Icon(Icons.inventory_2),
-            title: Text('Produk dan Stok'),
+            leading: const Icon(Icons.inventory_2),
+            title: const Text('Produk dan Stok'),
             onTap: () {
               Navigator.pushReplacement(
                 context,
@@ -84,9 +89,11 @@ class _NavDrawerState extends State<NavDrawer> {
               );
             },
           ),
+          
+          // Kasbon
           ListTile(
-            leading: Icon(Icons.monetization_on_rounded),
-            title: Text('Kasbon'),
+            leading: const Icon(Icons.monetization_on_rounded),
+            title: const Text('Kasbon'),
             onTap: () {
               Navigator.pushReplacement(
                 context,
@@ -94,27 +101,55 @@ class _NavDrawerState extends State<NavDrawer> {
               );
             },
           ),
+          
+          // Laporan - Updated to use native page
           ListTile(
-            onTap: () async {
-              final store = await Store.getStore();
-              final baseUrl = ServiceUtils().webUrl;
-
-              var url = Uri.parse("$baseUrl/report?store=${store['id']}");
-              if (!await launchUrl(url)) {
-                throw Exception('Could not launch $url');
-              }
-              // Navigator.pushReplacement(
-              //   context,
-              //   // MaterialPageRoute(builder: (context) => const ReportPage()),
-              //   MaterialPageRoute(
-              //       builder: (context) => ReportWebview(
-              //             store: store['id'],
-              //           )),
-              // );
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const ReportPage()),
+              );
             },
-            leading: Icon(Icons.equalizer),
-            title: Text('Laporan'),
+            leading: const Icon(Icons.equalizer),
+            title: const Text('Laporan'),
           ),
+          
+          // Alternative: Keep web version with better error handling
+          // ListTile(
+          //   onTap: () async {
+          //     try {
+          //       final store = await Store.getStore();
+          //       
+          //       if (store?['id'] == null) {
+          //         ScaffoldMessenger.of(context).showSnackBar(
+          //           const SnackBar(
+          //             content: Text('Store information not found. Please login again.'),
+          //             backgroundColor: Colors.red,
+          //           ),
+          //         );
+          //         return;
+          //       }
+          //       
+          //       final baseUrl = ServiceUtils().webUrl;
+          //       final url = Uri.parse("$baseUrl/report?store=${store['id']}");
+          //       
+          //       if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+          //         throw Exception('Could not launch $url');
+          //       }
+          //     } catch (e) {
+          //       ScaffoldMessenger.of(context).showSnackBar(
+          //         SnackBar(
+          //           content: Text('Failed to open report: $e'),
+          //           backgroundColor: Colors.red,
+          //         ),
+          //       );
+          //     }
+          //   },
+          //   leading: const Icon(Icons.web),
+          //   title: const Text('Laporan Web'),
+          // ),
+          
+          // Profil
           ListTile(
             onTap: () {
               Navigator.pushReplacement(
@@ -122,9 +157,11 @@ class _NavDrawerState extends State<NavDrawer> {
                 MaterialPageRoute(builder: (context) => const ProfilePage()),
               );
             },
-            leading: Icon(Icons.account_circle),
-            title: Text('Profil'),
+            leading: const Icon(Icons.account_circle),
+            title: const Text('Profil'),
           ),
+          
+          // Pelanggan
           ListTile(
             onTap: () {
               Navigator.pushReplacement(
@@ -132,9 +169,11 @@ class _NavDrawerState extends State<NavDrawer> {
                 MaterialPageRoute(builder: (context) => const CustomerPage()),
               );
             },
-            leading: Icon(Icons.people),
-            title: Text('Pelanggan'),
+            leading: const Icon(Icons.people),
+            title: const Text('Pelanggan'),
           ),
+          
+          // Pengaturan
           ListTile(
             onTap: () {
               Navigator.pushReplacement(
@@ -142,9 +181,21 @@ class _NavDrawerState extends State<NavDrawer> {
                 MaterialPageRoute(builder: (context) => const SettingPage()),
               );
             },
-            leading: Icon(Icons.settings),
-            title: Text('Pengaturan'),
-          )
+            leading: const Icon(Icons.settings),
+            title: const Text('Pengaturan'),
+          ),
+          
+          // Optional: Debug Screen (remove in production)
+          // ListTile(
+          //   onTap: () {
+          //     Navigator.pushReplacement(
+          //       context,
+          //       MaterialPageRoute(builder: (context) => const DebugScreen()),
+          //     );
+          //   },
+          //   leading: const Icon(Icons.bug_report),
+          //   title: const Text('Debug'),
+          // ),
         ],
       ),
     );
@@ -152,7 +203,11 @@ class _NavDrawerState extends State<NavDrawer> {
 }
 
 class DrawerHeader extends StatelessWidget {
-  const DrawerHeader({super.key, this.name, this.store});
+  const DrawerHeader({
+    super.key, 
+    this.name, 
+    this.store,
+  });
 
   final String? name;
   final String? store;
@@ -160,33 +215,61 @@ class DrawerHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
           CircleAvatar(
             backgroundColor: AppColor.primary,
             child: Text(
-              'RK',
-              style: TextStyle(color: Colors.white),
+              _getInitials(name ?? 'User'),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-          SizedBox(width: 10),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name ?? "-",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text(
-                store ?? "-",
-                style: TextStyle(fontSize: 10),
-              ),
-            ],
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name ?? "-",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  store ?? "-",
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
+  }
+
+  String _getInitials(String name) {
+    if (name.isEmpty) return 'U';
+    
+    final words = name.trim().split(' ');
+    if (words.length >= 2) {
+      return '${words.first[0].toUpperCase()}${words.last[0].toUpperCase()}';
+    } else {
+      return words.first.length >= 2 
+          ? words.first.substring(0, 2).toUpperCase()
+          : words.first[0].toUpperCase();
+    }
   }
 }
