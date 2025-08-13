@@ -4,6 +4,7 @@ import 'package:kasir/providers/product_provider.dart';
 import 'package:kasir/providers/category_provider.dart';
 import 'package:kasir/models/modern_product_model.dart';
 import 'package:kasir/helpers/colors_theme.dart';
+import 'package:kasir/helpers/currency_format.dart';
 import 'package:kasir/components/nav_drawer.dart';
 import 'package:kasir/components/builder_menu.dart';
 import 'package:kasir/screens/product_information/product_information.dart';
@@ -24,7 +25,8 @@ class _ModernProductPageState extends State<ModernProductPage> {
   final ScrollController _scrollController = ScrollController();
   final StoreServices _storeServices = StoreServices();
 
-  String _selectedFilter = 'all'; // all, favorites, low_stock
+  String _selectedFilter = 'all';
+  bool _showFAB = true;
 
   @override
   void initState() {
@@ -59,12 +61,25 @@ class _ModernProductPageState extends State<ModernProductPage> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels ==
-        _scrollController.position.maxScrollExtent) {
-      final provider = Provider.of<ProductProvider>(context, listen: false);
+    final provider = Provider.of<ProductProvider>(context, listen: false);
+    
+    // Handle pagination
+    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
       if (provider.canLoadMore && !provider.isLoadingMore) {
         provider.loadMoreProducts();
       }
+    }
+
+    // Handle FAB visibility
+    const threshold = 100.0;
+    if (_scrollController.offset > threshold && _showFAB) {
+      setState(() {
+        _showFAB = false;
+      });
+    } else if (_scrollController.offset <= threshold && !_showFAB) {
+      setState(() {
+        _showFAB = true;
+      });
     }
   }
 
@@ -126,8 +141,7 @@ class _ModernProductPageState extends State<ModernProductPage> {
           ),
           IconButton(
             onPressed: () {
-              final provider =
-                  Provider.of<ProductProvider>(context, listen: false);
+              final provider = Provider.of<ProductProvider>(context, listen: false);
               provider.refresh();
             },
             icon: const Icon(
@@ -154,8 +168,7 @@ class _ModernProductPageState extends State<ModernProductPage> {
                     onChanged: _onSearch,
                     decoration: const InputDecoration(
                       hintText: 'Cari produk...',
-                      prefixIcon:
-                          Icon(Icons.search_rounded, color: Colors.grey),
+                      prefixIcon: Icon(Icons.search_rounded, color: Colors.grey),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 16,
@@ -174,11 +187,9 @@ class _ModernProductPageState extends State<ModernProductPage> {
                   children: [
                     _buildFilterChip('all', 'Semua', Icons.grid_view_rounded),
                     const SizedBox(width: 8),
-                    _buildFilterChip(
-                        'favorites', 'Favorit', Icons.favorite_rounded),
+                    _buildFilterChip('favorites', 'Favorit', Icons.favorite_rounded),
                     const SizedBox(width: 8),
-                    _buildFilterChip(
-                        'low_stock', 'Stok Rendah', Icons.warning_rounded),
+                    _buildFilterChip('low_stock', 'Stok Rendah', Icons.warning_rounded),
                   ],
                 ),
               ),
@@ -217,8 +228,7 @@ class _ModernProductPageState extends State<ModernProductPage> {
                   child: ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(16),
-                    itemCount: provider.products.length +
-                        (provider.canLoadMore ? 1 : 0),
+                    itemCount: provider.products.length + (provider.canLoadMore ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index == provider.products.length) {
                         return _buildLoadingMoreWidget();
@@ -236,33 +246,38 @@ class _ModernProductPageState extends State<ModernProductPage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => MultiProvider(
-                providers: [
-                  ChangeNotifierProvider(
-                      create: (context) => ProductProvider()),
-                  ChangeNotifierProvider(
-                      create: (context) => CategoryProvider()),
-                ],
-                child: const ModernFormProduct(),
-              ),
-            ),
-          );
+      floatingActionButton: AnimatedSlide(
+        offset: _showFAB ? Offset.zero : const Offset(0, 2),
+        duration: const Duration(milliseconds: 200),
+        child: AnimatedOpacity(
+          opacity: _showFAB ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 200),
+          child: FloatingActionButton.extended(
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MultiProvider(
+                    providers: [
+                      ChangeNotifierProvider(create: (context) => ProductProvider()),
+                      ChangeNotifierProvider(create: (context) => CategoryProvider()),
+                    ],
+                    child: const ModernFormProduct(),
+                  ),
+                ),
+              );
 
-          if (result == true) {
-            final provider =
-                Provider.of<ProductProvider>(context, listen: false);
-            provider.refresh();
-          }
-        },
-        backgroundColor: AppColor.primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Tambah Produk'),
+              if (result == true) {
+                final provider = Provider.of<ProductProvider>(context, listen: false);
+                provider.refresh();
+              }
+            },
+            backgroundColor: AppColor.primary,
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Tambah Produk'),
+          ),
+        ),
       ),
     );
   }
@@ -362,8 +377,7 @@ class _ModernProductPageState extends State<ModernProductPage> {
     );
   }
 
-  Widget _buildStatItem(
-      String title, String value, IconData icon, Color color) {
+  Widget _buildStatItem(String title, String value, IconData icon, Color color) {
     return Column(
       children: [
         Icon(icon, color: color, size: 24),
@@ -523,11 +537,8 @@ class _ModernProductPageState extends State<ModernProductPage> {
                           'Stok: ${product.totalQuantity} ${product.displayUnit}',
                           style: TextStyle(
                             fontSize: 12,
-                            color: product.isLowStock
-                                ? Colors.red
-                                : Colors.grey[600],
-                            fontWeight:
-                                product.isLowStock ? FontWeight.w500 : null,
+                            color: product.isLowStock ? Colors.red : Colors.grey[600],
+                            fontWeight: product.isLowStock ? FontWeight.w500 : null,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -537,7 +548,10 @@ class _ModernProductPageState extends State<ModernProductPage> {
                           color: Colors.grey,
                         ),
                         Text(
-                          'Rp ${product.displayPrice}',
+                          CurrencyFormat.convertToIdr(
+                            double.tryParse(product.displayPrice) ?? 0,
+                            0,
+                          ),
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
@@ -615,9 +629,7 @@ class _ModernProductPageState extends State<ModernProductPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              isStoreError
-                  ? Icons.warning_rounded
-                  : Icons.error_outline_rounded,
+              isStoreError ? Icons.warning_rounded : Icons.error_outline_rounded,
               size: 64,
               color: Colors.grey[400],
             ),
@@ -643,7 +655,6 @@ class _ModernProductPageState extends State<ModernProductPage> {
             ElevatedButton.icon(
               onPressed: () async {
                 if (isStoreError) {
-                  // Re-initialize store and then refresh
                   await _storeServices.initializeStore();
                 }
                 provider.refresh();
@@ -699,10 +710,8 @@ class _ModernProductPageState extends State<ModernProductPage> {
                   MaterialPageRoute(
                     builder: (context) => MultiProvider(
                       providers: [
-                        ChangeNotifierProvider(
-                            create: (context) => ProductProvider()),
-                        ChangeNotifierProvider(
-                            create: (context) => CategoryProvider()),
+                        ChangeNotifierProvider(create: (context) => ProductProvider()),
+                        ChangeNotifierProvider(create: (context) => CategoryProvider()),
                       ],
                       child: const ModernFormProduct(),
                     ),
@@ -710,8 +719,7 @@ class _ModernProductPageState extends State<ModernProductPage> {
                 );
 
                 if (result == true) {
-                  final provider =
-                      Provider.of<ProductProvider>(context, listen: false);
+                  final provider = Provider.of<ProductProvider>(context, listen: false);
                   provider.refresh();
                 }
               },
@@ -728,8 +736,7 @@ class _ModernProductPageState extends State<ModernProductPage> {
     );
   }
 
-  void _showProductOptions(
-      BuildContext context, ProductModel product, ProductProvider provider) {
+  void _showProductOptions(BuildContext context, ProductModel product, ProductProvider provider) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -771,8 +778,7 @@ class _ModernProductPageState extends State<ModernProductPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                ModernProductDetail(productId: product.id),
+                            builder: (context) => ModernProductDetail(productId: product.id),
                           ),
                         );
                       },
@@ -787,10 +793,8 @@ class _ModernProductPageState extends State<ModernProductPage> {
                           MaterialPageRoute(
                             builder: (context) => MultiProvider(
                               providers: [
-                                ChangeNotifierProvider(
-                                    create: (context) => ProductProvider()),
-                                ChangeNotifierProvider(
-                                    create: (context) => CategoryProvider()),
+                                ChangeNotifierProvider(create: (context) => ProductProvider()),
+                                ChangeNotifierProvider(create: (context) => CategoryProvider()),
                               ],
                               child: ModernFormProduct(product: product),
                             ),
@@ -802,9 +806,7 @@ class _ModernProductPageState extends State<ModernProductPage> {
                       icon: product.isFavorite
                           ? Icons.favorite_rounded
                           : Icons.favorite_border_rounded,
-                      title: product.isFavorite
-                          ? 'Hapus dari Favorit'
-                          : 'Tambah ke Favorit',
+                      title: product.isFavorite ? 'Hapus dari Favorit' : 'Tambah ke Favorit',
                       color: Colors.orange,
                       onTap: () {
                         Navigator.pop(context);
@@ -849,8 +851,7 @@ class _ModernProductPageState extends State<ModernProductPage> {
     );
   }
 
-  void _showDeleteConfirmation(
-      BuildContext context, ProductModel product, ProductProvider provider) {
+  void _showDeleteConfirmation(BuildContext context, ProductModel product, ProductProvider provider) {
     showDialog(
       context: context,
       builder: (context) {
@@ -859,8 +860,7 @@ class _ModernProductPageState extends State<ModernProductPage> {
             borderRadius: BorderRadius.circular(16),
           ),
           title: const Text('Hapus Produk'),
-          content: Text(
-              'Apakah Anda yakin ingin menghapus produk "${product.name}"?'),
+          content: Text('Apakah Anda yakin ingin menghapus produk "${product.name}"?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -874,8 +874,7 @@ class _ModernProductPageState extends State<ModernProductPage> {
                 if (success) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content:
-                          Text('Produk "${product.name}" berhasil dihapus'),
+                      content: Text('Produk "${product.name}" berhasil dihapus'),
                       backgroundColor: Colors.green,
                     ),
                   );
