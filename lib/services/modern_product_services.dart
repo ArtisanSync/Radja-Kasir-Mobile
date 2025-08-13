@@ -108,8 +108,7 @@ class ModernProductServices {
       debugPrint('DioException in getProductById: ${e.message}');
       return {
         'success': false,
-        'message':
-            e.response?.data['message'] ?? 'Failed to fetch product details',
+        'message': e.response?.data['message'] ?? 'Failed to fetch product details',
         'data': null
       };
     } catch (e) {
@@ -154,8 +153,7 @@ class ModernProductServices {
         'storeId': store['id'],
         if (code != null && code.isNotEmpty) 'code': code,
         if (brand != null && brand.isNotEmpty) 'brand': brand,
-        if (categoryId != null && categoryId.isNotEmpty)
-          'categoryId': categoryId,
+        if (categoryId != null && categoryId.isNotEmpty) 'categoryId': categoryId,
         // Variant data for the default variant
         'unitId': unitId,
         'quantity': quantity,
@@ -176,22 +174,17 @@ class ModernProductServices {
             String contentType = 'image/png';
 
             if (image.startsWith('data:image/')) {
-              // Handle data URL format (data:image/png;base64,...)
-              final mimeMatch =
-                  RegExp(r'data:image/(\w+);base64,').firstMatch(image);
+              final mimeMatch = RegExp(r'data:image/(\w+);base64,').firstMatch(image);
               if (mimeMatch != null) {
                 final extension = mimeMatch.group(1)!.toLowerCase();
                 filename = 'product_image.$extension';
                 contentType = 'image/$extension';
-                // Remove data URL prefix and decode base64
                 final base64String = image.split(',')[1];
                 bytes = base64Decode(base64String);
               } else {
-                // Fallback: treat as plain base64
                 bytes = base64Decode(image);
               }
             } else {
-              // Treat as plain base64 string
               bytes = base64Decode(image);
             }
 
@@ -205,11 +198,6 @@ class ModernProductServices {
             ));
           } catch (e) {
             debugPrint('Error processing image for web: $e');
-            // Fallback to original method
-            formData.files.add(MapEntry(
-              'image',
-              MultipartFile.fromString(image, filename: 'product_image.png'),
-            ));
           }
         } else {
           // For mobile, image should be file path
@@ -277,45 +265,55 @@ class ModernProductServices {
     String? image,
     bool? active,
     bool? isFavorite,
+    String? unitId,
+    int? quantity,
+    String? capitalPrice,
+    String? price,
+    int? tax,
+    String? discountRp,
+    int? discountPercent,
   }) async {
     try {
       Map<String, dynamic> updateData = {};
 
+      // Product level updates
       if (name != null) updateData['name'] = name;
       if (code != null) updateData['code'] = code;
       if (brand != null) updateData['brand'] = brand;
       if (categoryId != null) updateData['categoryId'] = categoryId;
-      if (active != null) updateData['active'] = active;
+      if (active != null) updateData['isActive'] = active;
       if (isFavorite != null) updateData['isFavorite'] = isFavorite;
 
-      // Handle image update separately if needed
+      // Variant level updates
+      if (unitId != null) updateData['unitId'] = unitId;
+      if (quantity != null) updateData['quantity'] = quantity;
+      if (capitalPrice != null) updateData['capitalPrice'] = capitalPrice;
+      if (price != null) updateData['price'] = price;
+      if (tax != null) updateData['tax'] = tax;
+      if (discountRp != null) updateData['discountRp'] = discountRp;
+      if (discountPercent != null) updateData['discountPercent'] = discountPercent;
+
       FormData? formData;
       if (image != null) {
         formData = FormData.fromMap(updateData);
         if (kIsWeb) {
-          // For web, convert base64 to bytes and set proper MIME type
           try {
             Uint8List bytes;
             String filename = 'product_image.png';
             String contentType = 'image/png';
 
             if (image.startsWith('data:image/')) {
-              // Handle data URL format (data:image/png;base64,...)
-              final mimeMatch =
-                  RegExp(r'data:image/(\w+);base64,').firstMatch(image);
+              final mimeMatch = RegExp(r'data:image/(\w+);base64,').firstMatch(image);
               if (mimeMatch != null) {
                 final extension = mimeMatch.group(1)!.toLowerCase();
                 filename = 'product_image.$extension';
                 contentType = 'image/$extension';
-                // Remove data URL prefix and decode base64
                 final base64String = image.split(',')[1];
                 bytes = base64Decode(base64String);
               } else {
-                // Fallback: treat as plain base64
                 bytes = base64Decode(image);
               }
             } else {
-              // Treat as plain base64 string
               bytes = base64Decode(image);
             }
 
@@ -329,14 +327,8 @@ class ModernProductServices {
             ));
           } catch (e) {
             debugPrint('Error processing image for web: $e');
-            // Fallback to original method
-            formData.files.add(MapEntry(
-              'image',
-              MultipartFile.fromString(image, filename: 'product_image.png'),
-            ));
           }
         } else {
-          // For mobile, image should be file path
           final extension = path.extension(image).toLowerCase();
           String contentType = 'image/png';
 
@@ -376,6 +368,7 @@ class ModernProductServices {
       }
     } on DioException catch (e) {
       debugPrint('DioException in updateProduct: ${e.message}');
+      debugPrint('Response data: ${e.response?.data}');
       return {
         'success': false,
         'message': e.response?.data['message'] ?? 'Failed to update product',
@@ -383,6 +376,41 @@ class ModernProductServices {
       };
     } catch (e) {
       debugPrint('Error in updateProduct: $e');
+      return {
+        'success': false,
+        'message': 'Unexpected error occurred',
+        'data': null
+      };
+    }
+  }
+
+  /// Toggle favorite
+  Future<Map<String, dynamic>> toggleFavorite(String productId) async {
+    try {
+      final response = await _dio.patch("$_baseUrl/products/$productId/favorite");
+
+      if (response.data['success'] == true) {
+        return {
+          'success': true,
+          'message': response.data['message'],
+          'data': response.data['data']
+        };
+      } else {
+        return {
+          'success': false,
+          'message': response.data['message'] ?? 'Failed to toggle favorite',
+          'data': null
+        };
+      }
+    } on DioException catch (e) {
+      debugPrint('DioException in toggleFavorite: ${e.message}');
+      return {
+        'success': false,
+        'message': e.response?.data['message'] ?? 'Failed to toggle favorite',
+        'data': null
+      };
+    } catch (e) {
+      debugPrint('Error in toggleFavorite: $e');
       return {
         'success': false,
         'message': 'Unexpected error occurred',
@@ -459,119 +487,5 @@ class ModernProductServices {
         'data': []
       };
     }
-  }
-
-  /// Update product variant (stock, price, etc.)
-  Future<Map<String, dynamic>> updateProductVariant(
-    String productId, {
-    String? unitId,
-    int? quantity,
-    String? capitalPrice,
-    String? price,
-    int? tax,
-    String? discountRp,
-    int? discountPercent,
-  }) async {
-    try {
-      Map<String, dynamic> updateData = {};
-
-      if (unitId != null) updateData['unitId'] = unitId;
-      if (quantity != null) updateData['quantity'] = quantity;
-      if (capitalPrice != null) updateData['capitalPrice'] = capitalPrice;
-      if (price != null) updateData['price'] = price;
-      if (tax != null) updateData['tax'] = tax;
-      if (discountRp != null) updateData['discountRp'] = discountRp;
-      if (discountPercent != null)
-        updateData['discountPercent'] = discountPercent;
-
-      final response = await _dio.put(
-        "$_baseUrl/products/$productId",
-        data: updateData,
-      );
-
-      if (response.data['success'] == true) {
-        return {
-          'success': true,
-          'message': response.data['message'],
-          'data': response.data['data']
-        };
-      } else {
-        return {
-          'success': false,
-          'message':
-              response.data['message'] ?? 'Failed to update product variant',
-          'data': null
-        };
-      }
-    } on DioException catch (e) {
-      debugPrint('DioException in updateProductVariant: ${e.message}');
-      return {
-        'success': false,
-        'message':
-            e.response?.data['message'] ?? 'Failed to update product variant',
-        'data': null
-      };
-    } catch (e) {
-      debugPrint('Error in updateProductVariant: $e');
-      return {
-        'success': false,
-        'message': 'Unexpected error occurred',
-        'data': null
-      };
-    }
-  }
-
-  /// Upload product image
-  Future<Map<String, dynamic>> uploadProductImage(
-      String productId, String imagePath) async {
-    try {
-      FormData formData = FormData.fromMap({
-        'image': await MultipartFile.fromFile(imagePath),
-      });
-
-      final response = await _dio.put(
-        "$_baseUrl/products/$productId",
-        data: formData,
-      );
-
-      if (response.data['success'] == true) {
-        return {
-          'success': true,
-          'message': response.data['message'],
-          'data': response.data['data']
-        };
-      } else {
-        return {
-          'success': false,
-          'message': response.data['message'] ?? 'Failed to upload image',
-          'data': null
-        };
-      }
-    } on DioException catch (e) {
-      debugPrint('DioException in uploadProductImage: ${e.message}');
-      return {
-        'success': false,
-        'message': e.response?.data['message'] ?? 'Failed to upload image',
-        'data': null
-      };
-    } catch (e) {
-      debugPrint('Error in uploadProductImage: $e');
-      return {
-        'success': false,
-        'message': 'Unexpected error occurred',
-        'data': null
-      };
-    }
-  }
-
-  /// Get low stock products
-  Future<Map<String, dynamic>> getLowStockProducts({int threshold = 10}) async {
-    return await getProducts(lowStock: true, stockThreshold: threshold);
-  }
-
-  /// Toggle favorite status
-  Future<Map<String, dynamic>> toggleFavorite(
-      String productId, bool isFavorite) async {
-    return await updateProduct(productId, isFavorite: isFavorite);
   }
 }

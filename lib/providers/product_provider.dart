@@ -34,13 +34,10 @@ class ProductProvider extends ChangeNotifier {
   // Helper getters
   bool get hasError => _error != null;
   bool get hasProducts => _products.isNotEmpty;
-  bool get canLoadMore =>
-      _pagination != null && _currentPage < _pagination!.totalPages;
+  bool get canLoadMore => _pagination != null && _currentPage < _pagination!.totalPages;
   int get totalProducts => _pagination?.total ?? 0;
-  List<ProductModel> get favoriteProducts =>
-      _products.where((p) => p.isFavorite).toList();
-  List<ProductModel> get lowStockProducts =>
-      _products.where((p) => p.isLowStock).toList();
+  List<ProductModel> get favoriteProducts => _products.where((p) => p.isFavorite).toList();
+  List<ProductModel> get lowStockProducts => _products.where((p) => p.isLowStock).toList();
 
   // Load products with optional filters
   Future<void> loadProducts({
@@ -80,8 +77,7 @@ class ProductProvider extends ChangeNotifier {
       if (response['success'] == true && response['data'] != null) {
         final data = response['data'];
         final productList = data['products'] as List;
-        final newProducts =
-            productList.map((json) => ProductModel.fromJson(json)).toList();
+        final newProducts = productList.map((json) => ProductModel.fromJson(json)).toList();
 
         if (refresh || _currentPage == 1) {
           _products = newProducts;
@@ -195,6 +191,13 @@ class ProductProvider extends ChangeNotifier {
     String? image,
     bool? active,
     bool? isFavorite,
+    String? unitId,
+    int? quantity,
+    String? capitalPrice,
+    String? price,
+    int? tax,
+    String? discountRp,
+    int? discountPercent,
   }) async {
     _error = null;
     notifyListeners();
@@ -209,6 +212,13 @@ class ProductProvider extends ChangeNotifier {
         image: image,
         active: active,
         isFavorite: isFavorite,
+        unitId: unitId,
+        quantity: quantity,
+        capitalPrice: capitalPrice,
+        price: price,
+        tax: tax,
+        discountRp: discountRp,
+        discountPercent: discountPercent,
       );
 
       if (response['success'] == true) {
@@ -266,12 +276,30 @@ class ProductProvider extends ChangeNotifier {
 
   // Toggle favorite status
   Future<bool> toggleFavorite(String id) async {
-    final product = _products.firstWhere(
-      (p) => p.id == id,
-      orElse: () => throw Exception('Product not found'),
-    );
+    _error = null;
+    
+    try {
+      final response = await _productServices.toggleFavorite(id);
 
-    return await updateProduct(id, isFavorite: !product.isFavorite);
+      if (response['success'] == true) {
+        // Update local product
+        final index = _products.indexWhere((p) => p.id == id);
+        if (index != -1 && response['data'] != null) {
+          _products[index] = ProductModel.fromJson(response['data']);
+          notifyListeners();
+        }
+        return true;
+      } else {
+        _error = response['message'] ?? 'Failed to toggle favorite';
+        return false;
+      }
+    } catch (e) {
+      _error = 'Error toggling favorite: $e';
+      debugPrint('Error in toggleFavorite: $e');
+      return false;
+    } finally {
+      notifyListeners();
+    }
   }
 
   // Load units

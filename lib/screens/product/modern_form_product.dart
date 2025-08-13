@@ -2,12 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:kasir/providers/product_provider.dart';
 import 'package:kasir/providers/category_provider.dart';
 import 'package:kasir/models/modern_product_model.dart';
 import 'package:kasir/helpers/colors_theme.dart';
+import 'package:kasir/helpers/currency_format.dart';
 import 'package:kasir/components/button_primary.dart';
 import 'package:kasir/components/button_light.dart';
 import 'package:kasir/services/store_services.dart';
@@ -58,23 +60,35 @@ class _ModernFormProductState extends State<ModernFormProduct> {
 
   void _initializeControllers() {
     final product = widget.product;
-    final variant =
-        product?.variants.isNotEmpty == true ? product!.variants.first : null;
+    final variant = product?.variants.isNotEmpty == true ? product!.variants.first : null;
 
     _nameController = TextEditingController(text: product?.name ?? '');
     _codeController = TextEditingController(text: product?.code ?? '');
     _brandController = TextEditingController(text: product?.brand ?? '');
-    _capitalPriceController =
-        TextEditingController(text: variant?.capitalPrice ?? '0');
-    _priceController = TextEditingController(text: variant?.price ?? '0');
-    _discountRpController =
-        TextEditingController(text: variant?.discountRp ?? '0');
-    _discountPercentController =
-        TextEditingController(text: variant?.discountPercent.toString() ?? '0');
-    _quantityController =
-        TextEditingController(text: variant?.quantity.toString() ?? '1');
-    _taxController =
-        TextEditingController(text: variant?.tax.toString() ?? '0');
+    _capitalPriceController = TextEditingController(
+      text: variant?.capitalPrice != null 
+          ? CurrencyFormat.formatCurrencyInput(variant!.capitalPrice) 
+          : ''
+    );
+    _priceController = TextEditingController(
+      text: variant?.price != null 
+          ? CurrencyFormat.formatCurrencyInput(variant!.price) 
+          : ''
+    );
+    _discountRpController = TextEditingController(
+      text: variant?.discountRp != null 
+          ? CurrencyFormat.formatCurrencyInput(variant!.discountRp) 
+          : ''
+    );
+    _discountPercentController = TextEditingController(
+      text: variant?.discountPercent.toString() ?? '0'
+    );
+    _quantityController = TextEditingController(
+      text: variant?.quantity.toString() ?? '1'
+    );
+    _taxController = TextEditingController(
+      text: variant?.tax.toString() ?? '0'
+    );
 
     _selectedCategoryId = product?.categoryId;
     _selectedUnitId = variant?.unitId;
@@ -90,10 +104,8 @@ class _ModernFormProductState extends State<ModernFormProduct> {
     // Load data
     if (mounted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final productProvider =
-            Provider.of<ProductProvider>(context, listen: false);
-        final categoryProvider =
-            Provider.of<CategoryProvider>(context, listen: false);
+        final productProvider = Provider.of<ProductProvider>(context, listen: false);
+        final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
 
         productProvider.loadUnits();
         categoryProvider.loadCategories();
@@ -159,14 +171,12 @@ class _ModernFormProductState extends State<ModernFormProduct> {
     });
 
     try {
-      final productProvider =
-          Provider.of<ProductProvider>(context, listen: false);
+      final productProvider = Provider.of<ProductProvider>(context, listen: false);
 
       // Prepare image data
       String? imageData;
       if (_imageFile != null) {
         if (kIsWeb) {
-          // For web, convert to base64 data URL
           try {
             final bytes = await _imageFile!.readAsBytes();
             final extension = _imageFile!.name.split('.').last.toLowerCase();
@@ -194,10 +204,14 @@ class _ModernFormProductState extends State<ModernFormProduct> {
             return;
           }
         } else {
-          // For mobile, use file path
           imageData = _imageFile!.path;
         }
       }
+
+      // Parse currency values
+      final capitalPrice = CurrencyFormat.parseCurrency(_capitalPriceController.text).toString();
+      final price = CurrencyFormat.parseCurrency(_priceController.text).toString();
+      final discountRp = CurrencyFormat.parseCurrency(_discountRpController.text).toString();
 
       bool success = false;
 
@@ -206,36 +220,32 @@ class _ModernFormProductState extends State<ModernFormProduct> {
         success = await productProvider.updateProduct(
           widget.product!.id,
           name: _nameController.text.trim(),
-          code: _codeController.text.trim().isEmpty
-              ? null
-              : _codeController.text.trim(),
-          brand: _brandController.text.trim().isEmpty
-              ? null
-              : _brandController.text.trim(),
+          code: _codeController.text.trim().isEmpty ? null : _codeController.text.trim(),
+          brand: _brandController.text.trim().isEmpty ? null : _brandController.text.trim(),
           categoryId: _selectedCategoryId,
           image: imageData,
+          unitId: _selectedUnitId,
+          quantity: int.parse(_quantityController.text),
+          capitalPrice: capitalPrice,
+          price: price,
+          tax: int.tryParse(_taxController.text) ?? 0,
+          discountRp: discountRp,
+          discountPercent: int.tryParse(_discountPercentController.text) ?? 0,
         );
-
-        // TODO: Update variant data separately if needed
-        // The current API might not support variant updates directly
       } else {
         // Create new product
         success = await productProvider.createProduct(
           name: _nameController.text.trim(),
-          code: _codeController.text.trim().isEmpty
-              ? null
-              : _codeController.text.trim(),
-          brand: _brandController.text.trim().isEmpty
-              ? null
-              : _brandController.text.trim(),
+          code: _codeController.text.trim().isEmpty ? null : _codeController.text.trim(),
+          brand: _brandController.text.trim().isEmpty ? null : _brandController.text.trim(),
           categoryId: _selectedCategoryId,
           image: imageData,
           unitId: _selectedUnitId!,
           quantity: int.parse(_quantityController.text),
-          capitalPrice: _capitalPriceController.text,
-          price: _priceController.text,
+          capitalPrice: capitalPrice,
+          price: price,
           tax: int.tryParse(_taxController.text) ?? 0,
-          discountRp: _discountRpController.text,
+          discountRp: discountRp,
           discountPercent: int.tryParse(_discountPercentController.text) ?? 0,
         );
       }
@@ -244,8 +254,7 @@ class _ModernFormProductState extends State<ModernFormProduct> {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                'Produk berhasil ${isEditing ? 'diupdate' : 'ditambahkan'}'),
+            content: Text('Produk berhasil ${isEditing ? 'diupdate' : 'ditambahkan'}'),
             backgroundColor: Colors.green,
           ),
         );
@@ -337,22 +346,19 @@ class _ModernFormProductState extends State<ModernFormProduct> {
               _buildSectionCard(
                 title: 'Pengaturan Harga',
                 children: [
-                  _buildTextField(
+                  _buildCurrencyTextField(
                     controller: _capitalPriceController,
                     label: 'Harga Modal',
                     hint: '0',
-                    keyboardType: TextInputType.number,
                     prefixIcon: Icons.attach_money_rounded,
-                    prefixText: 'Rp ',
                   ),
                   const SizedBox(height: 16),
-                  _buildTextField(
+                  _buildCurrencyTextField(
                     controller: _priceController,
                     label: 'Harga Jual',
                     hint: '0',
-                    keyboardType: TextInputType.number,
                     prefixIcon: Icons.sell_rounded,
-                    prefixText: 'Rp ',
+                    required: true,
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
@@ -362,15 +368,17 @@ class _ModernFormProductState extends State<ModernFormProduct> {
                     keyboardType: TextInputType.number,
                     prefixIcon: Icons.percent_rounded,
                     suffixText: '%',
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(3),
+                    ],
                   ),
                   const SizedBox(height: 16),
-                  _buildTextField(
+                  _buildCurrencyTextField(
                     controller: _discountRpController,
                     label: 'Diskon (Rp)',
                     hint: '0',
-                    keyboardType: TextInputType.number,
                     prefixIcon: Icons.discount_rounded,
-                    prefixText: 'Rp ',
                   ),
                 ],
               ),
@@ -387,6 +395,7 @@ class _ModernFormProductState extends State<ModernFormProduct> {
                     keyboardType: TextInputType.number,
                     required: true,
                     prefixIcon: Icons.inventory_rounded,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
                   const SizedBox(height: 16),
                   _buildUnitDropdown(),
@@ -592,8 +601,7 @@ class _ModernFormProductState extends State<ModernFormProduct> {
     );
   }
 
-  Widget _buildSectionCard(
-      {required String title, required List<Widget> children}) {
+  Widget _buildSectionCard({required String title, required List<Widget> children}) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -638,16 +646,16 @@ class _ModernFormProductState extends State<ModernFormProduct> {
     IconData? prefixIcon,
     String? prefixText,
     String? suffixText,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, color: AppColor.primary)
-            : null,
+        prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: AppColor.primary) : null,
         prefixText: prefixText,
         suffixText: suffixText,
         border: OutlineInputBorder(
@@ -680,6 +688,59 @@ class _ModernFormProductState extends State<ModernFormProduct> {
     );
   }
 
+  Widget _buildCurrencyTextField({
+    required TextEditingController controller,
+    required String label,
+    String? hint,
+    bool required = false,
+    IconData? prefixIcon,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: TextInputType.number,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        CurrencyInputFormatter(),
+      ],
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: AppColor.primary) : null,
+        prefixText: 'Rp ',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColor.primary),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.red),
+        ),
+        filled: true,
+        fillColor: Colors.grey[50],
+      ),
+      validator: required
+          ? (value) {
+              if (value == null || value.trim().isEmpty) {
+                return '$label tidak boleh kosong';
+              }
+              final numValue = CurrencyFormat.parseCurrency(value);
+              if (numValue <= 0) {
+                return '$label harus lebih dari 0';
+              }
+              return null;
+            }
+          : null,
+    );
+  }
+
   Widget _buildCategoryDropdown() {
     return Consumer<CategoryProvider>(
       builder: (context, provider, child) {
@@ -689,12 +750,11 @@ class _ModernFormProductState extends State<ModernFormProduct> {
 
         return DropdownButtonFormField<String>(
           value: _selectedCategoryId,
-          isExpanded: true, // Fix overflow issue
+          isExpanded: true,
           decoration: InputDecoration(
             labelText: 'Kategori',
             hintText: 'Pilih kategori (opsional)',
-            prefixIcon:
-                const Icon(Icons.category_rounded, color: AppColor.primary),
+            prefixIcon: const Icon(Icons.category_rounded, color: AppColor.primary),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: Colors.grey[300]!),
@@ -709,8 +769,7 @@ class _ModernFormProductState extends State<ModernFormProduct> {
             ),
             filled: true,
             fillColor: Colors.grey[50],
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           ),
           items: [
             const DropdownMenuItem<String>(
@@ -754,7 +813,7 @@ class _ModernFormProductState extends State<ModernFormProduct> {
 
         return DropdownButtonFormField<String>(
           value: _selectedUnitId,
-          isExpanded: true, // Fix overflow issue
+          isExpanded: true,
           decoration: InputDecoration(
             labelText: 'Satuan',
             hintText: provider.units.isEmpty && provider.isLoading
@@ -784,8 +843,7 @@ class _ModernFormProductState extends State<ModernFormProduct> {
             ),
             filled: true,
             fillColor: Colors.grey[50],
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           ),
           items: provider.units.isEmpty
               ? null
