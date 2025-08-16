@@ -1,11 +1,12 @@
 // ignore_for_file: use_build_context_synchronously, prefer_const_constructors
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:kasir/core/use_store.dart';
 import 'package:kasir/helpers/colors_theme.dart';
 import 'package:kasir/screens/home_page.dart';
 import 'package:kasir/screens/register_page.dart';
-import 'package:kasir/screens/reset_password_page.dart'; // Import baru
+import 'package:kasir/screens/reset_password_page.dart';
 import 'package:kasir/services/auth_services.dart';
 import 'package:loader_overlay/loader_overlay.dart';
 
@@ -21,6 +22,7 @@ class _LoginPageState extends State<LoginPage> {
   final storage = Store;
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
+  bool _obscurePassword = true; // Added for password visibility toggle
 
   Future submit() async {
     final resp = await api.login({
@@ -128,12 +130,25 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 child: TextField(
                   controller: _password,
-                  obscureText: true,
+                  obscureText: _obscurePassword, // Use the state variable
                   decoration: InputDecoration(
                     labelText: "Password",
                     filled: true,
                     fillColor: Colors.white,
                     labelStyle: const TextStyle(color: AppColor.secondary),
+                    suffixIcon: IconButton( // Added suffix icon for toggle
+                      icon: Icon(
+                        _obscurePassword 
+                          ? CupertinoIcons.eye_slash 
+                          : CupertinoIcons.eye,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: const BorderSide(color: AppColor.light),

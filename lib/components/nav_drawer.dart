@@ -2,17 +2,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:kasir/core/use_store.dart';
-import 'package:kasir/helpers/colors_theme.dart';
 import 'package:kasir/screens/customer/customer.dart';
 import 'package:kasir/screens/home_page.dart';
 import 'package:kasir/screens/product/product.dart';
 import 'package:kasir/screens/profile/profile_page.dart';
 import 'package:kasir/screens/setting/setting_page.dart';
 import 'package:kasir/screens/transaction_dept/dept_page.dart';
-import 'package:kasir/screens/report/report_page.dart'; // Import halaman laporan native
-import 'package:kasir/screens/debug_screen.dart';
-import 'package:kasir/services/service_utils.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:kasir/screens/report/report_page.dart';
+import 'package:gap/gap.dart';
 
 class NavDrawer extends StatefulWidget {
   const NavDrawer({super.key});
@@ -54,200 +51,71 @@ class _NavDrawerState extends State<NavDrawer> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Drawer(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.white,
-      child: ListView(
+      backgroundColor: theme.colorScheme.surface,
+      child: Column(
         children: [
-          const SizedBox(height: 20),
-          DrawerHeader(
-            name: _userName,
-            store: _storeName,
-          ),
-          const SizedBox(height: 20),
-          
-          // Transaksi
-          ListTile(
-            leading: const Icon(Icons.home),
-            title: const Text('Transaksi'),
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const MyHomePage()),
-              );
-            },
-          ),
-          
-          // Produk dan Stok
-          ListTile(
-            leading: const Icon(Icons.inventory_2),
-            title: const Text('Produk dan Stok'),
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const ProductPage()),
-              );
-            },
-          ),
-          
-          // Kasbon
-          ListTile(
-            leading: const Icon(Icons.monetization_on_rounded),
-            title: const Text('Kasbon'),
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const DeptPage()),
-              );
-            },
-          ),
-          
-          // Laporan - Updated to use native page
-          ListTile(
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const ReportPage()),
-              );
-            },
-            leading: const Icon(Icons.equalizer),
-            title: const Text('Laporan'),
-          ),
-          
-          // Alternative: Keep web version with better error handling
-          // ListTile(
-          //   onTap: () async {
-          //     try {
-          //       final store = await Store.getStore();
-          //       
-          //       if (store?['id'] == null) {
-          //         ScaffoldMessenger.of(context).showSnackBar(
-          //           const SnackBar(
-          //             content: Text('Store information not found. Please login again.'),
-          //             backgroundColor: Colors.red,
-          //           ),
-          //         );
-          //         return;
-          //       }
-          //       
-          //       final baseUrl = ServiceUtils().webUrl;
-          //       final url = Uri.parse("$baseUrl/report?store=${store['id']}");
-          //       
-          //       if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-          //         throw Exception('Could not launch $url');
-          //       }
-          //     } catch (e) {
-          //       ScaffoldMessenger.of(context).showSnackBar(
-          //         SnackBar(
-          //           content: Text('Failed to open report: $e'),
-          //           backgroundColor: Colors.red,
-          //         ),
-          //       );
-          //     }
-          //   },
-          //   leading: const Icon(Icons.web),
-          //   title: const Text('Laporan Web'),
-          // ),
-          
-          // Profil
-          ListTile(
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const ProfilePage()),
-              );
-            },
-            leading: const Icon(Icons.account_circle),
-            title: const Text('Profil'),
-          ),
-          
-          // Pelanggan
-          ListTile(
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const CustomerPage()),
-              );
-            },
-            leading: const Icon(Icons.people),
-            title: const Text('Pelanggan'),
-          ),
-          
-          // Pengaturan
-          ListTile(
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingPage()),
-              );
-            },
-            leading: const Icon(Icons.settings),
-            title: const Text('Pengaturan'),
-          ),
-          
-          // Optional: Debug Screen (remove in production)
-          // ListTile(
-          //   onTap: () {
-          //     Navigator.pushReplacement(
-          //       context,
-          //       MaterialPageRoute(builder: (context) => const DebugScreen()),
-          //     );
-          //   },
-          //   leading: const Icon(Icons.bug_report),
-          //   title: const Text('Debug'),
-          // ),
-        ],
-      ),
-    );
-  }
-}
-
-class DrawerHeader extends StatelessWidget {
-  const DrawerHeader({
-    super.key, 
-    this.name, 
-    this.store,
-  });
-
-  final String? name;
-  final String? store;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: AppColor.primary,
-            child: Text(
-              _getInitials(name ?? 'User'),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+          // Modern Header
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  theme.colorScheme.primary,
+                  theme.colorScheme.primary.withOpacity(0.8),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
             ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      _getInitials(_userName),
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
+                  ),
+                ),
+                const Gap(16),
                 Text(
-                  name ?? "-",
+                  _userName,
                   style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                const Gap(4),
                 Text(
-                  store ?? "-",
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
+                  _storeName,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 14,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -255,13 +123,142 @@ class DrawerHeader extends StatelessWidget {
               ],
             ),
           ),
+
+          // Menu Items
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              children: [
+                _buildMenuItem(
+                  context,
+                  icon: Icons.home_rounded,
+                  title: 'Transaksi',
+                  onTap: () => _navigateToPage(context, const MyHomePage()),
+                ),
+                _buildMenuItem(
+                  context,
+                  icon: Icons.inventory_2_rounded,
+                  title: 'Produk dan Stok',
+                  onTap: () => _navigateToPage(context, const ProductPage()),
+                ),
+                _buildMenuItem(
+                  context,
+                  icon: Icons.monetization_on_rounded,
+                  title: 'Kasbon',
+                  onTap: () => _navigateToPage(context, const DeptPage()),
+                ),
+                _buildMenuItem(
+                  context,
+                  icon: Icons.bar_chart_rounded,
+                  title: 'Laporan',
+                  onTap: () => _navigateToPage(context, const ReportPage()),
+                ),
+                _buildMenuItem(
+                  context,
+                  icon: Icons.people_rounded,
+                  title: 'Pelanggan',
+                  onTap: () => _navigateToPage(context, const CustomerPage()),
+                ),
+                _buildMenuItem(
+                  context,
+                  icon: Icons.person_rounded,
+                  title: 'Profil',
+                  onTap: () => _navigateToPage(context, const ProfilePage()),
+                ),
+                
+                const Divider(height: 32),
+                
+                _buildMenuItem(
+                  context,
+                  icon: Icons.settings_rounded,
+                  title: 'Pengaturan',
+                  onTap: () => _navigateToPage(context, const SettingPage()),
+                ),
+              ],
+            ),
+          ),
+
+          // App Version
+          Container(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              'Radja Kasir v1.0.0',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
         ],
       ),
     );
   }
 
+  Widget _buildMenuItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: theme.colorScheme.primary,
+                    size: 22,
+                  ),
+                ),
+                const Gap(16),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: theme.colorScheme.onSurfaceVariant,
+                  size: 16,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _navigateToPage(BuildContext context, Widget page) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => page),
+    );
+  }
+
   String _getInitials(String name) {
-    if (name.isEmpty) return 'U';
+    if (name.isEmpty || name == 'Loading...' || name == 'User') return 'U';
     
     final words = name.trim().split(' ');
     if (words.length >= 2) {

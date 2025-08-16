@@ -1,6 +1,8 @@
 // ignore_for_file: use_build_context_synchronously, prefer_const_constructors
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir/components/builder_menu.dart';
 import 'package:kasir/components/nav_drawer.dart';
 import 'package:kasir/core/use_store.dart';
@@ -9,15 +11,16 @@ import 'package:kasir/screens/login_page.dart';
 import 'package:kasir/screens/setting/setting_print.dart';
 import 'package:kasir/screens/setting_member/member_page.dart';
 import 'package:kasir/screens/setting_store/store_setting.dart';
+import 'package:kasir/providers/cart_providers.dart';
 
-class SettingPage extends StatefulWidget {
+class SettingPage extends ConsumerStatefulWidget {
   const SettingPage({super.key});
 
   @override
-  State<SettingPage> createState() => _SettingPageState();
+  ConsumerState<SettingPage> createState() => _SettingPageState();
 }
 
-class _SettingPageState extends State<SettingPage> {
+class _SettingPageState extends ConsumerState<SettingPage> {
   bool isMember = false;
 
   Future<void> getUserStore() async {
@@ -35,6 +38,8 @@ class _SettingPageState extends State<SettingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cartCount = ref.watch(cartItemCountProvider); // Watch cart count
+
     return Scaffold(
       drawer: NavDrawer(),
       appBar: AppBar(
@@ -91,7 +96,7 @@ class _SettingPageState extends State<SettingPage> {
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 30, vertical: 30),
                     color: Colors.white,
-                    child: const Row(
+                    child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
@@ -99,13 +104,44 @@ class _SettingPageState extends State<SettingPage> {
                             style: TextStyle(fontSize: 16),
                           ),
                           Icon(
-                            Icons.supervised_user_circle_outlined,
+                            CupertinoIcons.person_3, // Changed to Cupertino group icon
                             color: AppColor.textPrimary,
                           )
                         ]),
                   ),
                 )
               : SizedBox(),
+          const SizedBox(height: 3),
+          // Cart Menu Item - Dynamic icon based on cart count
+          InkWell(
+            onTap: () {
+              // Placeholder untuk Cart Page
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Cart page coming soon'),
+                  backgroundColor: Colors.blue,
+                ),
+              );
+            },
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 30),
+              color: Colors.white,
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Keranjang',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    Icon(
+                      cartCount > 0 
+                        ? CupertinoIcons.cart_badge_plus // Show badge plus if cart has items
+                        : CupertinoIcons.cart, // Show regular cart if empty
+                      color: AppColor.textPrimary,
+                    )
+                  ]),
+            ),
+          ),
           const SizedBox(height: 3),
           !isMember
               ? InkWell(
