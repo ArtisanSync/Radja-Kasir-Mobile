@@ -44,7 +44,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
         length: 2,
         initialIndex: 0,
         child: Scaffold(
-          drawer: const NavDrawer(),
+          drawer: const NavDrawer(currentRoute: 'home'),
           appBar: AppBar(
             backgroundColor: Colors.white,
             title: const Text(
@@ -68,21 +68,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
               ButtonCartWithBadge(
                 cartCount: cartCount,
               ),
-              IconButton(
-                onPressed: () {
-                  // Placeholder untuk History Page
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('History page coming soon'),
-                      backgroundColor: Colors.blue,
-                    ),
-                  );
-                },
-                icon: const Icon(
-                  Icons.receipt_long_outlined,
-                  color: AppColor.textPrimary,
-                ),
-              ),
+              // Hapus IconButton untuk history karena sudah ada di drawer
               const SizedBox(width: 10),
             ],
             centerTitle: true,
@@ -201,7 +187,7 @@ class ButtonCartWithBadge extends StatelessWidget {
           },
           icon: Icon(
             cartCount > 0 
-              ? CupertinoIcons.cart_badge_plus // Dynamic icon based on cart count
+              ? CupertinoIcons.cart_badge_plus
               : CupertinoIcons.cart,
             color: AppColor.textPrimary,
           ),

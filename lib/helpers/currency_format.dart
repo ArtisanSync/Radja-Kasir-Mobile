@@ -14,6 +14,24 @@ class CurrencyFormat {
     return currencyFormatter.format(number);
   }
 
+  // Tambahkan method formatCurrency yang hilang
+  static String formatCurrency(dynamic value) {
+    if (value == null) return 'Rp 0';
+    
+    double amount;
+    if (value is String) {
+      amount = double.tryParse(value.replaceAll(RegExp(r'[^\d]'), '')) ?? 0;
+    } else if (value is int) {
+      amount = value.toDouble();
+    } else if (value is double) {
+      amount = value;
+    } else {
+      return 'Rp 0';
+    }
+    
+    return convertToIdr(amount, 0);
+  }
+
   // Format compact untuk angka besar (1K, 1M, dll)
   static String convertToCompactIdr(dynamic number) {
     if (number == null) return 'Rp 0';
@@ -44,6 +62,13 @@ class CurrencyFormat {
     return formatter.format(number);
   }
 
+  // Overload untuk menerima int parameter
+  static String formatCurrencyInputFromInt(int value) {
+    if (value <= 0) return '';
+    NumberFormat formatter = NumberFormat('#,###', 'id_ID');
+    return formatter.format(value);
+  }
+
   // Parse currency string ke number
   static double parseCurrency(String value) {
     if (value.isEmpty) return 0;
@@ -68,6 +93,25 @@ class CurrencyFormat {
     } else {
       return convertToIdr(discount, 0);
     }
+  }
+
+  // Format number tanpa simbol currency
+  static String formatNumber(dynamic value) {
+    if (value == null) return '0';
+    
+    double amount;
+    if (value is String) {
+      amount = double.tryParse(value) ?? 0;
+    } else if (value is int) {
+      amount = value.toDouble();
+    } else if (value is double) {
+      amount = value;
+    } else {
+      return '0';
+    }
+    
+    final formatter = NumberFormat('#,###', 'id_ID');
+    return formatter.format(amount);
   }
 }
 
