@@ -1,8 +1,9 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:kasir/core/use_store.dart';
-import 'package:kasir/screens/customer/customer.dart';
+import 'package:kasir/screens/history_page.dart';
 import 'package:kasir/screens/home_page.dart';
 import 'package:kasir/screens/product/product.dart';
 import 'package:kasir/screens/profile/profile_page.dart';
@@ -12,7 +13,9 @@ import 'package:kasir/screens/report/report_page.dart';
 import 'package:gap/gap.dart';
 
 class NavDrawer extends StatefulWidget {
-  const NavDrawer({super.key});
+  final String? currentRoute; // Tambahkan parameter untuk route aktif
+  
+  const NavDrawer({super.key, this.currentRoute});
 
   @override
   State<NavDrawer> createState() => _NavDrawerState();
@@ -131,38 +134,44 @@ class _NavDrawerState extends State<NavDrawer> {
               children: [
                 _buildMenuItem(
                   context,
-                  icon: Icons.home_rounded,
+                  icon: CupertinoIcons.house_fill,
                   title: 'Transaksi',
+                  route: 'home',
                   onTap: () => _navigateToPage(context, const MyHomePage()),
                 ),
                 _buildMenuItem(
                   context,
-                  icon: Icons.inventory_2_rounded,
+                  icon: CupertinoIcons.cube_box_fill,
                   title: 'Produk dan Stok',
+                  route: 'product',
                   onTap: () => _navigateToPage(context, const ProductPage()),
                 ),
                 _buildMenuItem(
                   context,
-                  icon: Icons.monetization_on_rounded,
+                  icon: CupertinoIcons.money_dollar_circle_fill,
                   title: 'Kasbon',
+                  route: 'dept',
                   onTap: () => _navigateToPage(context, const DeptPage()),
                 ),
                 _buildMenuItem(
                   context,
-                  icon: Icons.bar_chart_rounded,
+                  icon: CupertinoIcons.chart_bar_fill,
                   title: 'Laporan',
+                  route: 'report',
                   onTap: () => _navigateToPage(context, const ReportPage()),
                 ),
                 _buildMenuItem(
                   context,
-                  icon: Icons.people_rounded,
-                  title: 'Pelanggan',
-                  onTap: () => _navigateToPage(context, const CustomerPage()),
+                  icon: CupertinoIcons.time_solid,
+                  title: 'History',
+                  route: 'history',
+                  onTap: () => _navigateToPage(context, const HistoryPage()),
                 ),
                 _buildMenuItem(
                   context,
-                  icon: Icons.person_rounded,
+                  icon: CupertinoIcons.person_circle_fill,
                   title: 'Profil',
+                  route: 'profile',
                   onTap: () => _navigateToPage(context, const ProfilePage()),
                 ),
                 
@@ -170,8 +179,9 @@ class _NavDrawerState extends State<NavDrawer> {
                 
                 _buildMenuItem(
                   context,
-                  icon: Icons.settings_rounded,
+                  icon: CupertinoIcons.settings_solid,
                   title: 'Pengaturan',
+                  route: 'setting',
                   onTap: () => _navigateToPage(context, const SettingPage()),
                 ),
               ],
@@ -198,9 +208,11 @@ class _NavDrawerState extends State<NavDrawer> {
     BuildContext context, {
     required IconData icon,
     required String title,
+    required String route,
     required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
+    final isActive = widget.currentRoute == route; // Cek apakah menu ini aktif
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
@@ -212,18 +224,30 @@ class _NavDrawerState extends State<NavDrawer> {
           borderRadius: BorderRadius.circular(12),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              // Tambahkan background untuk item aktif
+              color: isActive 
+                ? theme.colorScheme.primaryContainer.withOpacity(0.3)
+                : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Row(
               children: [
                 Container(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                    // Ubah warna berdasarkan status aktif
+                    color: isActive
+                      ? theme.colorScheme.primary.withOpacity(0.2)
+                      : theme.colorScheme.primaryContainer.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     icon,
-                    color: theme.colorScheme.primary,
+                    color: isActive 
+                      ? theme.colorScheme.primary 
+                      : theme.colorScheme.primary,
                     size: 22,
                   ),
                 ),
@@ -232,14 +256,18 @@ class _NavDrawerState extends State<NavDrawer> {
                   child: Text(
                     title,
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: theme.colorScheme.onSurface,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                      color: isActive 
+                        ? theme.colorScheme.primary 
+                        : theme.colorScheme.onSurface,
                     ),
                   ),
                 ),
                 Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  color: theme.colorScheme.onSurfaceVariant,
+                  CupertinoIcons.chevron_right,
+                  color: isActive 
+                    ? theme.colorScheme.primary 
+                    : theme.colorScheme.onSurfaceVariant,
                   size: 16,
                 ),
               ],
@@ -251,9 +279,11 @@ class _NavDrawerState extends State<NavDrawer> {
   }
 
   void _navigateToPage(BuildContext context, Widget page) {
-    Navigator.pushReplacement(
+    Navigator.pop(context);
+    Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => page),
+      (route) => false,
     );
   }
 
