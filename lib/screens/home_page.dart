@@ -1,22 +1,21 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir/components/builder_menu.dart';
 import 'package:kasir/components/nav_drawer.dart';
 import 'package:kasir/core/use_store.dart';
 import 'package:kasir/helpers/colors_theme.dart';
 import 'package:kasir/services/setting_services.dart';
-import 'package:kasir/store/cart_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:kasir/providers/cart_providers.dart';
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({
-    super.key,
-  });
+class MyHomePage extends ConsumerStatefulWidget {
+  const MyHomePage({Key? key}) : super(key: key);
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  ConsumerState<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends ConsumerState<MyHomePage> {
   final api = SettingServices();
 
   Future<void> fetchPackage() async {
@@ -38,7 +37,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    int cartCount = context.watch<CartProvider>().list.length;
+    final cartCount = ref.watch(cartItemCountProvider);
 
     return Scaffold(
       body: DefaultTabController(
@@ -104,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
 // Widget placeholder untuk tab Produk
 class ProductTabContent extends StatelessWidget {
-  const ProductTabContent({super.key});
+  const ProductTabContent({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +141,7 @@ class ProductTabContent extends StatelessWidget {
 
 // Widget placeholder untuk tab Favorit
 class FavoriteTabContent extends StatelessWidget {
-  const FavoriteTabContent({super.key});
+  const FavoriteTabContent({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -181,8 +180,8 @@ class FavoriteTabContent extends StatelessWidget {
 class ButtonCartWithBadge extends StatelessWidget {
   const ButtonCartWithBadge({
     required this.cartCount,
-    super.key,
-  });
+    Key? key,
+  }) : super(key: key);
 
   final int cartCount;
 
@@ -200,8 +199,10 @@ class ButtonCartWithBadge extends StatelessWidget {
               ),
             );
           },
-          icon: const Icon(
-            Icons.local_mall_outlined,
+          icon: Icon(
+            cartCount > 0 
+              ? CupertinoIcons.cart_badge_plus // Dynamic icon based on cart count
+              : CupertinoIcons.cart,
             color: AppColor.textPrimary,
           ),
         ),

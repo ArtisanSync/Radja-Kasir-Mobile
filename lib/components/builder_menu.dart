@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class MenuBuilder extends StatelessWidget {
@@ -11,7 +12,7 @@ class MenuBuilder extends StatelessWidget {
       builder: (BuildContext context) {
         return IconButton(
           icon: const Icon(
-            Icons.sort,
+            CupertinoIcons.bars, // Changed from Icons.sort to CupertinoIcons.bars
             color: Colors.black87,
           ),
           onPressed: () {

@@ -1,4 +1,5 @@
 // ignore_for_file: use_build_context_synchronously, prefer_const_constructors
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:kasir/helpers/colors_theme.dart';
@@ -19,6 +20,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _name = TextEditingController();
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
+  bool _obscurePassword = true; // Added for password visibility toggle
 
   Future<void> submit() async {
     if (_name.text.isEmpty || _email.text.isEmpty || _password.text.isEmpty) {
@@ -149,12 +151,25 @@ class _RegisterPageState extends State<RegisterPage> {
                 padding: EdgeInsets.symmetric(horizontal: 30),
                 child: TextField(
                   controller: _password,
-                  obscureText: true,
+                  obscureText: _obscurePassword, // Use the state variable
                   decoration: InputDecoration(
                     labelText: "Password",
                     labelStyle: TextStyle(color: AppColor.secondary),
                     filled: true,
                     fillColor: Colors.white,
+                    suffixIcon: IconButton( // Added suffix icon for toggle
+                      icon: Icon(
+                        _obscurePassword 
+                          ? CupertinoIcons.eye_slash 
+                          : CupertinoIcons.eye,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide(color: AppColor.light),

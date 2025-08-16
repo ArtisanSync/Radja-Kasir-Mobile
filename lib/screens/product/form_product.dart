@@ -1,504 +1,548 @@
 import 'dart:io';
-import 'dart:typed_data';
-
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gap/gap.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:kasir/components/input_dropdown.dart';
-import 'package:kasir/core/use_store.dart';
-import 'package:kasir/helpers/colors_theme.dart';
-import 'package:kasir/screens/product/form/select_category.dart';
-import 'package:kasir/services/product_services.dart';
-import 'package:loader_overlay/loader_overlay.dart';
+import 'package:kasir/components/modern_buttons.dart';
+import 'package:kasir/components/modern_card.dart';
+import 'package:kasir/components/modern_text_field.dart';
+import 'package:kasir/helpers/currency_format.dart';
+import 'package:kasir/models/product_model.dart';
+import 'package:kasir/providers/product_providers.dart';
+import 'package:kasir/providers/category_providers.dart';
+import 'dart:convert';
+import 'dart:typed_data';
 
-class FormProduct extends StatefulWidget {
-  const FormProduct({super.key});
+class FormProduct extends ConsumerStatefulWidget {
+  final Product? product;
+  
+  const FormProduct({Key? key, this.product}) : super(key: key);
 
   @override
-  State<FormProduct> createState() => _FormProductState();
+  ConsumerState<FormProduct> createState() => _FormProductState();
 }
 
-class _FormProductState extends State<FormProduct> {
-  ProductServices productServices = ProductServices();
-  ImagePicker picker = ImagePicker();
-  final TextEditingController _name = TextEditingController();
-  final TextEditingController _code = TextEditingController();
-  final TextEditingController _brand = TextEditingController();
-  final TextEditingController _capitalPrice = TextEditingController();
-  final TextEditingController _price = TextEditingController();
-  final TextEditingController _discRp = TextEditingController();
-  final TextEditingController _discPercent = TextEditingController();
-  final TextEditingController _stock = TextEditingController();
-  final TextEditingController _tax = TextEditingController();
-  final TextEditingController _qtyType = TextEditingController();
+class _FormProductState extends ConsumerState<FormProduct> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _codeController = TextEditingController();
+  final _brandController = TextEditingController();
+  final _quantityController = TextEditingController();
+  final _capitalPriceController = TextEditingController();
+  final _priceController = TextEditingController();
+  final _taxController = TextEditingController();
+  final _discountRpController = TextEditingController();
+  final _discountPercentController = TextEditingController();
 
-  final _formProductKey = GlobalKey<FormState>();
-  XFile? _imageValue;
-  Uint8List? _imageBytes; // For web platform
-  bool loading = false;
-  bool showQtyType = false;
-  String? categoryId;
-  String? categoryLable;
-  String? selectQtyType;
-
-  // Pick Image
-  void getImage(XFile? image) async {
-    if (image != null) {
-      setState(() {
-        _imageValue = image;
-      });
-
-      // For web platform, we need to read bytes
-      if (kIsWeb) {
-        final bytes = await image.readAsBytes();
-        setState(() {
-          _imageBytes = bytes;
-        });
-      }
-    }
-  }
-
-  Future<void> submit(BuildContext context) async {
-    context.loaderOverlay.show();
-
-    final store = await Store.getStore();
-
-    // Create FormData with platform-specific image handling
-    MultipartFile? imageFile;
-    if (_imageValue != null) {
-      if (kIsWeb) {
-        // For web, use bytes
-        final bytes = await _imageValue!.readAsBytes();
-        imageFile = MultipartFile.fromBytes(
-          bytes,
-          filename: _imageValue!.name,
-        );
-      } else {
-        // For mobile, use file path
-        imageFile = await MultipartFile.fromFile(_imageValue!.path);
-      }
-    }
-
-    FormData formData = FormData.fromMap({
-      'store_id': store['id'],
-      if (imageFile != null) 'image': imageFile,
-      "name": _name.text,
-      "category_id": categoryId,
-      "code": _code.text,
-      "brand": _brand.text,
-      "variant": {
-        "name": "general",
-        "quantity": _stock.text,
-        "qty_type": _qtyType.text,
-        "capital_price": _capitalPrice.text,
-        "price": _price.text,
-        "disc_rp": _discRp.text,
-        "disc_percent": _discPercent.text,
-        "tax": _tax.text,
-      }
-    });
-
-    try {
-      var res = await productServices.storeProduct(formData);
-      context.loaderOverlay.show();
-      Navigator.pop(context);
-      print(res);
-    } catch (e) {
-      context.loaderOverlay.show();
-      const snackBar = SnackBar(
-        content: Text('Terjadi kesalahan ! coba lagi. '),
-        backgroundColor: Colors.red,
-      );
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      print(e);
-    }
-  }
-
-  void initDataState() {
-    setState(() {
-      _capitalPrice.text = '0';
-      _price.text = '0';
-      _discPercent.text = '0';
-      _discRp.text = '0';
-      _tax.text = '0';
-      _stock.text = '1';
-    });
-  }
+  String? _selectedCategoryId;
+  String? _selectedUnitId;
+  dynamic _selectedImage;
+  bool _isSubmitting = false;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
-    initDataState();
+    _loadInitialData();
+    if (widget.product != null) {
+      _populateFields();
+    }
+  }
+
+  void _loadInitialData() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(categoryProvider.notifier).loadCategories();
+    });
+  }
+
+  void _populateFields() {
+    final product = widget.product!;
+    _nameController.text = product.name;
+    _codeController.text = product.code ?? '';
+    _brandController.text = product.brand ?? '';
+    _selectedCategoryId = product.categoryId;
+    
+    if (product.variants.isNotEmpty) {
+      final variant = product.variants.first;
+      _quantityController.text = variant.quantity.toString();
+      _capitalPriceController.text = CurrencyFormat.formatCurrencyInput(variant.capitalPrice);
+      _priceController.text = CurrencyFormat.formatCurrencyInput(variant.price);
+      _taxController.text = variant.tax.toString();
+      _discountRpController.text = CurrencyFormat.formatCurrencyInput(variant.discountRp);
+      _discountPercentController.text = variant.discountPercent.toString();
+      _selectedUnitId = variant.unitId;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _codeController.dispose();
+    _brandController.dispose();
+    _quantityController.dispose();
+    _capitalPriceController.dispose();
+    _priceController.dispose();
+    _taxController.dispose();
+    _discountRpController.dispose();
+    _discountPercentController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+      
+      if (image != null) {
+        if (kIsWeb) {
+          final bytes = await image.readAsBytes();
+          final base64String = base64Encode(bytes);
+          setState(() {
+            _selectedImage = 'data:image/png;base64,$base64String';
+          });
+        } else {
+          setState(() {
+            _selectedImage = image.path;
+          });
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking image: $e')),
+      );
+    }
+  }
+
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_selectedUnitId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a unit')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      bool success;
+      
+      if (widget.product == null) {
+        // Create new product
+        success = await ref.read(productProvider.notifier).createProduct(
+          name: _nameController.text.trim(),
+          code: _codeController.text.trim().isEmpty ? null : _codeController.text.trim(),
+          brand: _brandController.text.trim().isEmpty ? null : _brandController.text.trim(),
+          categoryId: _selectedCategoryId,
+          image: _selectedImage,
+          unitId: _selectedUnitId!,
+          quantity: int.tryParse(_quantityController.text) ?? 0,
+          capitalPrice: CurrencyFormat.parseCurrency(_capitalPriceController.text).toString(),
+          price: CurrencyFormat.parseCurrency(_priceController.text).toString(),
+          tax: int.tryParse(_taxController.text) ?? 0,
+          discountRp: CurrencyFormat.parseCurrency(_discountRpController.text).toString(),
+          discountPercent: int.tryParse(_discountPercentController.text) ?? 0,
+        );
+      } else {
+        // Update existing product
+        success = await ref.read(productProvider.notifier).updateProduct(
+          widget.product!.id!,
+          name: _nameController.text.trim(),
+          code: _codeController.text.trim().isEmpty ? null : _codeController.text.trim(),
+          brand: _brandController.text.trim().isEmpty ? null : _brandController.text.trim(),
+          categoryId: _selectedCategoryId,
+          image: _selectedImage,
+          unitId: _selectedUnitId,
+          quantity: int.tryParse(_quantityController.text),
+          capitalPrice: CurrencyFormat.parseCurrency(_capitalPriceController.text).toString(),
+          price: CurrencyFormat.parseCurrency(_priceController.text).toString(),
+          tax: int.tryParse(_taxController.text),
+          discountRp: CurrencyFormat.parseCurrency(_discountRpController.text).toString(),
+          discountPercent: int.tryParse(_discountPercentController.text),
+        );
+      }
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(widget.product == null 
+                ? 'Product created successfully' 
+                : 'Product updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop(true);
+      } else {
+        final error = ref.read(productProvider).error;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error ?? 'Failed to save product'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isSubmitting = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final categoryState = ref.watch(categoryProvider);
+    final unitsAsync = ref.watch(unitsProvider);
+
     return Scaffold(
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: const Text(
-          "Tambah Produk",
-          style: TextStyle(
-            fontSize: 16,
+        backgroundColor: theme.colorScheme.surface,
+        title: Text(
+          widget.product == null ? 'Tambah Produk' : 'Edit Produk',
+          style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
           ),
         ),
+        elevation: 0,
       ),
-      body: LoaderOverlay(
-        overlayOpacity: 0.2,
-        overlayColor: Colors.black12,
-        useDefaultLoading: false,
-        overlayWidget: const Center(
-          child: SpinKitDoubleBounce(
-            color: Colors.black,
-            size: 50.0,
-          ),
-        ),
+      body: Form(
+        key: _formKey,
         child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              const SizedBox(height: 20),
-              Container(
-                color: Colors.white,
-                child: Stack(
+              // Product Image
+              ModernCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          height: 200,
-                          width: 200,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: Colors.grey[200],
-                          ),
-                          clipBehavior: Clip.hardEdge,
-                          child: _imageValue != null
-                              ? kIsWeb
-                                  ? (_imageBytes != null
-                                      ? Image.memory(
-                                          _imageBytes!,
-                                          fit: BoxFit.cover,
-                                          height: 200,
-                                          width: 100,
-                                        )
-                                      : const Center(
-                                          child: CircularProgressIndicator(),
-                                        ))
-                                  : Image.file(
-                                      File(_imageValue!.path),
-                                      fit: BoxFit.cover,
-                                      height: 200,
-                                      width: 100,
-                                    )
-                              : const Center(
-                                  child: Icon(
-                                    Icons.image,
-                                    size: 40,
-                                  ),
-                                ),
-                        )
-                      ],
+                    Text(
+                      'Foto Produk',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                    Positioned(
-                      left: (MediaQuery.of(context).size.width / 2) - -60,
-                      top: 10,
-                      child: CircleAvatar(
-                        radius: 30,
-                        child: IconButton(
-                          onPressed: () async {
-                            var image = await picker.pickImage(
-                              source: ImageSource.gallery,
-                            );
-                            getImage(image);
-                          },
-                          icon: const Icon(
-                            Icons.camera,
-                            size: 40,
+                    const Gap(12),
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child: Container(
+                        height: 200,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: theme.colorScheme.outline.withOpacity(0.5),
+                            style: BorderStyle.solid,
                           ),
                         ),
+                        child: _selectedImage != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: kIsWeb
+                                    ? Image.memory(
+                                        base64Decode(_selectedImage.split(',')[1]),
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                      )
+                                    : Image.file(
+                                        File(_selectedImage),
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                      ),
+                              )
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add_photo_alternate_outlined,
+                                    size: 48,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                  const Gap(8),
+                                  Text(
+                                    'Tap untuk menambah foto',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
-              Form(
-                key: _formProductKey,
+
+              const Gap(16),
+
+              // Basic Information
+              ModernCard(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 20),
-                    Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              TextInput(
-                                controller: _name,
-                                label: "Nama produk",
-                                validate: true,
-                              ),
-                              const SizedBox(height: 10),
-                              TextInput(
-                                controller: _code,
-                                label: "Kode produk",
-                                validate: false,
-                              ),
-                              const SizedBox(height: 10),
-                              TextInput(
-                                controller: _brand,
-                                label: "Brand/Merk",
-                                validate: false,
-                              ),
-                            ],
+                    Text(
+                      'Informasi Dasar',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const Gap(16),
+                    ModernTextField(
+                      label: 'Nama Produk *',
+                      controller: _nameController,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Nama produk tidak boleh kosong';
+                        }
+                        return null;
+                      },
+                    ),
+                    const Gap(12),
+                    ModernTextField(
+                      label: 'Kode Produk',
+                      controller: _codeController,
+                    ),
+                    const Gap(12),
+                    ModernTextField(
+                      label: 'Brand/Merek',
+                      controller: _brandController,
+                    ),
+                    const Gap(12),
+                    
+                    // Category Dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedCategoryId,
+                      decoration: InputDecoration(
+                        labelText: 'Kategori',
+                        filled: true,
+                        fillColor: theme.colorScheme.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: theme.colorScheme.outline),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.5)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                        ),
+                      ),
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('Pilih Kategori'),
+                        ),
+                        ...categoryState.categories.map(
+                          (category) => DropdownMenuItem<String>(
+                            value: category.id,
+                            child: Text(category.name),
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        InkWell(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 15),
-                              decoration: BoxDecoration(
-                                border: const Border.fromBorderSide(
-                                  BorderSide(width: 1, color: AppColor.light),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedCategoryId = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+              const Gap(16),
+
+              // Stock and Price Information
+              ModernCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Stok & Harga',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const Gap(16),
+                    
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ModernTextField(
+                            label: 'Jumlah Stok *',
+                            controller: _quantityController,
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Stok tidak boleh kosong';
+                              }
+                              if (int.tryParse(value) == null) {
+                                return 'Stok harus berupa angka';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const Gap(12),
+                        Expanded(
+                          child: unitsAsync.when(
+                            data: (units) => DropdownButtonFormField<String>(
+                              value: _selectedUnitId,
+                              decoration: InputDecoration(
+                                labelText: 'Satuan *',
+                                filled: true,
+                                fillColor: theme.colorScheme.surface,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: theme.colorScheme.outline),
                                 ),
-                                borderRadius: BorderRadius.circular(4),
-                                color: Colors.white,
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.5)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                                ),
                               ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  categoryId != null
-                                      ? Text('$categoryLable')
-                                      : const Text('Pilih Kategori'),
-                                  const Icon(Icons.chevron_right),
-                                ],
-                              ),
+                              items: units.map(
+                                (unit) => DropdownMenuItem<String>(
+                                  value: unit.id,
+                                  child: Text(unit.name),
+                                ),
+                              ).toList(),
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedUnitId = value;
+                                });
+                              },
+                              validator: (value) {
+                                if (value == null) {
+                                  return 'Pilih satuan';
+                                }
+                                return null;
+                              },
+                            ),
+                            loading: () => const ModernTextField(
+                              label: 'Loading...',
+                              enabled: false,
+                            ),
+                            error: (error, stack) => const ModernTextField(
+                              label: 'Error loading units',
+                              enabled: false,
                             ),
                           ),
-                          onTap: () async {
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SelectCategory(),
-                              ),
-                            );
-                            if (result != null) {
-                              setState(() {
-                                categoryId = result['id'] as String;
-                                categoryLable = result['name'] as String;
-                              });
-                            }
-                          },
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 10, horizontal: 20),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Atur Harga'),
-                          const SizedBox(height: 10),
-                          TextInput(
-                            label: "Modal",
-                            validate: false,
-                            controller: _capitalPrice,
-                            type: TextInputType.number,
-                          ),
-                          const SizedBox(height: 10),
-                          TextInput(
-                            label: "Harga jual",
-                            validate: false,
-                            controller: _price,
-                            type: TextInputType.number,
-                          ),
-                          const SizedBox(height: 10),
-                          TextInput(
-                            label: "Discount (%)",
-                            validate: false,
-                            controller: _discPercent,
-                            type: TextInputType.number,
-                          ),
-                          const SizedBox(height: 10),
-                          TextInput(
-                            label: "Discount (Rp)",
-                            validate: false,
-                            controller: _discRp,
-                            type: TextInputType.number,
-                          ),
-                          const SizedBox(height: 10),
-                          // TextInput(
-                          //   label: "Pajak (%)",
-                          //   validate: false,
-                          //   controller: _tax,
-                          //   type: TextInputType.number,
-                          // )
-                        ],
-                      ),
+                    
+                    const Gap(12),
+                    
+                    ModernTextField(
+                      label: 'Harga Modal *',
+                      controller: _capitalPriceController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [PriceInputFormatter()],
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Harga modal tidak boleh kosong';
+                        }
+                        return null;
+                      },
                     ),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 10, horizontal: 20),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Atur Stok'),
-                          const SizedBox(height: 10),
-                          TextInput(
-                            label: "Jumlah",
-                            validate: false,
-                            controller: _stock,
-                            type: TextInputType.number,
-                          ),
-                          const SizedBox(height: 10),
-                          showQtyType
-                              ? const SizedBox()
-                              : const Text(
-                                  'Satuan \n(Pilih lainnya untuk input manual satuan)'),
-                          const SizedBox(height: 10),
-                          showQtyType
-                              ? TextInput(
-                                  label: "Tipe",
-                                  validate: false,
-                                  controller: _qtyType,
-                                )
-                              : InputDropDown(
-                                  val: selectQtyType,
-                                  lists: const [
-                                    'PCS',
-                                    'KTN',
-                                    'DUS',
-                                    'PAK',
-                                    'BAL',
-                                    'LAINNYA'
-                                  ],
-                                  onSelect: (val) {
-                                    setState(() {
-                                      if (val == 'LAINNYA') {
-                                        showQtyType = true;
-                                      } else {
-                                        selectQtyType = val;
-                                        _qtyType.text = val;
-                                      }
-                                    });
-                                  },
-                                )
-                        ],
-                      ),
+                    
+                    const Gap(12),
+                    
+                    ModernTextField(
+                      label: 'Harga Jual *',
+                      controller: _priceController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [PriceInputFormatter()],
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Harga jual tidak boleh kosong';
+                        }
+                        return null;
+                      },
                     ),
-                    const SizedBox(height: 20),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: InkWell(
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 20,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColor.primary,
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'Simpan',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                        onTap: () {
-                          if (_formProductKey.currentState!.validate() &&
-                              _imageValue != null) {
-                            submit(context);
-                          } else {
-                            const snackBar = SnackBar(
-                              content: Text('Nama atau produk gambar kosong. '),
-                              backgroundColor: Colors.red,
-                            );
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(snackBar);
-                          }
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 50),
                   ],
                 ),
-              )
+              ),
+
+              const Gap(16),
+
+              // Additional Information
+              ModernCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Informasi Tambahan',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const Gap(16),
+                    
+                    ModernTextField(
+                      label: 'Pajak (%)',
+                      controller: _taxController,
+                      keyboardType: TextInputType.number,
+                    ),
+                    
+                    const Gap(12),
+                    
+                    ModernTextField(
+                      label: 'Diskon (Rp)',
+                      controller: _discountRpController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [PriceInputFormatter()],
+                    ),
+                    
+                    const Gap(12),
+                    
+                    ModernTextField(
+                      label: 'Diskon (%)',
+                      controller: _discountPercentController,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ],
+                ),
+              ),
+
+              const Gap(32),
+
+              // Submit Button
+              ModernButton(
+                text: widget.product == null ? 'Simpan Produk' : 'Update Produk',
+                onPressed: _isSubmitting ? null : _submitForm,
+                isLoading: _isSubmitting,
+                icon: Icon(widget.product == null ? Icons.add : Icons.save),
+              ),
+
+              const Gap(16),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class TextInput extends StatelessWidget {
-  const TextInput({
-    super.key,
-    required this.label,
-    required this.validate,
-    this.type,
-    required TextEditingController controller,
-  }) : _controller = controller;
-
-  final TextEditingController _controller;
-  final String label;
-  final bool validate;
-  final TextInputType? type;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: _controller,
-      validator: validate
-          ? (value) {
-              if (value == null || value.isEmpty) {
-                return '$label harus terisi !';
-              }
-              return null;
-            }
-          : null,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      keyboardType: type ?? TextInputType.text,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: AppColor.secondary, fontSize: 14),
-        filled: true,
-        fillColor: Colors.white,
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(4),
-          borderSide: const BorderSide(color: AppColor.light),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(4),
-          borderSide: const BorderSide(color: AppColor.primary),
-        ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 20),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(4),
-          borderSide: const BorderSide(color: Colors.black54),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.red),
-        ),
-        errorStyle: const TextStyle(color: Colors.red, fontSize: 10),
       ),
     );
   }
