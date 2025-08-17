@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:kasir/screens/home_page.dart';
 import 'package:kasir/screens/product/product.dart';
-import 'package:kasir/screens/customer/customer.dart';
 import 'package:kasir/screens/report/report_page.dart';
 import 'package:kasir/screens/profile/profile_page.dart';
 
@@ -20,7 +19,6 @@ class MainNavigation extends ConsumerWidget {
     final List<Widget> pages = [
       const MyHomePage(),
       const ProductPage(),
-      const CustomerPage(),
       const ReportPage(),
       const ProfilePage(),
     ];

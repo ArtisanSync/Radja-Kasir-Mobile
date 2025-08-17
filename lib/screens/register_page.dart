@@ -1,8 +1,7 @@
-// ignore_for_file: use_build_context_synchronously, prefer_const_constructors
+// screens/register_page.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:kasir/helpers/colors_theme.dart';
 import 'package:kasir/services/auth_services.dart';
 import 'package:kasir/screens/login_page.dart';
 import 'package:kasir/screens/email_verification_page.dart';
@@ -16,226 +15,233 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final _formKey = GlobalKey<FormState>();
   final api = AuthServices();
   final TextEditingController _name = TextEditingController();
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
-  bool _obscurePassword = true; // Added for password visibility toggle
+  bool _obscurePassword = true;
 
-  Future<void> submit() async {
-    if (_name.text.isEmpty || _email.text.isEmpty || _password.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Semua field harus diisi'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
+  Future<void> _submit() async {
+    // No client-side validation - let backend handle it
     final resp = await api.register({
       "name": _name.text.trim(),
       "email": _email.text.trim(),
-      "password": _password.text.trim(),
+      "password": _password.text,
     }, context);
 
     if (resp['success'] == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(resp['message'] ??
-              'Registrasi berhasil! Silakan cek email untuk verifikasi.'),
-          backgroundColor: Colors.green,
-        ),
+      _showSnackBar(
+        message: resp['message'] ?? 'Registrasi berhasil! Silakan cek email untuk verifikasi.',
+        isError: false,
       );
 
-      // Navigate to email verification page or login page
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-            builder: (_) => EmailVerificationPage(email: _email.text.trim())),
+          builder: (_) => EmailVerificationPage(email: _email.text.trim()),
+        ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text(resp['message'] ?? 'Registrasi gagal. Silakan coba lagi.'),
-          backgroundColor: Colors.red,
-        ),
+      _showSnackBar(
+        message: resp['message'] ?? 'Registrasi gagal. Silakan coba lagi.',
+        isError: true,
       );
     }
   }
 
+  void _showSnackBar({required String message, required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Theme.of(context).colorScheme.error : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _email.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
+      backgroundColor: theme.colorScheme.background,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: Icon(
+            CupertinoIcons.back,
+            color: theme.colorScheme.onBackground,
+          ),
+        ),
+      ),
       body: LoaderOverlay(
         overlayOpacity: 0.2,
         overlayColor: Colors.black12,
         useDefaultLoading: false,
         overlayWidget: Center(
           child: SpinKitDoubleBounce(
-            color: Colors.black,
+            color: theme.colorScheme.primary,
             size: 50.0,
           ),
         ),
-        child: SizedBox(
-          height: double.infinity,
-          width: double.infinity,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Logo
-              Image.asset(
-                'assets/images/logo_no_bg.png',
-                height: 100,
-                width: 100,
-              ),
-              SizedBox(height: 20),
-              // Judul
-              Text(
-                'Registrasi',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 40),
-              // Field Nama
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 30),
-                child: TextField(
-                  controller: _name,
-                  decoration: InputDecoration(
-                    labelText: "Name",
-                    labelStyle: TextStyle(color: AppColor.secondary),
-                    filled: true,
-                    fillColor: Colors.white,
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: AppColor.light),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: AppColor.primary),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 20),
+                  
+                  // Title
+                  Text(
+                    'Buat Akun Baru',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onBackground,
                     ),
                   ),
-                ),
-              ),
-              SizedBox(height: 20),
-              // Field Email
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 30),
-                child: TextField(
-                  controller: _email,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: "Email",
-                    labelStyle: TextStyle(color: AppColor.secondary),
-                    filled: true,
-                    fillColor: Colors.white,
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: AppColor.light),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: AppColor.primary),
+                  
+                  const SizedBox(height: 8),
+                  
+                  Text(
+                    'Lengkapi form di bawah untuk mendaftar',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onBackground.withOpacity(0.7),
                     ),
                   ),
-                ),
-              ),
-              SizedBox(height: 20),
-              // Field Password
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 30),
-                child: TextField(
-                  controller: _password,
-                  obscureText: _obscurePassword, // Use the state variable
-                  decoration: InputDecoration(
-                    labelText: "Password",
-                    labelStyle: TextStyle(color: AppColor.secondary),
-                    filled: true,
-                    fillColor: Colors.white,
-                    suffixIcon: IconButton( // Added suffix icon for toggle
-                      icon: Icon(
-                        _obscurePassword 
-                          ? CupertinoIcons.eye_slash 
-                          : CupertinoIcons.eye,
-                        color: Colors.grey,
+                  
+                  const SizedBox(height: 40),
+                  
+                  // Name Field
+                  TextFormField(
+                    controller: _name,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: InputDecoration(
+                      labelText: "Nama Lengkap",
+                      prefixIcon: Icon(CupertinoIcons.person),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: AppColor.light),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: AppColor.primary),
                     ),
                   ),
-                ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Email Field
+                  TextFormField(
+                    controller: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: "Email",
+                      prefixIcon: Icon(CupertinoIcons.mail),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Password Field
+                  TextFormField(
+                    controller: _password,
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: "Password",
+                      prefixIcon: Icon(CupertinoIcons.lock),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword 
+                            ? CupertinoIcons.eye_slash 
+                            : CupertinoIcons.eye,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      helperText: "Minimal 8 karakter",
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  
+                  // Register Button
+                  ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Daftar',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.onPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Login Link
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Sudah punya akun? ',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onBackground.withOpacity(0.7),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LoginPage(),
+                            ),
+                          );
+                        },
+                        child: Text(
+                          'Masuk',
+                          style: TextStyle(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 40),
+                ],
               ),
-              SizedBox(height: 40),
-              // Tombol Daftar
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: submit,
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    elevation: 0,
-                    backgroundColor: AppColor.primary,
-                    padding: EdgeInsets.symmetric(vertical: 15),
-                  ),
-                  child: Text(
-                    'Daftar',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-              // Tombol Kembali
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const LoginPage()),
-                    );
-                  },
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    side: BorderSide(color: AppColor.primary),
-                    padding: EdgeInsets.symmetric(vertical: 15),
-                  ),
-                  child: Text(
-                    'Kembali',
-                    style: TextStyle(
-                      color: AppColor.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

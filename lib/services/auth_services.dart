@@ -1,3 +1,4 @@
+// services/auth_services.dart
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:kasir/core/dio_intercaptor.dart';
@@ -13,7 +14,6 @@ class AuthServices {
     _dio.interceptors.add(DioInterceptor());
   }
 
-  // BASE URL
   final String _baseUrl = ServiceUtils().baseUrl;
 
   // Login user
@@ -24,24 +24,35 @@ class AuthServices {
       final response = await _dio.post("$_baseUrl/users/login", data: body);
 
       if (response.statusCode == 200) {
+        final responseData = response.data['data'];
+        
         // Save user data
-        await Store.saveUser(response.data['data']['user']);
-
+        await Store.saveUser(responseData['user']);
+        
         // Save token
-        await Store.setToken(response.data['data']['token']);
-
-        // Handle subscribe data from user object
-        if (response.data['data']['user'].containsKey('isSubscribe')) {
-          await Store.saveSubscribe(
-              {'isSubscribe': response.data['data']['user']['isSubscribe']});
+        await Store.setToken(responseData['token']);
+        
+        // Save store if exists
+        if (responseData['user']['firstStore'] != null) {
+          await Store.saveStore(responseData['user']['firstStore']);
+        }
+        
+        // Save subscription if exists
+        if (responseData['user']['currentSubscription'] != null) {
+          await Store.saveSubscribe({
+            'isSubscribe': responseData['user']['isSubscribed'],
+            'subscription': responseData['user']['currentSubscription']
+          });
         }
 
         context.loaderOverlay.hide();
         return {
           'success': true,
           'statusCode': response.statusCode,
-          'message': response.data['message'] ?? 'Login successful',
-          'data': response.data['data']
+          'message': response.data['message'],
+          'data': responseData,
+          'accessType': responseData['accessType'],
+          'userType': responseData['userType'],
         };
       }
 
@@ -49,12 +60,11 @@ class AuthServices {
       return {
         'success': false,
         'statusCode': response.statusCode,
-        'message': 'Login failed'
+        'message': response.data['message'] ?? 'Login failed'
       };
     } on DioException catch (e) {
       context.loaderOverlay.hide();
-      print('Login error: $e');
-
+      
       String errorMessage = 'Login failed';
       if (e.response?.data != null && e.response!.data['message'] != null) {
         errorMessage = e.response!.data['message'];
@@ -80,7 +90,7 @@ class AuthServices {
         return {
           'success': true,
           'statusCode': response.statusCode,
-          'message': response.data['message'] ?? 'Registration successful',
+          'message': response.data['message'],
           'data': response.data['data']
         };
       }
@@ -88,12 +98,11 @@ class AuthServices {
       return {
         'success': false,
         'statusCode': response.statusCode,
-        'message': 'Registration failed'
+        'message': response.data['message'] ?? 'Registration failed'
       };
     } on DioException catch (e) {
       context.loaderOverlay.hide();
-      print('Register error: $e');
-
+      
       String errorMessage = 'Registration failed';
       if (e.response?.data != null && e.response!.data['message'] != null) {
         errorMessage = e.response!.data['message'];
@@ -112,20 +121,21 @@ class AuthServices {
       Map<String, dynamic> body, BuildContext context) async {
     context.loaderOverlay.show();
     try {
-      final response =
-          await _dio.post("$_baseUrl/users/verify-email", data: body);
+      final response = await _dio.post("$_baseUrl/users/verify-email", data: body);
 
       if (response.statusCode == 200) {
+        final responseData = response.data['data'];
+        
         // Save user data and token after verification
-        await Store.saveUser(response.data['data']['user']);
-        await Store.setToken(response.data['data']['token']);
+        await Store.saveUser(responseData['user']);
+        await Store.setToken(responseData['token']);
 
         context.loaderOverlay.hide();
         return {
           'success': true,
           'statusCode': response.statusCode,
-          'message': response.data['message'] ?? 'Email verified successfully',
-          'data': response.data['data']
+          'message': response.data['message'],
+          'data': responseData
         };
       }
 
@@ -133,12 +143,11 @@ class AuthServices {
       return {
         'success': false,
         'statusCode': response.statusCode,
-        'message': 'Email verification failed'
+        'message': response.data['message'] ?? 'Email verification failed'
       };
     } on DioException catch (e) {
       context.loaderOverlay.hide();
-      print('Verify email error: $e');
-
+      
       String errorMessage = 'Email verification failed';
       if (e.response?.data != null && e.response!.data['message'] != null) {
         errorMessage = e.response!.data['message'];
@@ -157,27 +166,25 @@ class AuthServices {
       Map<String, dynamic> body, BuildContext context) async {
     context.loaderOverlay.show();
     try {
-      final response =
-          await _dio.post("$_baseUrl/users/resend-verification", data: body);
+      final response = await _dio.post("$_baseUrl/users/resend-verification", data: body);
 
       context.loaderOverlay.hide();
       if (response.statusCode == 200) {
         return {
           'success': true,
           'statusCode': response.statusCode,
-          'message': response.data['message'] ?? 'Verification email sent',
+          'message': response.data['message'],
         };
       }
 
       return {
         'success': false,
         'statusCode': response.statusCode,
-        'message': 'Failed to send verification email'
+        'message': response.data['message'] ?? 'Failed to send verification email'
       };
     } on DioException catch (e) {
       context.loaderOverlay.hide();
-      print('Resend verification error: $e');
-
+      
       String errorMessage = 'Failed to send verification email';
       if (e.response?.data != null && e.response!.data['message'] != null) {
         errorMessage = e.response!.data['message'];
@@ -196,27 +203,25 @@ class AuthServices {
       Map<String, dynamic> body, BuildContext context) async {
     context.loaderOverlay.show();
     try {
-      final response =
-          await _dio.post("$_baseUrl/users/forgot-password", data: body);
+      final response = await _dio.post("$_baseUrl/users/forgot-password", data: body);
 
       context.loaderOverlay.hide();
       if (response.statusCode == 200) {
         return {
           'success': true,
           'statusCode': response.statusCode,
-          'message': response.data['message'] ?? 'Password reset email sent',
+          'message': response.data['message'],
         };
       }
 
       return {
         'success': false,
         'statusCode': response.statusCode,
-        'message': 'Failed to send password reset email'
+        'message': response.data['message'] ?? 'Failed to send password reset email'
       };
     } on DioException catch (e) {
       context.loaderOverlay.hide();
-      print('Forgot password error: $e');
-
+      
       String errorMessage = 'Failed to send password reset email';
       if (e.response?.data != null && e.response!.data['message'] != null) {
         errorMessage = e.response!.data['message'];
@@ -235,27 +240,25 @@ class AuthServices {
       Map<String, dynamic> body, BuildContext context) async {
     context.loaderOverlay.show();
     try {
-      final response =
-          await _dio.post("$_baseUrl/users/resend-reset", data: body);
+      final response = await _dio.post("$_baseUrl/users/resend-reset", data: body);
 
       context.loaderOverlay.hide();
       if (response.statusCode == 200) {
         return {
           'success': true,
           'statusCode': response.statusCode,
-          'message': response.data['message'] ?? 'Reset token sent',
+          'message': response.data['message'],
         };
       }
 
       return {
         'success': false,
         'statusCode': response.statusCode,
-        'message': 'Failed to send reset token'
+        'message': response.data['message'] ?? 'Failed to send reset token'
       };
     } on DioException catch (e) {
       context.loaderOverlay.hide();
-      print('Resend reset error: $e');
-
+      
       String errorMessage = 'Failed to send reset token';
       if (e.response?.data != null && e.response!.data['message'] != null) {
         errorMessage = e.response!.data['message'];
@@ -274,27 +277,25 @@ class AuthServices {
       Map<String, dynamic> body, BuildContext context) async {
     context.loaderOverlay.show();
     try {
-      final response =
-          await _dio.post("$_baseUrl/users/reset-password", data: body);
+      final response = await _dio.post("$_baseUrl/users/reset-password", data: body);
 
       context.loaderOverlay.hide();
       if (response.statusCode == 200) {
         return {
           'success': true,
           'statusCode': response.statusCode,
-          'message': response.data['message'] ?? 'Password reset successful',
+          'message': response.data['message'],
         };
       }
 
       return {
         'success': false,
         'statusCode': response.statusCode,
-        'message': 'Password reset failed'
+        'message': response.data['message'] ?? 'Password reset failed'
       };
     } on DioException catch (e) {
       context.loaderOverlay.hide();
-      print('Reset password error: $e');
-
+      
       String errorMessage = 'Password reset failed';
       if (e.response?.data != null && e.response!.data['message'] != null) {
         errorMessage = e.response!.data['message'];
@@ -322,8 +323,7 @@ class AuthServices {
         return {
           'success': true,
           'statusCode': response.statusCode,
-          'message':
-              response.data['message'] ?? 'Profile retrieved successfully',
+          'message': response.data['message'],
           'data': response.data['data']
         };
       }
@@ -331,12 +331,11 @@ class AuthServices {
       return {
         'success': false,
         'statusCode': response.statusCode,
-        'message': 'Failed to get profile'
+        'message': response.data['message'] ?? 'Failed to get profile'
       };
     } on DioException catch (e) {
       context.loaderOverlay.hide();
-      print('Get profile error: $e');
-
+      
       String errorMessage = 'Failed to get profile';
       if (e.response?.data != null && e.response!.data['message'] != null) {
         errorMessage = e.response!.data['message'];
@@ -365,7 +364,7 @@ class AuthServices {
         return {
           'success': true,
           'statusCode': response.statusCode,
-          'message': response.data['message'] ?? 'Profile updated successfully',
+          'message': response.data['message'],
           'data': response.data['data']
         };
       }
@@ -373,12 +372,11 @@ class AuthServices {
       return {
         'success': false,
         'statusCode': response.statusCode,
-        'message': 'Failed to update profile'
+        'message': response.data['message'] ?? 'Failed to update profile'
       };
     } on DioException catch (e) {
       context.loaderOverlay.hide();
-      print('Update profile error: $e');
-
+      
       String errorMessage = 'Failed to update profile';
       if (e.response?.data != null && e.response!.data['message'] != null) {
         errorMessage = e.response!.data['message'];
