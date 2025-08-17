@@ -1,11 +1,14 @@
-// ignore_for_file: use_build_context_synchronously, prefer_const_constructors
+// screens/profile/profile_page.dart
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:kasir/helpers/colors_theme.dart';
+import 'package:kasir/components/builder_menu.dart';
+import 'package:kasir/components/nav_drawer.dart';
 import 'package:kasir/screens/login_page.dart';
 import 'package:kasir/services/auth_services.dart';
 import 'package:kasir/core/use_store.dart';
 import 'package:loader_overlay/loader_overlay.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -16,14 +19,20 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final api = AuthServices();
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _businessNameController = TextEditingController();
+  final TextEditingController _businessTypeController = TextEditingController();
+  final TextEditingController _businessAddressController = TextEditingController();
+  final TextEditingController _whatsappController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   Map<String, dynamic>? userProfile;
   bool isLoading = true;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void initState() {
@@ -31,14 +40,35 @@ class _ProfilePageState extends State<ProfilePage> {
     loadProfile();
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _businessNameController.dispose();
+    _businessTypeController.dispose();
+    _businessAddressController.dispose();
+    _whatsappController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
   Future<void> loadProfile() async {
+    setState(() {
+      isLoading = true;
+    });
+
     final resp = await api.getProfile(context);
 
     if (resp['success'] == true) {
       setState(() {
         userProfile = resp['data'];
         _nameController.text = userProfile!['name'] ?? '';
-        _emailController.text = userProfile!['email'] ?? '';
+        _phoneController.text = userProfile!['phone'] ?? '';
+        _businessNameController.text = userProfile!['businessName'] ?? '';
+        _businessTypeController.text = userProfile!['businessType'] ?? '';
+        _businessAddressController.text = userProfile!['businessAddress'] ?? '';
+        _whatsappController.text = userProfile!['whatsapp'] ?? '';
         isLoading = false;
       });
     } else {
@@ -46,11 +76,9 @@ class _ProfilePageState extends State<ProfilePage> {
         isLoading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(resp['message'] ?? 'Gagal memuat profil'),
-          backgroundColor: Colors.red,
-        ),
+      _showSnackBar(
+        message: resp['message'] ?? 'Gagal memuat profil',
+        isError: true,
       );
     }
   }
@@ -58,41 +86,31 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> updateProfile() async {
     Map<String, dynamic> updateData = {
       "name": _nameController.text.trim(),
+      "phone": _phoneController.text.trim(),
+      "businessName": _businessNameController.text.trim(),
+      "businessType": _businessTypeController.text.trim(),
+      "businessAddress": _businessAddressController.text.trim(),
+      "whatsapp": _whatsappController.text.trim(),
     };
 
     // Only include password if it's provided
     if (_passwordController.text.isNotEmpty) {
       if (_passwordController.text != _confirmPasswordController.text) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Password konfirmasi tidak cocok'),
-            backgroundColor: Colors.red,
-          ),
+        _showSnackBar(
+          message: 'Password konfirmasi tidak cocok',
+          isError: true,
         );
         return;
       }
-
-      if (_passwordController.text.length < 8) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Password minimal 8 karakter'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
       updateData["password"] = _passwordController.text;
     }
 
     final resp = await api.updateProfile(updateData, context);
 
     if (resp['success'] == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(resp['message'] ?? 'Profil berhasil diperbarui!'),
-          backgroundColor: Colors.green,
-        ),
+      _showSnackBar(
+        message: resp['message'] ?? 'Profil berhasil diperbarui!',
+        isError: false,
       );
 
       setState(() {
@@ -101,11 +119,9 @@ class _ProfilePageState extends State<ProfilePage> {
         _confirmPasswordController.clear();
       });
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(resp['message'] ?? 'Gagal memperbarui profil'),
-          backgroundColor: Colors.red,
-        ),
+      _showSnackBar(
+        message: resp['message'] ?? 'Gagal memperbarui profil',
+        isError: true,
       );
     }
   }
@@ -114,24 +130,39 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        final theme = Theme.of(context);
         return AlertDialog(
-          title: Text('Konfirmasi Logout'),
-          content: Text('Apakah Anda yakin ingin logout?'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Icon(
+                CupertinoIcons.question_circle,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 12),
+              const Text('Konfirmasi Logout'),
+            ],
+          ),
+          content: const Text('Apakah Anda yakin ingin logout?'),
           actions: [
             TextButton(
-              child: Text('Batal'),
+              child: const Text('Batal'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
-            TextButton(
-              child: Text('Logout'),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: theme.colorScheme.onError,
+              ),
+              child: const Text('Logout'),
               onPressed: () async {
                 Navigator.of(context).pop();
                 await api.logout();
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => LoginPage()),
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
                   (route) => false,
                 );
               },
@@ -142,17 +173,44 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  void _showSnackBar({required String message, required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Theme.of(context).colorScheme.error : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
+      backgroundColor: theme.colorScheme.background,
+      drawer: const NavDrawer(currentRoute: 'profile'),
       appBar: AppBar(
-        title: Text('Profil'),
-        backgroundColor: AppColor.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: theme.colorScheme.surface,
+        elevation: 0,
+        leading: const MenuBuilder(),
+        title: Text(
+          'Profil',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+        centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.logout),
+            icon: Icon(
+              CupertinoIcons.square_arrow_right,
+              color: theme.colorScheme.error,
+            ),
             onPressed: logout,
+            tooltip: 'Logout',
           ),
         ],
       ),
@@ -162,247 +220,350 @@ class _ProfilePageState extends State<ProfilePage> {
         useDefaultLoading: false,
         overlayWidget: Center(
           child: SpinKitDoubleBounce(
-            color: Colors.black,
+            color: theme.colorScheme.primary,
             size: 50.0,
           ),
         ),
         child: isLoading
-            ? Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                padding: EdgeInsets.all(20),
+            ? Center(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // User Info Card
-                    Card(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Informasi Akun',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 16),
-
-                            // Avatar placeholder
-                            Center(
-                              child: CircleAvatar(
-                                radius: 50,
-                                backgroundColor: AppColor.primary,
-                                backgroundImage: userProfile?['avatar'] != null
-                                    ? NetworkImage(userProfile!['avatar'])
-                                    : null,
-                                child: userProfile?['avatar'] == null
-                                    ? Icon(Icons.person,
-                                        size: 50, color: Colors.white)
-                                    : null,
-                              ),
-                            ),
-                            SizedBox(height: 16),
-
-                            // User details
-                            _buildInfoRow('Email', userProfile?['email'] ?? ''),
-                            _buildInfoRow('Role', userProfile?['role'] ?? ''),
-                            _buildInfoRow(
-                                'Member',
-                                userProfile?['isMember'] == true
-                                    ? 'Ya'
-                                    : 'Tidak'),
-                            _buildInfoRow(
-                                'Subscribe',
-                                userProfile?['isSubscribe'] == true
-                                    ? 'Aktif'
-                                    : 'Tidak Aktif'),
-                            _buildInfoRow(
-                                'Email Verified',
-                                userProfile?['emailVerifiedAt'] != null
-                                    ? 'Ya'
-                                    : 'Belum'),
-                            _buildInfoRow(
-                                'Bergabung',
-                                userProfile?['createdAt'] != null
-                                    ? DateTime.parse(userProfile!['createdAt'])
-                                        .toString()
-                                        .substring(0, 10)
-                                    : ''),
-                          ],
-                        ),
-                      ),
+                    CircularProgressIndicator(
+                      color: theme.colorScheme.primary,
                     ),
-
-                    SizedBox(height: 20),
-
-                    // Update Profile Form
-                    Card(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Update Profil',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 16),
-
-                            // Name Input
-                            TextField(
-                              controller: _nameController,
-                              decoration: InputDecoration(
-                                labelText: "Nama",
-                                labelStyle:
-                                    TextStyle(color: AppColor.secondary),
-                                filled: true,
-                                fillColor: Colors.white,
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: BorderSide(color: AppColor.light),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide:
-                                      BorderSide(color: AppColor.primary),
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 16),
-
-                            // Email Input (read-only)
-                            TextField(
-                              controller: _emailController,
-                              enabled: false,
-                              decoration: InputDecoration(
-                                labelText: "Email (tidak dapat diubah)",
-                                labelStyle:
-                                    TextStyle(color: AppColor.secondary),
-                                filled: true,
-                                fillColor: Colors.grey[100],
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: BorderSide(color: AppColor.light),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide:
-                                      BorderSide(color: AppColor.primary),
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 16),
-
-                            // Password Input
-                            TextField(
-                              controller: _passwordController,
-                              obscureText: true,
-                              decoration: InputDecoration(
-                                labelText: "Password Baru (opsional)",
-                                labelStyle:
-                                    TextStyle(color: AppColor.secondary),
-                                filled: true,
-                                fillColor: Colors.white,
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: BorderSide(color: AppColor.light),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide:
-                                      BorderSide(color: AppColor.primary),
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 16),
-
-                            // Confirm Password Input
-                            TextField(
-                              controller: _confirmPasswordController,
-                              obscureText: true,
-                              decoration: InputDecoration(
-                                labelText: "Konfirmasi Password",
-                                labelStyle:
-                                    TextStyle(color: AppColor.secondary),
-                                filled: true,
-                                fillColor: Colors.white,
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: BorderSide(color: AppColor.light),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide:
-                                      BorderSide(color: AppColor.primary),
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 20),
-
-                            // Update Button
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: updateProfile,
-                                style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10.0),
-                                  ),
-                                  elevation: 0,
-                                  backgroundColor: AppColor.primary,
-                                  padding: EdgeInsets.symmetric(vertical: 15),
-                                ),
-                                child: Text(
-                                  'Update Profil',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Memuat profil...',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.onBackground.withOpacity(0.7),
                       ),
                     ),
                   ],
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: loadProfile,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        // Profile Header Card
+                        Card(
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              children: [
+                                // Avatar
+                                CircleAvatar(
+                                  radius: 50,
+                                  backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                                  backgroundImage: userProfile?['avatar'] != null
+                                      ? CachedNetworkImageProvider(userProfile!['avatar'])
+                                      : null,
+                                  child: userProfile?['avatar'] == null
+                                      ? Icon(
+                                          CupertinoIcons.person_fill,
+                                          size: 50,
+                                          color: theme.colorScheme.primary,
+                                        )
+                                      : null,
+                                ),
+                                const SizedBox(height: 16),
+
+                                // User Info
+                                Text(
+                                  userProfile?['name'] ?? 'User',
+                                  style: theme.textTheme.headlineSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.onSurface,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  userProfile?['email'] ?? '',
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                
+                                // Status Badges
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    _buildStatusBadge(
+                                      userProfile?['role'] ?? 'USER',
+                                      theme.colorScheme.primary,
+                                      theme,
+                                    ),
+                                    if (userProfile?['emailVerifiedAt'] != null)
+                                      _buildStatusBadge(
+                                        'Email Terverifikasi',
+                                        Colors.green,
+                                        theme,
+                                      ),
+                                    if (userProfile?['isSubscribed'] == true)
+                                      _buildStatusBadge(
+                                        'Berlangganan',
+                                        Colors.purple,
+                                        theme,
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Update Profile Form
+                        Card(
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      CupertinoIcons.person_circle,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Update Profil',
+                                      style: theme.textTheme.titleLarge?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: theme.colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+
+                                // Personal Info Section
+                                _buildSectionTitle('Informasi Personal', theme),
+                                const SizedBox(height: 16),
+                                
+                                TextFormField(
+                                  controller: _nameController,
+                                  decoration: InputDecoration(
+                                    labelText: "Nama Lengkap",
+                                    prefixIcon: const Icon(CupertinoIcons.person),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                
+                                TextFormField(
+                                  controller: _phoneController,
+                                  keyboardType: TextInputType.phone,
+                                  decoration: InputDecoration(
+                                    labelText: "Nomor Telepon",
+                                    prefixIcon: const Icon(CupertinoIcons.phone),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                
+                                TextFormField(
+                                  controller: _whatsappController,
+                                  keyboardType: TextInputType.phone,
+                                  decoration: InputDecoration(
+                                    labelText: "WhatsApp",
+                                    prefixIcon: const Icon(CupertinoIcons.chat_bubble),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 24),
+
+                                // Business Info Section
+                                _buildSectionTitle('Informasi Bisnis', theme),
+                                const SizedBox(height: 16),
+                                
+                                TextFormField(
+                                  controller: _businessNameController,
+                                  decoration: InputDecoration(
+                                    labelText: "Nama Bisnis",
+                                    prefixIcon: const Icon(CupertinoIcons.building_2_fill),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                
+                                TextFormField(
+                                  controller: _businessTypeController,
+                                  decoration: InputDecoration(
+                                    labelText: "Jenis Bisnis",
+                                    prefixIcon: const Icon(CupertinoIcons.briefcase),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                
+                                TextFormField(
+                                  controller: _businessAddressController,
+                                  maxLines: 3,
+                                  decoration: InputDecoration(
+                                    labelText: "Alamat Bisnis",
+                                    prefixIcon: const Icon(CupertinoIcons.location),
+                                    alignLabelWithHint: true,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 24),
+
+                                // Password Section
+                                _buildSectionTitle('Ubah Password (Opsional)', theme),
+                                const SizedBox(height: 16),
+                                
+                                TextFormField(
+                                  controller: _passwordController,
+                                  obscureText: _obscurePassword,
+                                  decoration: InputDecoration(
+                                    labelText: "Password Baru",
+                                    prefixIcon: const Icon(CupertinoIcons.lock),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscurePassword 
+                                          ? CupertinoIcons.eye_slash 
+                                          : CupertinoIcons.eye,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _obscurePassword = !_obscurePassword;
+                                        });
+                                      },
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    helperText: "Kosongkan jika tidak ingin mengubah password",
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                
+                                TextFormField(
+                                  controller: _confirmPasswordController,
+                                  obscureText: _obscureConfirmPassword,
+                                  decoration: InputDecoration(
+                                    labelText: "Konfirmasi Password Baru",
+                                    prefixIcon: const Icon(CupertinoIcons.lock_fill),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscureConfirmPassword 
+                                          ? CupertinoIcons.eye_slash 
+                                          : CupertinoIcons.eye,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _obscureConfirmPassword = !_obscureConfirmPassword;
+                                        });
+                                      },
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 32),
+
+                                // Update Button
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: updateProfile,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: theme.colorScheme.primary,
+                                      foregroundColor: theme.colorScheme.onPrimary,
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(CupertinoIcons.checkmark_circle),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Update Profil',
+                                          style: theme.textTheme.titleMedium?.copyWith(
+                                            color: theme.colorScheme.onPrimary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
                 ),
               ),
       ),
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              '$label:',
-              style: TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ),
-        ],
+  Widget _buildStatusBadge(String text, Color color, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Text(
+        text,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, ThemeData theme) {
+    return Text(
+      title,
+      style: theme.textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.bold,
+        color: theme.colorScheme.onSurface,
       ),
     );
   }

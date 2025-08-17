@@ -1,9 +1,8 @@
-// ignore_for_file: use_build_context_synchronously, prefer_const_constructors
+// screens/login_page.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:kasir/core/use_store.dart';
-import 'package:kasir/helpers/colors_theme.dart';
 import 'package:kasir/screens/home_page.dart';
 import 'package:kasir/screens/register_page.dart';
 import 'package:kasir/screens/reset_password_page.dart';
@@ -18,51 +17,51 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
   final api = AuthServices();
-  final storage = Store;
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
-  bool _obscurePassword = true; // Added for password visibility toggle
+  bool _obscurePassword = true;
 
-  Future submit() async {
+  Future<void> _submit() async {
     final resp = await api.login({
       "email": _email.text.trim(),
-      "password": _password.text.trim(),
+      "password": _password.text,
     }, context);
 
     if (resp['success'] == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(resp['message'] ?? 'Login berhasil'),
-          backgroundColor: Colors.green,
-        ),
+      _showSnackBar(
+        message: resp['message'] ?? 'Login berhasil',
+        isError: false,
       );
+      
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MyHomePage()),
       );
-    } else if (resp['statusCode'] == 401) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(resp['message'] ?? 'Email atau password salah'),
-          backgroundColor: Colors.black87,
-        ),
-      );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text(resp['message'] ?? 'Terjadi kesalahan sistem! Coba lagi.'),
-          backgroundColor: Colors.red,
-        ),
+      _showSnackBar(
+        message: resp['message'] ?? 'Login gagal',
+        isError: true,
       );
     }
   }
 
-  void checkToken(BuildContext context) async {
+  void _showSnackBar({required String message, required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Theme.of(context).colorScheme.error : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  Future<void> _checkExistingToken() async {
     final token = await Store.getToken();
-    if (token != null) {
-      Navigator.push(
+    if (token != null && mounted) {
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const MyHomePage()),
       );
@@ -70,176 +69,214 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _checkExistingToken();
+  }
+
+  @override
+  void dispose() {
+    _email.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    checkToken(context);
+    final theme = Theme.of(context);
+    
     return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
       body: LoaderOverlay(
         overlayOpacity: 0.2,
         overlayColor: Colors.black12,
         useDefaultLoading: false,
         overlayWidget: Center(
           child: SpinKitDoubleBounce(
-            color: Colors.black,
+            color: theme.colorScheme.primary,
             size: 50.0,
           ),
         ),
-        child: SizedBox(
-          height: double.infinity,
-          width: double.infinity,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/images/logo_no_bg.png',
-                height: 100,
-                width: 100,
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Radja Kasir',
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 40),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 30,
-                ),
-                child: TextField(
-                  controller: _email,
-                  decoration: InputDecoration(
-                    labelText: "Email",
-                    labelStyle: const TextStyle(color: AppColor.secondary),
-                    filled: true,
-                    fillColor: Colors.white,
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColor.light),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColor.primary),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 30,
-                ),
-                child: TextField(
-                  controller: _password,
-                  obscureText: _obscurePassword, // Use the state variable
-                  decoration: InputDecoration(
-                    labelText: "Password",
-                    filled: true,
-                    fillColor: Colors.white,
-                    labelStyle: const TextStyle(color: AppColor.secondary),
-                    suffixIcon: IconButton( // Added suffix icon for toggle
-                      icon: Icon(
-                        _obscurePassword 
-                          ? CupertinoIcons.eye_slash 
-                          : CupertinoIcons.eye,
-                        color: Colors.grey,
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+                  
+                  // Logo
+                  Center(
+                    child: SizedBox(
+                      height: 120,
+                      width: 120,
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 120,
+                            width: 120,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.store_rounded,
+                              size: 60,
+                              color: theme.colorScheme.primary,
+                            ),
+                          );
+                        },
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColor.light),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColor.primary),
                     ),
                   ),
-                ),
-              ),
-              // Teks "Lupa Password" dengan navigasi
-              Align(
-                alignment: Alignment.centerRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 30.0),
-                  child: TextButton(
+                  
+                  const SizedBox(height: 32),
+                  
+                  // Title
+                  Text(
+                    'Selamat Datang',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 8),
+                  
+                  Text(
+                    'Masuk ke akun Radja Kasir Anda',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 48),
+                  
+                  // Email Field
+                  TextFormField(
+                    controller: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(
+                      labelText: "Email",
+                      prefixIcon: Icon(CupertinoIcons.mail),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Password Field
+                  TextFormField(
+                    controller: _password,
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: "Password",
+                      prefixIcon: const Icon(CupertinoIcons.lock),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword 
+                            ? CupertinoIcons.eye_slash 
+                            : CupertinoIcons.eye,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
+                      border: const OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 8),
+                  
+                  // Forgot Password
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ResetPasswordPage(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        'Lupa Password?',
+                        style: TextStyle(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Login Button
+                  ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                    ),
+                    child: Text(
+                      'Masuk',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.onPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Register Button
+                  OutlinedButton(
                     onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const ResetPasswordPage()),
+                          builder: (context) => const RegisterPage(),
+                        ),
                       );
                     },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: BorderSide(color: theme.colorScheme.primary),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                    ),
                     child: Text(
-                      'Lupa Password',
-                      style: TextStyle(
-                        color: AppColor.primary,
-                        fontSize: 14,
+                      'Daftar Akun Baru',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                ),
+                  
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+                ],
               ),
-              const SizedBox(height: 10),
-              // Tombol Masuk
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => submit(),
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    elevation: 0,
-                    backgroundColor: AppColor.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                  ),
-                  child: Text(
-                    'Masuk',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-              // Tombol Daftar
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const RegisterPage()),
-                    );
-                  },
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    side: BorderSide(color: AppColor.primary),
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                  ),
-                  child: Text(
-                    'Daftar',
-                    style: TextStyle(
-                      color: AppColor.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
