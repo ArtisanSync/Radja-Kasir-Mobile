@@ -2,7 +2,6 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 class CurrencyFormat {
-  // Format angka menjadi format Rupiah Indonesia
   static String convertToIdr(dynamic number, int decimalDigit) {
     if (number == null) return 'Rp 0';
     
@@ -14,7 +13,6 @@ class CurrencyFormat {
     return currencyFormatter.format(number);
   }
 
-  // Tambahkan method formatCurrency yang hilang
   static String formatCurrency(dynamic value) {
     if (value == null) return 'Rp 0';
     
@@ -49,7 +47,6 @@ class CurrencyFormat {
     }
   }
 
-  // Format input untuk currency (tanpa simbol)
   static String formatCurrencyInput(String value) {
     if (value.isEmpty) return '';
     
@@ -62,21 +59,18 @@ class CurrencyFormat {
     return formatter.format(number);
   }
 
-  // Overload untuk menerima int parameter
   static String formatCurrencyInputFromInt(int value) {
     if (value <= 0) return '';
     NumberFormat formatter = NumberFormat('#,###', 'id_ID');
     return formatter.format(value);
   }
 
-  // Parse currency string ke number
   static double parseCurrency(String value) {
     if (value.isEmpty) return 0;
     String digitsOnly = value.replaceAll(RegExp(r'[^\d]'), '');
     return double.tryParse(digitsOnly) ?? 0;
   }
 
-  // Format untuk display harga dengan warna
   static String formatPrice(dynamic price) {
     if (price == null) return 'Rp 0';
     
@@ -95,7 +89,6 @@ class CurrencyFormat {
     }
   }
 
-  // Format number tanpa simbol currency
   static String formatNumber(dynamic value) {
     if (value == null) return '0';
     
@@ -148,7 +141,6 @@ class CurrencyInputFormatter extends TextInputFormatter {
   }
 }
 
-// Formatter khusus untuk input harga tanpa simbol Rp
 class PriceInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(

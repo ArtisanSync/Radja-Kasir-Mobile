@@ -8,15 +8,11 @@ class ActionProduct {
       UserSubsModel userSubs, List<dynamic> products, ctx) {
     var subs = userSubs.subscibe;
     var package = userSubs.package;
-    //  1. check user has subscribe package
     if (subs?.endDate != null) {
-      // 2. check package not expired
       String _subsEnd = subs?.endDate as String;
       DateTime _currentDate = DateTime.now();
       DateTime _endDate = DateTime.parse(_subsEnd);
-      // 3. Check end date is valid
       if (_currentDate.isBefore(_endDate)) {
-        // 4. check package addable member
         var _packageMeta = package?.meta;
         if (_packageMeta?.isLimitProduct != null) {
           print(_packageMeta?.isLimitProduct);
@@ -28,7 +24,6 @@ class ActionProduct {
               );
 
               Navigator.push(ctx, detail).then(
-                // (value) => fetchProduct,
                 (value) => {},
               );
             } else {

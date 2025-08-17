@@ -12,7 +12,7 @@ class MenuBuilder extends StatelessWidget {
       builder: (BuildContext context) {
         return IconButton(
           icon: const Icon(
-            CupertinoIcons.bars, // Changed from Icons.sort to CupertinoIcons.bars
+            CupertinoIcons.bars,
             color: Colors.black87,
           ),
           onPressed: () {

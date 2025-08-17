@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Cart Item Model
 class CartItem {
   final String id;
   final String productId;
