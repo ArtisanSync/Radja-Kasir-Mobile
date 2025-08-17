@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir/models/product_model.dart';
 import 'package:kasir/services/product_services.dart';
 
-// Product Services Provider - DEFINISI INI YANG HILANG!
+// Product Services Provider
 final productServicesProvider = Provider<ProductServices>((ref) {
   return ProductServices();
 });

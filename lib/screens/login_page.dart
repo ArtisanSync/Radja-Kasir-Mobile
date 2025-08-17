@@ -1,9 +1,10 @@
-// screens/login_page.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kasir/core/use_store.dart';
 import 'package:kasir/screens/home_page.dart';
+import 'package:kasir/screens/admin/admin_dashboard_page.dart';
 import 'package:kasir/screens/register_page.dart';
 import 'package:kasir/screens/reset_password_page.dart';
 import 'package:kasir/services/auth_services.dart';
@@ -35,16 +36,47 @@ class _LoginPageState extends State<LoginPage> {
         isError: false,
       );
       
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MyHomePage()),
-      );
+      await _navigateBasedOnRole(resp['data']);
     } else {
       _showSnackBar(
         message: resp['message'] ?? 'Login gagal',
         isError: true,
       );
     }
+  }
+
+  Future<void> _navigateBasedOnRole(Map<String, dynamic> userData) async {
+    final user = userData['user'];
+    final userRole = user['role'] ?? 'USER';
+    
+    if (!mounted) return;
+    
+    Widget targetPage;
+    
+    if (userRole == 'ADMIN') {
+      targetPage = const AdminDashboardPage();
+    } else {
+      targetPage = const MyHomePage();
+    }
+    
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => targetPage,
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          var begin = const Offset(1.0, 0.0);
+          var end = Offset.zero;
+          var curve = Curves.ease;
+          var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+          
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+    );
   }
 
   void _showSnackBar({required String message, required bool isError}) {
@@ -59,12 +91,55 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _checkExistingToken() async {
-    final token = await Store.getToken();
-    if (token != null && mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MyHomePage()),
-      );
+    try {
+      final token = await Store.getToken();
+      if (token != null && token.isNotEmpty && mounted) {
+        final user = await Store.getUser();
+        
+        if (user == null) {
+          await _clearInvalidData();
+          return;
+        }
+        
+        final userRole = user['role'] ?? 'USER';
+        
+        Widget targetPage;
+        if (userRole == 'ADMIN') {
+          targetPage = const AdminDashboardPage();
+        } else {
+          targetPage = const MyHomePage();
+        }
+        
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => targetPage,
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 300),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        await _clearInvalidData();
+      }
+    }
+  }
+
+  // ✅ Method untuk clear invalid data menggunakan SharedPreferences
+  Future<void> _clearInvalidData() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.remove('token');
+      await prefs.remove('user');
+      await prefs.remove('store');
+    } catch (e) {
+      print('Error clearing data: $e');
     }
   }
 
