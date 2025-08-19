@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kasir/core/use_store.dart';
 import 'package:kasir/screens/admin/admin_dashboard_page.dart';
+import 'package:kasir/screens/admin/admin_subscribers_page.dart'; // Import halaman subscribers
 import 'package:kasir/screens/history_page.dart';
 import 'package:kasir/screens/home_page.dart';
 import 'package:kasir/screens/product/product.dart';
@@ -10,7 +11,6 @@ import 'package:kasir/screens/profile/profile_page.dart';
 import 'package:kasir/screens/transaction_dept/dept_page.dart';
 import 'package:kasir/screens/report/report_page.dart';
 import 'package:kasir/screens/login_page.dart';
-import 'package:gap/gap.dart';
 
 class NavDrawer extends StatefulWidget {
   final String? currentRoute;
@@ -107,7 +107,7 @@ class _NavDrawerState extends State<NavDrawer> {
                     ),
                   ),
                 ),
-                const Gap(16),
+                const SizedBox(width: 16),
                 Text(
                   _userName,
                   style: const TextStyle(
@@ -118,7 +118,7 @@ class _NavDrawerState extends State<NavDrawer> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const Gap(4),
+                const SizedBox(width: 4),
                 Text(
                   _isAdmin ? 'Administrator' : _storeName,
                   style: TextStyle(
@@ -129,7 +129,7 @@ class _NavDrawerState extends State<NavDrawer> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (_isAdmin) ...[
-                  const Gap(8),
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
@@ -182,6 +182,13 @@ class _NavDrawerState extends State<NavDrawer> {
         title: 'Dashboard Admin',
         route: 'admin_dashboard',
         onTap: () => _navigateToPage(context, const AdminDashboardPage()),
+      ),
+      _buildMenuItem(
+        context,
+        icon: CupertinoIcons.person_3_fill,
+        title: 'Kelola Pengguna',
+        route: 'admin_subscribers',
+        onTap: () => _navigateToPage(context, const AdminSubscribersPage()),
       ),
       _buildMenuItem(
         context,
@@ -311,7 +318,7 @@ class _NavDrawerState extends State<NavDrawer> {
                     size: 22,
                   ),
                 ),
-                const Gap(16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Text(
                     title,
