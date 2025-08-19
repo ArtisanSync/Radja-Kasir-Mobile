@@ -30,8 +30,7 @@ class CurrencyFormat {
     return convertToIdr(amount, 0);
   }
 
-  // Format compact untuk angka besar (1K, 1M, dll)
-  static String convertToCompactIdr(dynamic number) {
+static String convertToCompactIdr(dynamic number) {
     if (number == null) return 'Rp 0';
     
     final value = number is String ? double.tryParse(number) ?? 0 : number.toDouble();
