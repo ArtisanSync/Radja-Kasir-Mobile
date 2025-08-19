@@ -13,6 +13,7 @@ class AdminServices {
 
   final String _baseUrl = ServiceUtils().baseUrl;
 
+  // Dashboard endpoint
   Future<Map<String, dynamic>> getDashboardStats() async {
     try {
       developer.log('Fetching dashboard stats from: $_baseUrl/admin/dashboard');
@@ -21,11 +22,9 @@ class AdminServices {
       
       developer.log('Dashboard response: ${response.data}');
       
-      // Check if response is successful
       if (response.statusCode == 200) {
         final data = response.data;
         
-        // Handle both success field check and direct data
         if (data is Map<String, dynamic>) {
           if (data.containsKey('success')) {
             if (data['success'] == true) {
@@ -44,7 +43,6 @@ class AdminServices {
               };
             }
           } else {
-            // Direct data without success wrapper
             developer.log('Direct data received without success wrapper');
             return {
               'success': true,
@@ -81,7 +79,8 @@ class AdminServices {
     }
   }
 
-  Future<Map<String, dynamic>> getAllSubscribers({
+  // Subscribers endpoint - GET /subscribers
+  Future<Map<String, dynamic>> getAllActiveSubscribers({
     String? search,
     String? packageType,
     bool? expiringOnly,
@@ -121,7 +120,6 @@ class AdminServices {
               };
             }
           } else {
-            // Direct array data
             return {
               'success': true,
               'data': data is List ? data : [data],
@@ -138,14 +136,14 @@ class AdminServices {
       };
       
     } on DioException catch (e) {
-      developer.log('DioException in getAllSubscribers: ${e.toString()}');
+      developer.log('DioException in getAllActiveSubscribers: ${e.toString()}');
       return {
         'success': false,
         'message': e.response?.data?['message'] ?? 'Network error: ${e.message}',
         'data': []
       };
     } catch (e) {
-      developer.log('General exception in getAllSubscribers: ${e.toString()}');
+      developer.log('General exception in getAllActiveSubscribers: ${e.toString()}');
       return {
         'success': false,
         'message': 'Unexpected error: ${e.toString()}',
@@ -154,12 +152,102 @@ class AdminServices {
     }
   }
 
+  // User deletion endpoint - DELETE /users/:userId
+  Future<Map<String, dynamic>> removeUserAccount(String userId) async {
+    try {
+      developer.log('Deleting user account: $_baseUrl/admin/users/$userId');
+      
+      final response = await _dio.delete("$_baseUrl/admin/users/$userId");
+      
+      developer.log('Delete user response: ${response.data}');
+      
+      if (response.statusCode == 200) {
+        final data = response.data;
+        return {
+          'success': data['success'] ?? true,
+          'data': data['data'],
+          'message': data['message'] ?? 'User account deleted successfully'
+        };
+      }
+      
+      return {
+        'success': false,
+        'message': 'Failed to delete user account',
+        'data': null
+      };
+      
+    } on DioException catch (e) {
+      developer.log('DioException in removeUserAccount: ${e.toString()}');
+      return {
+        'success': false,
+        'message': e.response?.data?['message'] ?? 'Network error occurred',
+        'data': null
+      };
+    } catch (e) {
+      developer.log('General exception in removeUserAccount: ${e.toString()}');
+      return {
+        'success': false,
+        'message': 'Unexpected error: ${e.toString()}',
+        'data': null
+      };
+    }
+  }
+
+  // Change subscription endpoint - PUT /users/:userId/subscription
+  Future<Map<String, dynamic>> changeUserSubscription(String userId, String packageId) async {
+    try {
+      developer.log('Changing user subscription: $_baseUrl/admin/users/$userId/subscription');
+      
+      final response = await _dio.put(
+        "$_baseUrl/admin/users/$userId/subscription",
+        data: {'packageId': packageId},
+      );
+      
+      developer.log('Change subscription response: ${response.data}');
+      
+      if (response.statusCode == 200) {
+        final data = response.data;
+        return {
+          'success': data['success'] ?? true,
+          'data': data['data'],
+          'message': data['message'] ?? 'Subscription changed successfully'
+        };
+      }
+      
+      return {
+        'success': false,
+        'message': 'Failed to change subscription',
+        'data': null
+      };
+      
+    } on DioException catch (e) {
+      developer.log('DioException in changeUserSubscription: ${e.toString()}');
+      return {
+        'success': false,
+        'message': e.response?.data?['message'] ?? 'Network error occurred',
+        'data': null
+      };
+    } catch (e) {
+      developer.log('General exception in changeUserSubscription: ${e.toString()}');
+      return {
+        'success': false,
+        'message': 'Unexpected error: ${e.toString()}',
+        'data': null
+      };
+    }
+  }
+
+  // Extend subscription endpoint - PUT /users/:userId/extend
   Future<Map<String, dynamic>> extendUserSubscription(String userId, int additionalDays) async {
     try {
+      developer.log('Extending user subscription: $_baseUrl/admin/users/$userId/extend');
+      
       final response = await _dio.put(
         "$_baseUrl/admin/users/$userId/extend",
         data: {'additionalDays': additionalDays},
       );
+      
+      developer.log('Extend subscription response: ${response.data}');
       
       if (response.statusCode == 200) {
         final data = response.data;
@@ -177,39 +265,68 @@ class AdminServices {
       };
       
     } on DioException catch (e) {
+      developer.log('DioException in extendUserSubscription: ${e.toString()}');
       return {
         'success': false,
         'message': e.response?.data?['message'] ?? 'Network error occurred',
         'data': null
       };
+    } catch (e) {
+      developer.log('General exception in extendUserSubscription: ${e.toString()}');
+      return {
+        'success': false,
+        'message': 'Unexpected error: ${e.toString()}',
+        'data': null
+      };
     }
   }
 
-  Future<Map<String, dynamic>> deleteUserAccount(String userId) async {
+  // Remove store member endpoint - DELETE /members/:memberId
+  Future<Map<String, dynamic>> removeStoreMember(String memberId) async {
     try {
-      final response = await _dio.delete("$_baseUrl/admin/users/$userId");
+      developer.log('Removing store member: $_baseUrl/admin/members/$memberId');
+      
+      final response = await _dio.delete("$_baseUrl/admin/members/$memberId");
+      
+      developer.log('Remove member response: ${response.data}');
       
       if (response.statusCode == 200) {
         final data = response.data;
         return {
           'success': data['success'] ?? true,
           'data': data['data'],
-          'message': data['message'] ?? 'User deleted successfully'
+          'message': data['message'] ?? 'Store member removed successfully'
         };
       }
       
       return {
         'success': false,
-        'message': 'Failed to delete user',
+        'message': 'Failed to remove store member',
         'data': null
       };
       
     } on DioException catch (e) {
+      developer.log('DioException in removeStoreMember: ${e.toString()}');
       return {
         'success': false,
         'message': e.response?.data?['message'] ?? 'Network error occurred',
         'data': null
       };
+    } catch (e) {
+      developer.log('General exception in removeStoreMember: ${e.toString()}');
+      return {
+        'success': false,
+        'message': 'Unexpected error: ${e.toString()}',
+        'data': null
+      };
+    }
+  }
+
+  // Helper method untuk debugging
+  void logRequest(String method, String url, dynamic data) {
+    developer.log('$method Request to: $url');
+    if (data != null) {
+      developer.log('Request Data: $data');
     }
   }
 }

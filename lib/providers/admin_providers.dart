@@ -1,3 +1,4 @@
+// providers/admin_providers.dart
 import 'dart:developer' as developer;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir/services/admin_services.dart';
@@ -149,7 +150,8 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final result = await _adminServices.getAllSubscribers(
+      // Fix: Menggunakan method yang benar dari AdminServices
+      final result = await _adminServices.getAllActiveSubscribers(
         search: state.searchQuery.isEmpty ? null : state.searchQuery,
         packageType: state.packageFilter,
         expiringOnly: state.expiringOnlyFilter ? true : null,
@@ -209,7 +211,8 @@ class SubscribersNotifier extends StateNotifier<SubscribersState> {
 
   Future<bool> deleteUser(String userId) async {
     try {
-      final result = await _adminServices.deleteUserAccount(userId);
+      // Fix: Menggunakan method yang benar dari AdminServices
+      final result = await _adminServices.removeUserAccount(userId);
       
       if (result['success'] == true) {
         await loadSubscribers();
