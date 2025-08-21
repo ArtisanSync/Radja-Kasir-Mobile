@@ -3,12 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kasir/core/use_store.dart';
 import 'package:kasir/screens/admin/admin_dashboard_page.dart';
-import 'package:kasir/screens/admin/admin_subscribers_page.dart'; // Import halaman subscribers
+import 'package:kasir/screens/admin/admin_subscribers_page.dart';
 import 'package:kasir/screens/history_page.dart';
 import 'package:kasir/screens/home_page.dart';
 import 'package:kasir/screens/product/product.dart';
 import 'package:kasir/screens/profile/profile_page.dart';
-import 'package:kasir/screens/transaction_dept/dept_page.dart';
 import 'package:kasir/screens/report/report_page.dart';
 import 'package:kasir/screens/login_page.dart';
 
@@ -226,13 +225,6 @@ class _NavDrawerState extends State<NavDrawer> {
         title: 'Produk dan Stok',
         route: 'product',
         onTap: () => _navigateToPage(context, const ProductPage()),
-      ),
-      _buildMenuItem(
-        context,
-        icon: CupertinoIcons.money_dollar_circle_fill,
-        title: 'Kasbon',
-        route: 'dept',
-        onTap: () => _navigateToPage(context, const DeptPage()),
       ),
       _buildMenuItem(
         context,
