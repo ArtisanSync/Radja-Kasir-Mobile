@@ -106,7 +106,7 @@ class _NavDrawerState extends State<NavDrawer> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(height: 16),
                 Text(
                   _userName,
                   style: const TextStyle(
@@ -117,7 +117,7 @@ class _NavDrawerState extends State<NavDrawer> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(height: 4),
                 Text(
                   _isAdmin ? 'Administrator' : _storeName,
                   style: TextStyle(
@@ -128,7 +128,7 @@ class _NavDrawerState extends State<NavDrawer> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (_isAdmin) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
