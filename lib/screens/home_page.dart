@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir/components/builder_menu.dart';
 import 'package:kasir/components/nav_drawer.dart';
-import 'package:kasir/core/use_store.dart';
 import 'package:kasir/helpers/colors_theme.dart';
 import 'package:kasir/providers/cart_providers.dart';
 

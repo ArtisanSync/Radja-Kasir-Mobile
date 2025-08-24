@@ -4,7 +4,6 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:kasir/components/button_light.dart';
 import 'package:kasir/components/button_primary.dart';
 import 'package:kasir/components/input_validation.dart';
-import 'package:kasir/core/use_store.dart';
 import 'package:kasir/services/user_services.dart';
 import 'package:loader_overlay/loader_overlay.dart';
 
