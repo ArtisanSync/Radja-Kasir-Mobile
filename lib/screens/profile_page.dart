@@ -5,7 +5,6 @@ import 'package:kasir/components/builder_menu.dart';
 import 'package:kasir/components/nav_drawer.dart';
 import 'package:kasir/screens/login_page.dart';
 import 'package:kasir/services/auth_services.dart';
-import 'package:kasir/core/use_store.dart';
 import 'package:loader_overlay/loader_overlay.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 

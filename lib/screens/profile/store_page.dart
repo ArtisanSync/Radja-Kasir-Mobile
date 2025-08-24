@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:kasir/models/profile_model.dart';
 import 'package:kasir/screens/profile/form/upload_logo.dart';
-import 'package:kasir/screens/profile/form/upload_stamp.dart';
 import 'package:kasir/services/profile_services.dart';
 
 import '../../components/image_avatar.dart';

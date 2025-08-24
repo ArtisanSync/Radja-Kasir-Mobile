@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:kasir/core/dio_intercaptor.dart';
-import 'package:kasir/core/use_store.dart';
 import 'package:kasir/services/service_utils.dart';
 
 class InviteServices {

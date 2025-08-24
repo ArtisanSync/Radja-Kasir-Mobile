@@ -829,7 +829,7 @@ class _SubscriberDetailPageState extends ConsumerState<SubscriberDetailPage> {
     }
   }
 
-  String _formatDate(DateTime date) {
+  String formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
   }
 } 

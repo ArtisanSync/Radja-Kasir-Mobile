@@ -21,7 +21,7 @@ class _InviteMemberPageState extends ConsumerState<InviteMemberPage> {
   String _selectedRole = 'CASHIER';
   bool _isLoading = false;
   bool _isSubmitting = false;
-  String? _storeId;
+  String? storeId;
   List<dynamic> _members = [];
   
   @override
@@ -42,7 +42,7 @@ class _InviteMemberPageState extends ConsumerState<InviteMemberPage> {
     try {
       final store = await Store.getStore();
       if (store != null && store['id'] != null) {
-        setState(() => _storeId = store['id']);
+        setState(() => storeId = store['id']);
         await _loadMembers();
       }
     } catch (e) {

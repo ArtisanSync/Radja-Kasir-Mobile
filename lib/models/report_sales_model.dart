@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 class SalesReportModel {
   final String period;
   final DateRange dateRange;

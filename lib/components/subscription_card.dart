@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:kasir/helpers/currency_format.dart';
 import 'package:kasir/models/subscription_model.dart';
 
 class SubscriptionCard extends StatelessWidget {

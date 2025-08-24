@@ -104,7 +104,7 @@ class _PickImageState extends State<PickImage> {
     );
   }
 
-  Future<void> _openDialog(BuildContext context) {
+  Future<void> openDialog(BuildContext context) {
     return showDialog(
       context: context,
       builder: (BuildContext context) {

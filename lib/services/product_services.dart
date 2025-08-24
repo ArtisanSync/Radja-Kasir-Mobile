@@ -6,7 +6,7 @@ import 'package:path/path.dart' as path;
 import 'package:kasir/core/dio_intercaptor.dart';
 import 'package:kasir/core/use_store.dart';
 import 'package:kasir/services/service_utils.dart';
-import 'package:kasir/models/product_model.dart';
+
 
 class ProductServices {
   late final Dio _dio;
