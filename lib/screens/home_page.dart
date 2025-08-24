@@ -5,7 +5,6 @@ import 'package:kasir/components/builder_menu.dart';
 import 'package:kasir/components/nav_drawer.dart';
 import 'package:kasir/core/use_store.dart';
 import 'package:kasir/helpers/colors_theme.dart';
-import 'package:kasir/services/setting_services.dart';
 import 'package:kasir/providers/cart_providers.dart';
 
 class MyHomePage extends ConsumerStatefulWidget {
@@ -16,25 +15,6 @@ class MyHomePage extends ConsumerStatefulWidget {
 }
 
 class _MyHomePageState extends ConsumerState<MyHomePage> {
-  final api = SettingServices();
-
-  Future<void> fetchPackage() async {
-    try {
-      final resp = await api.subcribe();
-      if (resp.statusCode == 200) {
-        await Store.savePackageSubscribe(resp.data!['data']);
-      }
-    } catch (e) {
-      print('Error fetching package: $e');
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    fetchPackage();
-  }
-
   @override
   Widget build(BuildContext context) {
     final cartCount = ref.watch(cartItemCountProvider);
@@ -68,7 +48,6 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
               ButtonCartWithBadge(
                 cartCount: cartCount,
               ),
-              // Hapus IconButton untuk history karena sudah ada di drawer
               const SizedBox(width: 10),
             ],
             centerTitle: true,
@@ -177,7 +156,6 @@ class ButtonCartWithBadge extends StatelessWidget {
       children: [
         IconButton(
           onPressed: () {
-            // Placeholder untuk Transaction Page
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Cart/Transaction page coming soon'),
