@@ -10,10 +10,10 @@ import 'package:kasir/screens/product/product.dart';
 import 'package:kasir/screens/profile/profile_page.dart';
 import 'package:kasir/screens/report/report_page.dart';
 import 'package:kasir/screens/login_page.dart';
-
+import 'package:kasir/helpers/colors_theme.dart';
 class NavDrawer extends StatefulWidget {
   final String? currentRoute;
-  
+
   const NavDrawer({super.key, this.currentRoute});
 
   @override
@@ -60,7 +60,7 @@ class _NavDrawerState extends State<NavDrawer> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Drawer(
       backgroundColor: theme.colorScheme.surface,
       child: Column(
@@ -71,9 +71,7 @@ class _NavDrawerState extends State<NavDrawer> {
             padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: _isAdmin 
-                  ? [Colors.red.shade600, Colors.red.shade400]
-                  : [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.8)],
+                colors: [Color(0xFF00ADFE), Color(0xFF1E40AF)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -99,7 +97,7 @@ class _NavDrawerState extends State<NavDrawer> {
                     child: Text(
                       _getInitials(_userName),
                       style: TextStyle(
-                        color: _isAdmin ? Colors.red.shade600 : theme.colorScheme.primary,
+                        color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
                         fontSize: 20,
                       ),
@@ -196,9 +194,7 @@ class _NavDrawerState extends State<NavDrawer> {
         route: 'profile',
         onTap: () => _navigateToPage(context, const ProfilePage()),
       ),
-      
       const Divider(height: 32),
-      
       _buildMenuItem(
         context,
         icon: CupertinoIcons.square_arrow_right,
@@ -247,9 +243,7 @@ class _NavDrawerState extends State<NavDrawer> {
         route: 'profile',
         onTap: () => _navigateToPage(context, const ProfilePage()),
       ),
-      
       const Divider(height: 32),
-      
       _buildMenuItem(
         context,
         icon: CupertinoIcons.square_arrow_right,
@@ -272,11 +266,12 @@ class _NavDrawerState extends State<NavDrawer> {
     final theme = Theme.of(context);
     final isActive = widget.currentRoute == route;
     final isAdmin = _userRole == 'ADMIN';
-    
-    Color primaryColor = isDestructive 
-        ? Colors.red.shade600 
-        : (isAdmin ? Colors.red.shade600 : theme.colorScheme.primary);
-    
+
+    // Set color for icons consistently across the app
+    Color primaryColor = isDestructive
+        ? Colors.red.shade600
+        : (isAdmin ? AppColor.primary : AppColor.primary);
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       child: Material(
@@ -288,9 +283,7 @@ class _NavDrawerState extends State<NavDrawer> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: isActive 
-                ? primaryColor.withOpacity(0.1)
-                : Colors.transparent,
+              color: isActive ? primaryColor.withOpacity(0.1) : Colors.transparent,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -300,8 +293,8 @@ class _NavDrawerState extends State<NavDrawer> {
                   height: 40,
                   decoration: BoxDecoration(
                     color: isActive
-                      ? primaryColor.withOpacity(0.2)
-                      : primaryColor.withOpacity(0.1),
+                        ? primaryColor.withOpacity(0.2)
+                        : primaryColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
@@ -316,9 +309,9 @@ class _NavDrawerState extends State<NavDrawer> {
                     title,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                      color: isActive 
-                        ? primaryColor
-                        : theme.colorScheme.onSurface,
+                      color: isActive
+                          ? primaryColor
+                          : theme.colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -345,8 +338,8 @@ class _NavDrawerState extends State<NavDrawer> {
   }
 
   Future<void> _handleLogout(BuildContext context) async {
-    Navigator.pop(context); // Close drawer first
-    
+    Navigator.pop(context);
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -380,7 +373,7 @@ class _NavDrawerState extends State<NavDrawer> {
       // Clear all stored data
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.clear();
-      
+
       // Navigate to login page
       if (context.mounted) {
         Navigator.pushAndRemoveUntil(
@@ -413,12 +406,12 @@ class _NavDrawerState extends State<NavDrawer> {
 
   String _getInitials(String name) {
     if (name.isEmpty || name == 'Loading...' || name == 'User') return 'U';
-    
+
     final words = name.trim().split(' ');
     if (words.length >= 2) {
       return '${words.first[0].toUpperCase()}${words.last[0].toUpperCase()}';
     } else {
-      return words.first.length >= 2 
+      return words.first.length >= 2
           ? words.first.substring(0, 2).toUpperCase()
           : words.first[0].toUpperCase();
     }
