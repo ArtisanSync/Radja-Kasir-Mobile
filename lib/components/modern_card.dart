@@ -10,7 +10,6 @@ class ModernCard extends StatelessWidget {
   final double? elevation;
   final BorderRadiusGeometry? borderRadius;
   final VoidCallback? onTap;
-
   const ModernCard({
     Key? key,
     required this.child,

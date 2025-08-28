@@ -13,32 +13,66 @@ class ProfileServices {
 
   final String _baseUrl = ServiceUtils().baseUrl;
 
-  Future<dynamic> detailStore() async {
-    final store = await Store.getStore();
-    final response = await _dio.get("$_baseUrl/setting/store/${store['id']}");
-    if (response.statusCode == 200) {
-      return response.data;
-    }
-  }
-
+  // Correct the endpoint for user profile
   Future<dynamic> profile() async {
     final user = await Store.getUser();
-    final resp = await _dio.get("$_baseUrl/settings/profile/${user['id']}");
     try {
-      return resp;
+      final resp = await _dio.get("$_baseUrl/users/profile");
+
+      if (resp.statusCode == 200) {
+        return resp.data;
+      } else {
+        return {
+          'success': false,
+          'message': resp.data['message'] ?? 'Failed to fetch profile',
+        };
+      }
     } on DioException catch (e) {
-      return e;
+      return {
+        'success': false,
+        'message': e.response?.data['message'] ?? 'Failed to fetch profile',
+      };
     }
   }
 
-  Future<dynamic> update(Map<String, dynamic> body) async {
-    final store = await Store.getStore();
-    final resp = await _dio
-        .post("$_baseUrl/settings/store/${store['id']}/update", data: body);
+  Future<Map<String, dynamic>> update(Map<String, dynamic> body) async {
     try {
-      return resp;
+      final store = await Store.getStore();
+      if (store == null || store['id'] == null) {
+        return {
+          'success': false,
+          'message': 'Informasi toko tidak ditemukan',
+        };
+      }
+
+      final response = await _dio
+          .post("$_baseUrl/settings/store/${store['id']}/update", data: body);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Perbarui data store yang tersimpan
+        if (response.data['data']) {
+          await Store.saveStore(response.data['data']);
+        }
+
+        return {
+          'success': true,
+          'statusCode': response.statusCode,
+          'message': response.data['message'],
+          'data': response.data['data']
+        };
+      }
+
+      return {
+        'success': false,
+        'statusCode': response.statusCode,
+        'message': response.data['message'] ?? 'Gagal memperbarui profil'
+      };
     } on DioException catch (e) {
-      return e;
+      return {
+        'success': false,
+        'statusCode': e.response?.statusCode ?? 400,
+        'message': e.response?.data['message'] ?? 'Gagal memperbarui profil'
+      };
     }
   }
 
@@ -65,6 +99,4 @@ class ProfileServices {
       return e;
     }
   }
-
-  // settings/store/2bc24ffe-7d51-11ee-a870-9d9102b9ccf2/logo/upload
 }

@@ -14,55 +14,146 @@ class UserServices {
   // BASE URL
   final String _baseUrl = ServiceUtils().baseUrl;
 
-  Future<dynamic> lists() async {
-    final store = await Store.getStore();
-
+  // Get All Users (Admin Only)
+  Future<Map<String, dynamic>> getUsers() async {
     try {
-      final response = await _dio.get("$_baseUrl/users/${store['id']}/member");
-      return response;
+      final response = await _dio.get("$_baseUrl/users/profile");
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'statusCode': response.statusCode,
+          'message': response.data['message'],
+          'data': response.data['data']
+        };
+      } else {
+        return {
+          'success': false,
+          'statusCode': response.statusCode,
+          'message': response.data['message'] ?? 'Failed to fetch users'
+        };
+      }
     } on DioException catch (e) {
-      print(e);
-      // return e.response!.statusCode ?? 500;
+      return {
+        'success': false,
+        'statusCode': e.response?.statusCode ?? 500,
+        'message': e.response?.data['message'] ?? 'Failed to fetch users'
+      };
     }
   }
 
-  Future<dynamic> store(Map<String, dynamic> body) async {
+  // Create a new store member
+  Future<Map<String, dynamic>> createMember(Map<String, dynamic> body) async {
     final store = await Store.getStore();
     try {
       final response = await _dio.post(
         "$_baseUrl/users/${store['id']}/member/store",
         data: body,
       );
-      return response;
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'statusCode': response.statusCode,
+          'message': response.data['message'],
+          'data': response.data['data']
+        };
+      } else {
+        return {
+          'success': false,
+          'statusCode': response.statusCode,
+          'message': response.data['message'] ?? 'Failed to create member'
+        };
+      }
     } on DioException catch (e) {
-      return e.response;
+      return {
+        'success': false,
+        'statusCode': e.response?.statusCode ?? 400,
+        'message': e.response?.data['message'] ?? 'Failed to create member'
+      };
     }
   }
 
-  Future<dynamic> destroy(int id) async {
+  // Delete a store member (Admin Only)
+  Future<Map<String, dynamic>> deleteMember(int id) async {
     try {
       final response = await _dio.delete("$_baseUrl/users/member/destroy/$id");
-      return response;
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'statusCode': response.statusCode,
+          'message': response.data['message'],
+        };
+      } else {
+        return {
+          'success': false,
+          'statusCode': response.statusCode,
+          'message': response.data['message'] ?? 'Failed to delete member'
+        };
+      }
     } on DioException catch (e) {
-      return e.response;
+      return {
+        'success': false,
+        'statusCode': e.response?.statusCode ?? 400,
+        'message': e.response?.data['message'] ?? 'Failed to delete member'
+      };
     }
   }
 
-  // GET USER PROFILE
-  Future<dynamic> profile() async {
+  // Get User Profile (Authenticated User)
+  Future<Map<String, dynamic>> getProfile() async {
     try {
-      return await _dio.get("$_baseUrl/users/profile");
+      final response = await _dio.get("$_baseUrl/users/profile");
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'statusCode': response.statusCode,
+          'message': response.data['message'],
+          'data': response.data['data']
+        };
+      } else {
+        return {
+          'success': false,
+          'statusCode': response.statusCode,
+          'message': response.data['message'] ?? 'Failed to get profile'
+        };
+      }
     } on DioException catch (e) {
-      return e.response;
+      return {
+        'success': false,
+        'statusCode': e.response?.statusCode ?? 400,
+        'message': e.response?.data['message'] ?? 'Failed to get profile'
+      };
     }
   }
 
-  // USER PACKAGE
-  Future<dynamic> package(int id) async {
+  // Get User Package (Subscription Info)
+  Future<Map<String, dynamic>> getPackage(int id) async {
     try {
-      return await _dio.get("$_baseUrl/users/package/$id");
+      final response = await _dio.get("$_baseUrl/users/package/$id");
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'statusCode': response.statusCode,
+          'message': response.data['message'],
+          'data': response.data['data']
+        };
+      } else {
+        return {
+          'success': false,
+          'statusCode': response.statusCode,
+          'message': response.data['message'] ?? 'Failed to fetch package'
+        };
+      }
     } on DioException catch (e) {
-      return e.response!.statusMessage;
+      return {
+        'success': false,
+        'statusCode': e.response?.statusCode ?? 400,
+        'message': e.response?.data['message'] ?? 'Failed to fetch package'
+      };
     }
   }
 }

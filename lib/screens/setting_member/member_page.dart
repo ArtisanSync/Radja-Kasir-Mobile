@@ -33,10 +33,10 @@ class _MemberPageState extends State<MemberPage> {
   }
 
   Future<void> fetchData() async {
-    var resp = await userServices.lists();
-    var data = Member.fromJson(resp.data);
+    var resp = await userServices.getUsers();
+    var data = Member.fromJson(resp['data']);
 
-    if (resp!.statusCode == 200) {
+    if (resp['success'] == true && resp['statusCode'] == 200) {
       setState(() {
         member = data.data!;
       });
@@ -44,8 +44,8 @@ class _MemberPageState extends State<MemberPage> {
   }
 
   Future<void> delete(int id) async {
-    var resp = await userServices.destroy(id);
-    if (resp!.statusCode == 201) {
+    var resp = await userServices.deleteMember(id);
+    if (resp['success'] == true) {
       refresh();
     }
   }
@@ -78,7 +78,7 @@ class _MemberPageState extends State<MemberPage> {
             children: [
               ListView.separated(
                 shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 separatorBuilder: (context, index) =>
                     Container(height: 1, color: Colors.grey[300]),
                 itemCount: member.length,
