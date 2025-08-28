@@ -1,3 +1,5 @@
+// lib/models/subscription_model.dart
+
 class SubscriptionPackage {
   final String id;
   final String name;

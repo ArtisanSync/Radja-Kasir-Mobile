@@ -1,4 +1,3 @@
-// ignore_for_file: use_build_context_synchronously, prefer_final_fields
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:kasir/components/button_light.dart';
@@ -28,13 +27,14 @@ class _MemberCreateState extends State<MemberCreate> {
       "email": _email.text,
       "password": _password.text
     };
-    var resp = await userServices.store(body);
+
+    var resp = await userServices.createMember(body);
     context.loaderOverlay.hide();
-    if (resp!.statusCode == 201) {
+    if (resp['success'] == true) {
       Navigator.pop(context);
     }
 
-    if (resp!.statusCode == 400) {
+    if (resp['success'] == false && resp['statusCode'] == 400) {
       const snackBar = SnackBar(
         content: Text('Email telah terdaftar'),
         backgroundColor: Colors.red,

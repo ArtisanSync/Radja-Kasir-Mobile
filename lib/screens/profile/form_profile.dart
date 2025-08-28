@@ -25,14 +25,18 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
   TextEditingController name = TextEditingController();
   TextEditingController storeType = TextEditingController();
   TextEditingController address = TextEditingController();
+  TextEditingController phone = TextEditingController();
+  TextEditingController whatsapp = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     setState(() {
-      name.text = widget.profile.store!;
-      storeType.text = widget.profile.storeType!;
-      address.text = widget.profile.address!;
+      name.text = widget.profile.businessName ?? '';
+      storeType.text = widget.profile.businessType ?? '';
+      address.text = widget.profile.businessAddress ?? '';
+      phone.text = widget.profile.phone ?? '';
+      whatsapp.text = widget.profile.whatsapp ?? '';
     });
   }
 
@@ -65,21 +69,43 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
             children: [
               SizedBox(height: 20.sp),
               Padding(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 20.sp, vertical: 10.sp),
-                child: TextInput(label: "Nama Usaha", controller: name),
+                padding: EdgeInsets.symmetric(horizontal: 20.sp, vertical: 10.sp),
+                child: TextInput(
+                  label: "Nama Usaha",
+                  controller: name,
+                ),
               ),
               SizedBox(height: 5.sp),
               Padding(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 20.sp, vertical: 10.sp),
-                child: TextInput(label: "Jenis Usaha", controller: storeType),
+                padding: EdgeInsets.symmetric(horizontal: 20.sp, vertical: 10.sp),
+                child: TextInput(
+                  label: "Jenis Usaha",
+                  controller: storeType,
+                ),
               ),
               SizedBox(height: 5.sp),
               Padding(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 20.sp, vertical: 10.sp),
-                child: TextInput(label: "Alamat", controller: address),
+                padding: EdgeInsets.symmetric(horizontal: 20.sp, vertical: 10.sp),
+                child: TextInput(
+                  label: "Alamat",
+                  controller: address,
+                ),
+              ),
+              SizedBox(height: 5.sp),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.sp, vertical: 10.sp),
+                child: TextInput(
+                  label: "Nomor Telepon",
+                  controller: phone,
+                ),
+              ),
+              SizedBox(height: 5.sp),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.sp, vertical: 10.sp),
+                child: TextInput(
+                  label: "Whatsapp",
+                  controller: whatsapp,
+                ),
               ),
               SizedBox(height: 20.sp),
               Padding(
@@ -91,11 +117,19 @@ class _ProfileFormScreenState extends State<ProfileFormScreen> {
                     var resp = await profileServices.update({
                       "name": name.text,
                       "address": address.text,
-                      "store_type": storeType.text
+                      "store_type": storeType.text,
+                      "phone": phone.text,
+                      "whatsapp": whatsapp.text,
                     });
                     context.loaderOverlay.hide();
-                    if (resp!.statusCode == 201) {
+                    if (resp['success'] == true && resp['statusCode'] == 200) {
                       Navigator.pop(context);
+                    } else {
+                      const snackBar = SnackBar(
+                        content: Text('Update gagal'),
+                        backgroundColor: Colors.red,
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
                     }
                   },
                 ),

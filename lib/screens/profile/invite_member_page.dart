@@ -5,6 +5,7 @@ import 'package:kasir/components/modern_card.dart';
 import 'package:kasir/components/modern_buttons.dart';
 import 'package:kasir/components/modern_text_field.dart';
 import 'package:kasir/core/use_store.dart';
+import 'package:kasir/services/user_services.dart';
 
 class InviteMemberPage extends ConsumerStatefulWidget {
   const InviteMemberPage({Key? key}) : super(key: key);
@@ -23,7 +24,8 @@ class _InviteMemberPageState extends ConsumerState<InviteMemberPage> {
   bool _isSubmitting = false;
   String? storeId;
   List<dynamic> _members = [];
-  
+  UserServices userServices = UserServices();
+
   @override
   void initState() {
     super.initState();
@@ -46,50 +48,68 @@ class _InviteMemberPageState extends ConsumerState<InviteMemberPage> {
         await _loadMembers();
       }
     } catch (e) {
-      // Handle error
     } finally {
       setState(() => _isLoading = false);
     }
   }
   
+  // Fetch members
   Future<void> _loadMembers() async {
-    // Implementation to fetch members from API
-    // Set _members state with results
+    var resp = await userServices.getUsers();
+    if (resp['success']) {
+      setState(() {
+        _members = resp['data'];
+      });
+    }
   }
   
+  // Invite new member
   Future<void> _inviteMember() async {
     if (!_formKey.currentState!.validate()) return;
     
     setState(() => _isSubmitting = true);
     try {
-      // API call to invite member using the store service
-      // Example:
-      // final response = await _inviteService.inviteMember({
-      //   "storeId": _storeId,
-      //   "invitedName": _nameController.text,
-      //   "invitedEmail": _emailController.text,
-      //   "role": _selectedRole
-      // });
-      
-      // Success handling
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Undangan berhasil dikirim'), backgroundColor: Colors.green)
-      );
-      
-      _nameController.clear();
-      _emailController.clear();
-      _loadMembers(); // Reload member list
+      final response = await userServices.createMember({
+        "storeId": storeId,
+        "invitedName": _nameController.text,
+        "invitedEmail": _emailController.text,
+        "role": _selectedRole,
+      });
+
+      if (response['success']) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Undangan berhasil dikirim'), backgroundColor: Colors.green),
+        );
+
+        _nameController.clear();
+        _emailController.clear();
+        _loadMembers();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal mengirim undangan'), backgroundColor: Colors.red),
+        );
+      }
       
     } catch (e) {
-      // Error handling
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal mengirim undangan'), backgroundColor: Colors.red)
+        const SnackBar(content: Text('Gagal mengirim undangan'), backgroundColor: Colors.red),
       );
     } finally {
       setState(() => _isSubmitting = false);
     }
   }
   
+  Future<void> _deleteMember(int id) async {
+    try {
+      var resp = await userServices.deleteMember(id);
+      if (resp['success']) {
+        _loadMembers();
+      }
+    } catch (e) {
+      // Handle deletion error
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -246,6 +266,7 @@ class _InviteMemberPageState extends ConsumerState<InviteMemberPage> {
                             icon: const Icon(Icons.delete_outline, color: Colors.red),
                             onPressed: () {
                               // Show confirmation dialog and remove member
+                              _deleteMember(member['id']);
                             },
                           ),
                         ),

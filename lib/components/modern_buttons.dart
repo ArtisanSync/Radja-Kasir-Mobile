@@ -40,7 +40,9 @@ class ModernButton extends StatelessWidget {
               width: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  theme.colorScheme.onPrimary
+                ),
               ),
             )
           : Row(
@@ -49,7 +51,7 @@ class ModernButton extends StatelessWidget {
               children: [
                 if (icon != null) ...[
                   icon!,
-                  const Gap(8),
+                  const SizedBox(width: 8),
                 ],
                 Text(text),
               ],

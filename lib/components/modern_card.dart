@@ -9,7 +9,7 @@ class ModernCard extends StatelessWidget {
   final Color? color;
   final double? elevation;
   final BorderRadiusGeometry? borderRadius;
-
+  final VoidCallback? onTap;
   const ModernCard({
     Key? key,
     required this.child,
@@ -18,6 +18,7 @@ class ModernCard extends StatelessWidget {
     this.color,
     this.elevation,
     this.borderRadius,
+    this.onTap,
   }) : super(key: key);
 
   @override

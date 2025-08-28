@@ -1,10 +1,6 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
-
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:kasir/helpers/colors_theme.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class PickImage extends StatefulWidget {
@@ -16,74 +12,102 @@ class PickImage extends StatefulWidget {
 }
 
 class _PickImageState extends State<PickImage> {
-  final ImagePicker picker = ImagePicker();
-  late String imagePath = '';
-
-  Future<void> checkPermission(BuildContext context) async {
-    // var storageStatus = await Permission.photos.request();
-    var cameraStatus = await Permission.camera.request();
-
-    // if (storageStatus.isGranted && cameraStatus.isGranted) {
-    //   // Permissions granted, you can access storage and camera here
-    //   print('Storage and Camera permissions granted');
-    // } else {
-    //   // Handle denied or permanently denied permissions
-    //   if (storageStatus.isDenied || cameraStatus.isDenied) {
-    //     print('Storage or Camera permission denied');
-    //     openAppSettings();
-    //   } else if (storageStatus.isPermanentlyDenied ||
-    //       cameraStatus.isPermanentlyDenied) {
-    //     print('Storage or Camera permission permanently denied');
-    //     openAppSettings(); // Opens app settings for the user to enable permissions
-    //   }
-    // }
-    if (cameraStatus.isGranted) {
-      // Permissions granted, you can access storage and camera here
-      print('Storage and Camera permissions granted');
-      pickGallery(context);
-    } else {
-      // Handle denied or permanently denied permissions
-      if (cameraStatus.isDenied) {
-        print('Storage or Camera permission denied');
-        openAppSettings();
-      } else if (cameraStatus.isPermanentlyDenied) {
-        print('Storage or Camera permission permanently denied');
-        openAppSettings(); // Opens app settings for the user to enable permissions
+  XFile? _imageFile;
+  final ImagePicker _picker = ImagePicker();
+  
+  Future<void> pickImage(ImageSource source) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        imageQuality: 80,
+      );
+      
+      if (image != null) {
+        setState(() {
+          _imageFile = image;
+          widget.getFile(image);
+        });
       }
+    } catch (e) {
+      print('Error picking image: $e');
     }
   }
 
-  Future<void> pickGallery(BuildContext context) async {
-    var image = await picker.pickImage(source: ImageSource.gallery);
-    Navigator.pop(context);
-    setState(() {
-      imagePath = image!.path;
-      widget.getFile(image);
-    });
-  }
-
-  Future<void> pickCamera(BuildContext context) async {
-    var image = await picker.pickImage(source: ImageSource.camera);
-    Navigator.pop(context);
-    setState(() {
-      imagePath = image!.path;
-      widget.getFile(image);
-    });
+  Future<void> checkPermission(BuildContext context) async {
+    try {
+      // Periksa permission kamera
+      var cameraStatus = await Permission.camera.request();
+      
+      // Periksa permission galeri (penyimpanan)
+      var galleryStatus = Platform.isAndroid 
+          ? await Permission.storage.request() 
+          : await Permission.photos.request();
+      
+      if (cameraStatus.isGranted && 
+          (galleryStatus.isGranted || galleryStatus.isLimited)) {
+        // Tampilkan dialog pilihan sumber
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: Colors.white,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          builder: (BuildContext context) {
+            return SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  ListTile(
+                    leading: const Icon(Icons.photo_library),
+                    title: const Text('Ambil dari Galeri'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      pickImage(ImageSource.gallery);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.photo_camera),
+                    title: const Text('Ambil Foto'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      pickImage(ImageSource.camera);
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      } else {
+        // Tampilkan pesan jika izin tidak diberikan
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Aplikasi membutuhkan izin kamera dan galeri untuk mengambil gambar'),
+            backgroundColor: Colors.red,
+            action: SnackBarAction(
+              label: 'Pengaturan',
+              onPressed: () => openAppSettings(),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error checking permissions: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {
-        checkPermission(context);
-      },
+      onTap: () => checkPermission(context),
       child: Container(
         width: double.infinity,
-        color: imagePath.isNotEmpty ? Colors.grey[200] : Colors.blue[700],
-        padding: EdgeInsets.symmetric(vertical: imagePath.isNotEmpty ? 0 : 40),
-        child: imagePath.isNotEmpty
+        color: _imageFile != null ? Colors.grey[200] : Colors.blue[700],
+        padding: EdgeInsets.symmetric(vertical: _imageFile != null ? 0 : 40),
+        child: _imageFile != null
             ? Image.file(
-                File(imagePath),
+                File(_imageFile!.path),
                 fit: BoxFit.contain,
                 height: 250,
               )
@@ -101,79 +125,6 @@ class _PickImageState extends State<PickImage> {
                 ],
               ),
       ),
-    );
-  }
-
-  Future<void> openDialog(BuildContext context) {
-    return showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          surfaceTintColor: Colors.white,
-          content: Container(
-            height: 130,
-            width: double.minPositive,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Ambil Gambar',
-                  style: TextStyle(
-                      fontSize: 22,
-                      color: AppColor.textPrimary,
-                      fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    InkWell(
-                      onTap: () async {
-                        // await checkPermission(context);
-                        var image =
-                            await picker.pickImage(source: ImageSource.gallery);
-                        // Navigator.pop(context);
-                        setState(() {
-                          imagePath = image!.path;
-                          widget.getFile(image);
-                        });
-                      },
-                      child: Container(
-                        padding:
-                            EdgeInsets.symmetric(vertical: 20, horizontal: 40),
-                        decoration: BoxDecoration(
-                          border: Border.all(width: 1, color: AppColor.light),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Icon(
-                          Icons.image_outlined,
-                          size: 22,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    InkWell(
-                      onTap: () {},
-                      child: Container(
-                        padding:
-                            EdgeInsets.symmetric(vertical: 20, horizontal: 40),
-                        decoration: BoxDecoration(
-                          border: Border.all(width: 1, color: AppColor.light),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Icon(
-                          Icons.camera_alt_outlined,
-                          size: 22,
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }

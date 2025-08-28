@@ -33,7 +33,7 @@ class ModernTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return TextFormField(
       controller: controller,
       validator: validator,
@@ -53,7 +53,8 @@ class ModernTextField extends StatelessWidget {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.5)),
+          borderSide:
+              BorderSide(color: theme.colorScheme.outline.withOpacity(0.5)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -69,19 +70,20 @@ class ModernTextField extends StatelessWidget {
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.3)),
+          borderSide:
+              BorderSide(color: theme.colorScheme.outline.withOpacity(0.3)),
         ),
         filled: true,
-        fillColor: enabled 
-          ? theme.colorScheme.surface 
-          : theme.colorScheme.surface.withOpacity(0.5),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        fillColor: enabled
+            ? theme.colorScheme.surface
+            : theme.colorScheme.surface.withOpacity(0.5),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
   }
 }
 
-// Tambahkan ModernSearchField yang hilang
 class ModernSearchField extends StatefulWidget {
   final TextEditingController controller;
   final String hint;
@@ -104,11 +106,11 @@ class _ModernSearchFieldState extends State<ModernSearchField> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return TextField(
       controller: widget.controller,
       onChanged: (value) {
-        setState(() {}); // Rebuild untuk update clear button
+        setState(() {});
         widget.onChanged?.call(value);
       },
       decoration: InputDecoration(
@@ -136,7 +138,8 @@ class _ModernSearchFieldState extends State<ModernSearchField> {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.5)),
+          borderSide:
+              BorderSide(color: theme.colorScheme.outline.withOpacity(0.5)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -144,7 +147,8 @@ class _ModernSearchFieldState extends State<ModernSearchField> {
         ),
         filled: true,
         fillColor: theme.colorScheme.surface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
   }
