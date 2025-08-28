@@ -2,10 +2,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:kasir/components/builder_menu.dart';
 import 'package:kasir/components/nav_drawer.dart';
+import 'package:kasir/helpers/store.dart';
 import 'package:kasir/screens/profile/business_profile_page.dart';
+import 'package:kasir/screens/store/store_list_page.dart';
 import 'package:kasir/screens/subscription/subscription_page.dart';
 import 'package:kasir/screens/profile/invite_member_page.dart';
-import 'package:kasir/core/use_store.dart';
+import 'package:kasir/services/user_services.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -16,27 +18,47 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   dynamic _user = {};
+  Map<String, dynamic>? _currentStore;
   bool _isLoading = true;
   bool _isMember = false;
+  UserServices userServices = UserServices();
 
-  Future<void> getUserStore() async {
+  Future<void> getUserProfile() async {
     setState(() => _isLoading = true);
     try {
-      final user = await Store.getUser();
-      setState(() {
-        _user = user ?? {};
-        _isMember = user?['is_member'] == true;
-        _isLoading = false;
-      });
+      final resp = await userServices.getProfile();
+      if (resp['success'] == true) {
+        setState(() {
+          _user = resp['data'];
+          _isMember = _user['role'] == 'MEMBER';
+          _isLoading = false;
+        });
+      } else {
+        setState(() => _isLoading = false);
+      }
     } catch (e) {
       setState(() => _isLoading = false);
     }
   }
 
+  Future<void> _getCurrentStore() async {
+    try {
+      final currentStore = await Store.getStore();
+      if (mounted) {
+        setState(() {
+          _currentStore = currentStore;
+        });
+      }
+    } catch (e) {
+      // Handle error
+    }
+  }
+
   @override
   void initState() {
-    getUserStore();
     super.initState();
+    getUserProfile();
+    _getCurrentStore();
   }
 
   @override
@@ -73,10 +95,15 @@ class _ProfilePageState extends State<ProfilePage> {
                         width: 70,
                         child: CircleAvatar(
                           backgroundColor: theme.colorScheme.primary,
-                          child: Text(
-                            _getInitials(_user['name'] ?? ''),
-                            style: const TextStyle(color: Colors.white, fontSize: 32),
-                          ),
+                          backgroundImage: _user['avatar'] != null
+                              ? NetworkImage(_user['avatar'])
+                              : null,
+                          child: _user['avatar'] == null
+                              ? Text(
+                                  _getInitials(_user['name'] ?? ''),
+                                  style: const TextStyle(color: Colors.white, fontSize: 32),
+                                )
+                              : null,
                         ),
                       ),
                       const SizedBox(width: 20),
@@ -101,16 +128,32 @@ class _ProfilePageState extends State<ProfilePage> {
                 
                 const SizedBox(height: 10),
                 
-                // Business Profile Menu
-                _buildMenuItem(
-                  context: context,
-                  icon: CupertinoIcons.building_2_fill,
-                  title: 'Profil usaha',
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const BusinessProfilePage()),
+                // Ubah menu Profil Usaha
+                _currentStore != null && _currentStore!['id'] != null
+                ? _buildMenuItem(
+                    context: context,
+                    icon: CupertinoIcons.house_fill,
+                    title: 'Profil usaha: ${_currentStore!['name'] ?? 'Toko saya'}',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => BusinessProfilePage(
+                          storeId: _currentStore!['id'],
+                        ),
+                      ),
+                    ),
+                  )
+                : _buildMenuItem(
+                    context: context,
+                    icon: CupertinoIcons.house_fill,
+                    title: 'Daftar Toko',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const StoreListPage(),
+                      ),
+                    ).then((_) => _getCurrentStore()),
                   ),
-                ),
                 
                 const SizedBox(height: 3),
                 
@@ -127,7 +170,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 
                 const SizedBox(height: 3),
                 
-                // Invite Member Menu (Hide for members)
                 if (!_isMember)
                   _buildMenuItem(
                     context: context,
@@ -173,13 +215,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               const SizedBox(width: 16),
-              Text(
-                title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
+              Expanded(
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-              const Spacer(),
               Icon(
                 CupertinoIcons.chevron_right,
                 color: theme.colorScheme.onSurfaceVariant,

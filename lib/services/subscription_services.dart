@@ -48,13 +48,15 @@ class SubscriptionServices {
   // Get user's current subscription
   Future<Map<String, dynamic>> getMySubscription() async {
     try {
-      final response = await _dio.get("$_baseUrl/subscriptions/my-subscription");
+      final response =
+          await _dio.get("$_baseUrl/subscriptions/my-subscription");
 
       if (response.statusCode == 200) {
         return {
           'success': true,
           'data': response.data['data'],
-          'message': response.data['message'] ?? 'Subscription loaded successfully'
+          'message':
+              response.data['message'] ?? 'Subscription loaded successfully'
         };
       }
 
