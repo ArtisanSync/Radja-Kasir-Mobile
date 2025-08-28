@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir/models/product_model.dart';
 import 'package:kasir/services/transaction_services.dart';
-import 'dart:developer' as developer;
 
 // Transaction Services Provider
 final transactionServicesProvider = Provider<TransactionServices>((ref) {
@@ -52,13 +51,8 @@ class TransactionItem {
 
   Map<String, dynamic> toJson() {
     return {
-      'product_id': productId,
-      'product_name': productName,
-      'price': price,
+      'variantId': productId,
       'quantity': quantity,
-      'unit': unit,
-      'category': category,
-      'image': image,
     };
   }
 
@@ -94,7 +88,8 @@ class CustomerInfo {
       'name': name,
       'phone': phone,
       'address': address,
-      'notes': notes,
+      'company': null,
+      'whatsapp': phone, // Use phone as whatsapp for now
     };
   }
 }
@@ -190,7 +185,8 @@ class TransactionState {
 class TransactionNotifier extends StateNotifier<TransactionState> {
   final TransactionServices _transactionServices;
 
-  TransactionNotifier(this._transactionServices) : super(const TransactionState());
+  TransactionNotifier(this._transactionServices)
+      : super(const TransactionState());
 
   // Initialize new transaction
   void initializeTransaction(List<TransactionItem> items) {
@@ -200,7 +196,6 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       items: items,
       createdAt: DateTime.now(),
     );
-    developer.log('Transaction initialized: $transactionNumber');
   }
 
   // Process cash payment
@@ -277,34 +272,38 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     state = state.copyWith(isProcessing: true, error: null);
 
     try {
-      // Prepare transaction data
+      // Prepare transaction data according to backend format
       final transactionData = {
-        'transaction_number': state.transactionNumber,
         'items': state.items.map((item) => item.toJson()).toList(),
-        'payment_info': paymentInfo.toJson(),
-        'total_amount': state.totalAmount,
-        'created_at': state.createdAt?.toIso8601String(),
+        'paymentMethod': _mapPaymentMethod(paymentInfo.method),
+        'notes': paymentInfo.notes,
       };
 
-      developer.log('Processing payment: ${paymentInfo.method}');
-      
+      // Add payment-specific data
+      if (paymentInfo.method == 'cash') {
+        transactionData['amountPaid'] = paymentInfo.receivedAmount;
+      } else if (paymentInfo.method == 'credit') {
+        transactionData['customerData'] = paymentInfo.customerInfo?.toJson();
+      }
+
       // Call transaction service
-      final result = await _transactionServices.createTransaction(transactionData);
-      
+      final result =
+          await _transactionServices.createTransaction(transactionData);
+
       if (result['success'] == true) {
         state = state.copyWith(
           paymentInfo: paymentInfo,
           isProcessing: false,
           isCompleted: true,
         );
-        developer.log('Transaction completed successfully');
+
         return true;
       } else {
         state = state.copyWith(
           error: result['message'] ?? 'Failed to process payment',
           isProcessing: false,
         );
-        developer.log('Transaction failed: ${state.error}');
+
         return false;
       }
     } catch (e) {
@@ -312,15 +311,26 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
         error: 'Network error: ${e.toString()}',
         isProcessing: false,
       );
-      developer.log('Transaction error: $e');
+
       return false;
+    }
+  }
+
+  // Map payment method to backend format
+  String _mapPaymentMethod(String method) {
+    switch (method) {
+      case 'cash':
+        return 'TUNAI';
+      case 'credit':
+        return 'KASBON';
+      default:
+        return 'TUNAI';
     }
   }
 
   // Clear transaction
   void clearTransaction() {
     state = const TransactionState();
-    developer.log('Transaction cleared');
   }
 
   // Clear error
@@ -342,7 +352,8 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
 }
 
 // Transaction Provider
-final transactionProvider = StateNotifierProvider<TransactionNotifier, TransactionState>((ref) {
+final transactionProvider =
+    StateNotifierProvider<TransactionNotifier, TransactionState>((ref) {
   final transactionServices = ref.watch(transactionServicesProvider);
   return TransactionNotifier(transactionServices);
 });

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/cart_providers.dart';
+import '../../services/transaction_services.dart';
 import 'payment_success_page.dart';
 
 class CreditPaymentPage extends ConsumerStatefulWidget {
@@ -35,29 +36,93 @@ class _CreditPaymentPageState extends ConsumerState<CreditPaymentPage> {
     super.dispose();
   }
 
-  void _processPayment() {
+  void _processPayment() async {
     if (_formKey.currentState!.validate()) {
-      // Clear cart after successful payment
-      ref.read(cartProvider.notifier).clearCart();
-
-      // Navigate to success page
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PaymentSuccessPage(
-            transactionNumber: widget.transactionNumber,
-            totalAmount: widget.totalAmount,
-            receivedAmount: widget.totalAmount,
-            changeAmount: 0,
-            paymentMethod: 'Kasbon',
-            cartItems: widget.cartItems,
-            customerName: _nameController.text,
-            customerPhone: _phoneController.text,
-            customerAddress: _addressController.text,
-            notes: _notesController.text,
-          ),
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
         ),
       );
+
+      try {
+        // Prepare transaction data for backend
+        final transactionData = {
+          'items': widget.cartItems
+              .map((item) => {
+                    'variantId': item.variantId,
+                    'quantity': item.quantity,
+                  })
+              .toList(),
+          'paymentMethod': 'KASBON',
+          'amountPaid': null,
+          'notes':
+              _notesController.text.isNotEmpty ? _notesController.text : null,
+          'customerData': {
+            'name': _nameController.text,
+            'phone': _phoneController.text,
+            'address': _addressController.text.isNotEmpty
+                ? _addressController.text
+                : null,
+            'company': null,
+            'whatsapp': null,
+          },
+        };
+
+        // Call backend API
+        final transactionService = TransactionServices();
+        final result =
+            await transactionService.createTransaction(transactionData);
+
+        // Hide loading
+        Navigator.of(context).pop();
+
+        if (result['success'] == true) {
+          // Clear cart after successful payment
+          ref.read(cartProvider.notifier).clearCart();
+
+          // Navigate to success page
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PaymentSuccessPage(
+                transactionNumber:
+                    result['data']['invoiceNumber'] ?? widget.transactionNumber,
+                totalAmount: widget.totalAmount,
+                receivedAmount: widget.totalAmount,
+                changeAmount: 0,
+                paymentMethod: 'Kasbon',
+                cartItems: widget.cartItems,
+                customerName: _nameController.text,
+                customerPhone: _phoneController.text,
+                customerAddress: _addressController.text,
+                notes: _notesController.text,
+              ),
+            ),
+          );
+        } else {
+          // Show error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Gagal membuat transaksi'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        // Hide loading
+        Navigator.of(context).pop();
+
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Terjadi kesalahan: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -118,7 +183,7 @@ class _CreditPaymentPageState extends ConsumerState<CreditPaymentPage> {
               ],
             ),
           ),
-          
+
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -136,7 +201,7 @@ class _CreditPaymentPageState extends ConsumerState<CreditPaymentPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Customer Form
                     Container(
                       padding: const EdgeInsets.all(16),
@@ -162,11 +227,13 @@ class _CreditPaymentPageState extends ConsumerState<CreditPaymentPage> {
                               hintText: 'Masukkan nama lengkap',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(color: Colors.grey[300]!),
+                                borderSide:
+                                    BorderSide(color: Colors.grey[300]!),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide: const BorderSide(color: Colors.blue),
+                                borderSide:
+                                    const BorderSide(color: Colors.blue),
                               ),
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -181,7 +248,7 @@ class _CreditPaymentPageState extends ConsumerState<CreditPaymentPage> {
                             },
                           ),
                           const SizedBox(height: 16),
-                          
+
                           // Phone Field
                           TextFormField(
                             controller: _phoneController,
@@ -191,11 +258,13 @@ class _CreditPaymentPageState extends ConsumerState<CreditPaymentPage> {
                               hintText: 'Masukkan nomor telepon',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(color: Colors.grey[300]!),
+                                borderSide:
+                                    BorderSide(color: Colors.grey[300]!),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide: const BorderSide(color: Colors.blue),
+                                borderSide:
+                                    const BorderSide(color: Colors.blue),
                               ),
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -210,7 +279,7 @@ class _CreditPaymentPageState extends ConsumerState<CreditPaymentPage> {
                             },
                           ),
                           const SizedBox(height: 16),
-                          
+
                           // Address Field
                           TextFormField(
                             controller: _addressController,
@@ -220,11 +289,13 @@ class _CreditPaymentPageState extends ConsumerState<CreditPaymentPage> {
                               hintText: 'Masukkan alamat lengkap',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(color: Colors.grey[300]!),
+                                borderSide:
+                                    BorderSide(color: Colors.grey[300]!),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide: const BorderSide(color: Colors.blue),
+                                borderSide:
+                                    const BorderSide(color: Colors.blue),
                               ),
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -239,7 +310,7 @@ class _CreditPaymentPageState extends ConsumerState<CreditPaymentPage> {
                             },
                           ),
                           const SizedBox(height: 16),
-                          
+
                           // Notes Field
                           TextFormField(
                             controller: _notesController,
@@ -249,11 +320,13 @@ class _CreditPaymentPageState extends ConsumerState<CreditPaymentPage> {
                               hintText: 'Tambahkan catatan jika diperlukan',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(color: Colors.grey[300]!),
+                                borderSide:
+                                    BorderSide(color: Colors.grey[300]!),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide: const BorderSide(color: Colors.blue),
+                                borderSide:
+                                    const BorderSide(color: Colors.blue),
                               ),
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -265,7 +338,7 @@ class _CreditPaymentPageState extends ConsumerState<CreditPaymentPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Info Card
                     Container(
                       width: double.infinity,
@@ -300,7 +373,7 @@ class _CreditPaymentPageState extends ConsumerState<CreditPaymentPage> {
               ),
             ),
           ),
-          
+
           // Bottom Action Button
           Container(
             padding: const EdgeInsets.all(16),

@@ -62,52 +62,54 @@ class MyApp extends StatelessWidget {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.background,
-      
+
       // Text Theme
       textTheme: GoogleFonts.poppinsTextTheme(
         Theme.of(context).textTheme,
-      ).apply(
-        bodyColor: colorScheme.onSurface,
-        displayColor: colorScheme.onSurface,
-      ).copyWith(
-        // Custom text styles for consistency
-        headlineLarge: GoogleFonts.poppins(
-          fontSize: 32,
-          fontWeight: FontWeight.bold,
-          color: colorScheme.onSurface,
-        ),
-        headlineMedium: GoogleFonts.poppins(
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
-          color: colorScheme.onSurface,
-        ),
-        headlineSmall: GoogleFonts.poppins(
-          fontSize: 24,
-          fontWeight: FontWeight.w600,
-          color: colorScheme.onSurface,
-        ),
-        titleLarge: GoogleFonts.poppins(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: colorScheme.onSurface,
-        ),
-        titleMedium: GoogleFonts.poppins(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: colorScheme.onSurface,
-        ),
-        bodyLarge: GoogleFonts.poppins(
-          fontSize: 16,
-          fontWeight: FontWeight.normal,
-          color: colorScheme.onSurface,
-        ),
-        bodyMedium: GoogleFonts.poppins(
-          fontSize: 14,
-          fontWeight: FontWeight.normal,
-          color: colorScheme.onSurface,
-        ),
-      ),
-      
+      )
+          .apply(
+            bodyColor: colorScheme.onSurface,
+            displayColor: colorScheme.onSurface,
+          )
+          .copyWith(
+            // Custom text styles for consistency
+            headlineLarge: GoogleFonts.poppins(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+            headlineMedium: GoogleFonts.poppins(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+            headlineSmall: GoogleFonts.poppins(
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface,
+            ),
+            titleLarge: GoogleFonts.poppins(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface,
+            ),
+            titleMedium: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: colorScheme.onSurface,
+            ),
+            bodyLarge: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.normal,
+              color: colorScheme.onSurface,
+            ),
+            bodyMedium: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
+              color: colorScheme.onSurface,
+            ),
+          ),
+
       // AppBar Theme
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface,
@@ -126,7 +128,7 @@ class MyApp extends StatelessWidget {
           statusBarBrightness: Brightness.light,
         ),
       ),
-      
+
       // Button Themes
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -144,7 +146,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      
+
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: colorScheme.primary,
@@ -159,7 +161,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      
+
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: colorScheme.primary,
@@ -170,12 +172,13 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      
+
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: colorScheme.surface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.outline),
@@ -216,7 +219,7 @@ class MyApp extends StatelessWidget {
           fontWeight: FontWeight.w500,
         ),
       ),
-      
+
       // Card Theme
       cardTheme: CardThemeData(
         elevation: 2,
@@ -228,7 +231,7 @@ class MyApp extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         margin: EdgeInsets.zero,
       ),
-      
+
       // Bottom Sheet Theme
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: colorScheme.surface,
@@ -239,7 +242,7 @@ class MyApp extends StatelessWidget {
         elevation: 8,
         modalElevation: 8,
       ),
-      
+
       // Dialog Theme
       dialogTheme: DialogThemeData(
         backgroundColor: colorScheme.surface,
@@ -258,7 +261,7 @@ class MyApp extends StatelessWidget {
           fontSize: 14,
         ),
       ),
-      
+
       // FloatingActionButton Theme
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: colorScheme.primary,
@@ -268,7 +271,7 @@ class MyApp extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
         ),
       ),
-      
+
       // Chip Theme
       chipTheme: ChipThemeData(
         backgroundColor: colorScheme.surfaceVariant,
@@ -284,7 +287,7 @@ class MyApp extends StatelessWidget {
         elevation: 0,
         pressElevation: 1,
       ),
-      
+
       // SnackBar Theme
       snackBarTheme: SnackBarThemeData(
         backgroundColor: colorScheme.inverseSurface,
@@ -298,21 +301,21 @@ class MyApp extends StatelessWidget {
         behavior: SnackBarBehavior.floating,
         elevation: 6,
       ),
-      
+
       // Progress Indicator Theme
       progressIndicatorTheme: ProgressIndicatorThemeData(
         color: colorScheme.primary,
         linearTrackColor: colorScheme.primary.withOpacity(0.2),
         circularTrackColor: colorScheme.primary.withOpacity(0.2),
       ),
-      
+
       // Divider Theme
       dividerTheme: DividerThemeData(
         color: colorScheme.outline.withOpacity(0.2),
         thickness: 1,
         space: 1,
       ),
-      
+
       // ListTile Theme
       listTileTheme: ListTileThemeData(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -330,7 +333,7 @@ class MyApp extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
       ),
-      
+
       // Switch Theme
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith<Color>(

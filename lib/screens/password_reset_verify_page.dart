@@ -132,7 +132,7 @@ class _PasswordResetVerifyPageState extends State<PasswordResetVerifyPage> {
               children: [
                 // Logo
                 Image.asset(
-                  'assets/images/logo_no_bg.png',
+                  'assets/images/logo.png',
                   height: 100,
                   width: 100,
                 ),

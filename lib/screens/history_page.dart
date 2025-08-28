@@ -10,7 +10,6 @@ import 'package:kasir/components/modern_text_field.dart';
 import 'package:kasir/helpers/currency_format.dart';
 import 'package:kasir/models/transaction_model.dart';
 import 'package:kasir/services/transaction_services.dart';
-import 'dart:developer' as developer;
 
 class HistoryPage extends ConsumerStatefulWidget {
   const HistoryPage({Key? key}) : super(key: key);
@@ -20,7 +19,9 @@ class HistoryPage extends ConsumerStatefulWidget {
 }
 
 // Transaction History Provider
-final transactionHistoryProvider = StateNotifierProvider<TransactionHistoryNotifier, TransactionHistoryState>((ref) {
+final transactionHistoryProvider =
+    StateNotifierProvider<TransactionHistoryNotifier, TransactionHistoryState>(
+        (ref) {
   return TransactionHistoryNotifier();
 });
 
@@ -72,7 +73,8 @@ class TransactionHistoryState {
   }
 }
 
-class TransactionHistoryNotifier extends StateNotifier<TransactionHistoryState> {
+class TransactionHistoryNotifier
+    extends StateNotifier<TransactionHistoryState> {
   final TransactionServices _transactionServices = TransactionServices();
 
   TransactionHistoryNotifier() : super(const TransactionHistoryState());
@@ -96,7 +98,7 @@ class TransactionHistoryNotifier extends StateNotifier<TransactionHistoryState> 
     }
 
     final currentPage = refresh ? 1 : (state.pagination?.currentPage ?? 0) + 1;
-    
+
     state = state.copyWith(
       isLoading: refresh || currentPage == 1,
       isLoadingMore: !refresh && currentPage > 1,
@@ -114,9 +116,14 @@ class TransactionHistoryNotifier extends StateNotifier<TransactionHistoryState> 
 
       if (result['success'] == true) {
         final transactionData = result['data'] as List? ?? [];
-        final newTransactions = transactionData
-            .map((json) => TransactionModel.fromJson(json))
-            .toList();
+
+        final newTransactions = <TransactionModel>[];
+        for (int i = 0; i < transactionData.length; i++) {
+          try {
+            final transaction = TransactionModel.fromJson(transactionData[i]);
+            newTransactions.add(transaction);
+          } catch (e) {}
+        }
 
         final pagination = result['pagination'] != null
             ? TransactionPagination.fromJson(result['pagination'])
@@ -132,8 +139,6 @@ class TransactionHistoryNotifier extends StateNotifier<TransactionHistoryState> 
           isLoading: false,
           isLoadingMore: false,
         );
-
-        developer.log('Loaded ${newTransactions.length} transactions');
       } else {
         state = state.copyWith(
           error: result['message'] ?? 'Failed to load transactions',
@@ -142,7 +147,6 @@ class TransactionHistoryNotifier extends StateNotifier<TransactionHistoryState> 
         );
       }
     } catch (e) {
-      developer.log('Error loading transactions: $e');
       state = state.copyWith(
         error: 'Network error occurred',
         isLoading: false,
@@ -160,7 +164,8 @@ class TransactionHistoryNotifier extends StateNotifier<TransactionHistoryState> 
   }
 
   Future<void> filterByDateRange(DateTime? startDate, DateTime? endDate) async {
-    await loadTransactions(refresh: true, startDate: startDate, endDate: endDate);
+    await loadTransactions(
+        refresh: true, startDate: startDate, endDate: endDate);
   }
 
   Future<void> loadMore() async {
@@ -185,9 +190,12 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
   @override
   void initState() {
     super.initState();
+
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(transactionHistoryProvider.notifier).loadTransactions(refresh: true);
+      ref
+          .read(transactionHistoryProvider.notifier)
+          .loadTransactions(refresh: true);
     });
   }
 
@@ -199,13 +207,16 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.8) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent * 0.8) {
       ref.read(transactionHistoryProvider.notifier).loadMore();
     }
   }
 
   Future<void> _onSearch(String query) async {
-    await ref.read(transactionHistoryProvider.notifier).searchTransactions(query);
+    await ref
+        .read(transactionHistoryProvider.notifier)
+        .searchTransactions(query);
   }
 
   Future<void> _onRefresh() async {
@@ -279,7 +290,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
               },
             ),
           ),
-          
           Expanded(
             child: Consumer(
               builder: (context, ref, child) {
@@ -293,7 +303,8 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     );
   }
 
-  Widget _buildHistoryList(BuildContext context, ThemeData theme, TransactionHistoryState historyState) {
+  Widget _buildHistoryList(BuildContext context, ThemeData theme,
+      TransactionHistoryState historyState) {
     if (historyState.error != null) {
       return _buildErrorState(context, theme, historyState.error!);
     }
@@ -311,7 +322,8 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
       child: ListView.builder(
         controller: _scrollController,
         padding: const EdgeInsets.all(16),
-        itemCount: historyState.transactions.length + (historyState.isLoadingMore ? 1 : 0),
+        itemCount: historyState.transactions.length +
+            (historyState.isLoadingMore ? 1 : 0),
         itemBuilder: (context, index) {
           if (index >= historyState.transactions.length) {
             return const Padding(
@@ -349,8 +361,8 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
           Text(
             'Memuat history...',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
         ],
       ),
@@ -453,7 +465,7 @@ class TransactionHistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: ModernCard(
@@ -503,7 +515,8 @@ class TransactionHistoryCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: _getStatusColor(transaction.status).withOpacity(0.1),
+                          color: _getStatusColor(transaction.status)
+                              .withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -552,7 +565,7 @@ class TransactionHistoryCard extends StatelessWidget {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inDays == 0) {
       return 'Hari ini ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
     } else if (difference.inDays == 1) {
@@ -594,8 +607,6 @@ class TransactionHistoryCard extends StatelessWidget {
   }
 }
 
-
-
 // Dialog untuk detail transaksi
 class TransactionDetailDialog extends StatelessWidget {
   final TransactionModel transaction;
@@ -608,7 +619,7 @@ class TransactionDetailDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -624,10 +635,12 @@ class TransactionDetailDialog extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Detail Transaksi',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Text(
+                      'Detail Transaksi',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   IconButton(
@@ -642,14 +655,20 @@ class TransactionDetailDialog extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildDetailRow('No. Invoice', transaction.transactionNumber, theme),
-                      _buildDetailRow('Tanggal', _formatFullDate(transaction.createdAt), theme),
-                      _buildDetailRow('Status', _getStatusText(transaction.status), theme),
-                      _buildDetailRow('Metode Bayar', transaction.paymentInfo?.method ?? '-', theme),
+                      _buildDetailRow(
+                          'No. Invoice', transaction.transactionNumber, theme),
+                      _buildDetailRow('Tanggal',
+                          _formatFullDate(transaction.createdAt), theme),
+                      _buildDetailRow(
+                          'Status', _getStatusText(transaction.status), theme),
+                      _buildDetailRow('Metode Bayar',
+                          transaction.paymentInfo?.method ?? '-', theme),
                       if (transaction.customerInfo != null) ...[
-                        _buildDetailRow('Customer', transaction.customerInfo!.name, theme),
+                        _buildDetailRow(
+                            'Customer', transaction.customerInfo!.name, theme),
                         if (transaction.customerInfo!.phone.isNotEmpty)
-                          _buildDetailRow('Telepon', transaction.customerInfo!.phone, theme),
+                          _buildDetailRow('Telepon',
+                              transaction.customerInfo!.phone, theme),
                       ],
                       const Gap(16),
                       Text(
@@ -660,56 +679,68 @@ class TransactionDetailDialog extends StatelessWidget {
                       ),
                       const Gap(8),
                       ...transaction.items.map((item) => Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item.productName,
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${item.quantity} x ${CurrencyFormat.formatCurrency(item.price)}',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surfaceVariant
+                                  .withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            Text(
-                              CurrencyFormat.formatCurrency(item.totalPrice),
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.productName,
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${item.quantity} x ${CurrencyFormat.formatCurrency(item.price)}',
+                                        style:
+                                            theme.textTheme.bodySmall?.copyWith(
+                                          color: theme
+                                              .colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  CurrencyFormat.formatCurrency(
+                                      item.totalPrice),
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      )),
+                          )),
                       const Gap(16),
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                          color: theme.colorScheme.primaryContainer
+                              .withOpacity(0.3),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Column(
                           children: [
-                            _buildSummaryRow('Subtotal', CurrencyFormat.formatCurrency(transaction.totalAmount), theme),
+                            _buildSummaryRow(
+                                'Subtotal',
+                                CurrencyFormat.formatCurrency(
+                                    transaction.totalAmount),
+                                theme),
                             const Divider(),
                             _buildSummaryRow(
                               'Total',
-                              CurrencyFormat.formatCurrency(transaction.totalAmount),
+                              CurrencyFormat.formatCurrency(
+                                  transaction.totalAmount),
                               theme,
                               isTotal: true,
                             ),
@@ -777,7 +808,8 @@ class TransactionDetailDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value, ThemeData theme, {bool isTotal = false}) {
+  Widget _buildSummaryRow(String label, String value, ThemeData theme,
+      {bool isTotal = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -787,7 +819,9 @@ class TransactionDetailDialog extends StatelessWidget {
             label,
             style: theme.textTheme.bodyMedium?.copyWith(
               fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-              color: isTotal ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+              color: isTotal
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
             ),
           ),
           Text(
