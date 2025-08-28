@@ -5,6 +5,7 @@ import 'package:kasir/components/builder_menu.dart';
 import 'package:kasir/components/nav_drawer.dart';
 import 'package:kasir/helpers/colors_theme.dart';
 import 'package:kasir/providers/cart_providers.dart';
+import 'package:kasir/screens/cart/cart_page.dart';
 
 class MyHomePage extends ConsumerStatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -155,10 +156,10 @@ class ButtonCartWithBadge extends StatelessWidget {
       children: [
         IconButton(
           onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Cart/Transaction page coming soon'),
-                backgroundColor: Colors.blue,
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CartPage(),
               ),
             );
           },

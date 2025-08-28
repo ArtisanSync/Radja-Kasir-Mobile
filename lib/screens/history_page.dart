@@ -8,6 +8,9 @@ import 'package:kasir/components/nav_drawer.dart';
 import 'package:kasir/components/modern_card.dart';
 import 'package:kasir/components/modern_text_field.dart';
 import 'package:kasir/helpers/currency_format.dart';
+import 'package:kasir/models/transaction_model.dart';
+import 'package:kasir/services/transaction_services.dart';
+import 'dart:developer' as developer;
 
 class HistoryPage extends ConsumerStatefulWidget {
   const HistoryPage({Key? key}) : super(key: key);
@@ -16,52 +19,197 @@ class HistoryPage extends ConsumerStatefulWidget {
   ConsumerState<HistoryPage> createState() => _HistoryPageState();
 }
 
+// Transaction History Provider
+final transactionHistoryProvider = StateNotifierProvider<TransactionHistoryNotifier, TransactionHistoryState>((ref) {
+  return TransactionHistoryNotifier();
+});
+
+class TransactionHistoryState {
+  final List<TransactionModel> transactions;
+  final TransactionPagination? pagination;
+  final bool isLoading;
+  final bool isLoadingMore;
+  final String? error;
+  final String searchQuery;
+  final String? paymentMethodFilter;
+  final DateTime? startDateFilter;
+  final DateTime? endDateFilter;
+
+  const TransactionHistoryState({
+    this.transactions = const [],
+    this.pagination,
+    this.isLoading = false,
+    this.isLoadingMore = false,
+    this.error,
+    this.searchQuery = '',
+    this.paymentMethodFilter,
+    this.startDateFilter,
+    this.endDateFilter,
+  });
+
+  TransactionHistoryState copyWith({
+    List<TransactionModel>? transactions,
+    TransactionPagination? pagination,
+    bool? isLoading,
+    bool? isLoadingMore,
+    String? error,
+    String? searchQuery,
+    String? paymentMethodFilter,
+    DateTime? startDateFilter,
+    DateTime? endDateFilter,
+  }) {
+    return TransactionHistoryState(
+      transactions: transactions ?? this.transactions,
+      pagination: pagination ?? this.pagination,
+      isLoading: isLoading ?? this.isLoading,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      error: error,
+      searchQuery: searchQuery ?? this.searchQuery,
+      paymentMethodFilter: paymentMethodFilter ?? this.paymentMethodFilter,
+      startDateFilter: startDateFilter ?? this.startDateFilter,
+      endDateFilter: endDateFilter ?? this.endDateFilter,
+    );
+  }
+}
+
+class TransactionHistoryNotifier extends StateNotifier<TransactionHistoryState> {
+  final TransactionServices _transactionServices = TransactionServices();
+
+  TransactionHistoryNotifier() : super(const TransactionHistoryState());
+
+  Future<void> loadTransactions({
+    bool refresh = false,
+    String? search,
+    String? paymentMethod,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    if (refresh) {
+      state = state.copyWith(
+        transactions: [],
+        pagination: null,
+        searchQuery: search ?? '',
+        paymentMethodFilter: paymentMethod,
+        startDateFilter: startDate,
+        endDateFilter: endDate,
+      );
+    }
+
+    final currentPage = refresh ? 1 : (state.pagination?.currentPage ?? 0) + 1;
+    
+    state = state.copyWith(
+      isLoading: refresh || currentPage == 1,
+      isLoadingMore: !refresh && currentPage > 1,
+      error: null,
+    );
+
+    try {
+      final result = await _transactionServices.getTransactionHistory(
+        page: currentPage,
+        search: state.searchQuery.isEmpty ? null : state.searchQuery,
+        paymentMethod: state.paymentMethodFilter,
+        startDate: state.startDateFilter,
+        endDate: state.endDateFilter,
+      );
+
+      if (result['success'] == true) {
+        final transactionData = result['data'] as List? ?? [];
+        final newTransactions = transactionData
+            .map((json) => TransactionModel.fromJson(json))
+            .toList();
+
+        final pagination = result['pagination'] != null
+            ? TransactionPagination.fromJson(result['pagination'])
+            : null;
+
+        final updatedTransactions = refresh
+            ? newTransactions
+            : [...state.transactions, ...newTransactions];
+
+        state = state.copyWith(
+          transactions: updatedTransactions,
+          pagination: pagination,
+          isLoading: false,
+          isLoadingMore: false,
+        );
+
+        developer.log('Loaded ${newTransactions.length} transactions');
+      } else {
+        state = state.copyWith(
+          error: result['message'] ?? 'Failed to load transactions',
+          isLoading: false,
+          isLoadingMore: false,
+        );
+      }
+    } catch (e) {
+      developer.log('Error loading transactions: $e');
+      state = state.copyWith(
+        error: 'Network error occurred',
+        isLoading: false,
+        isLoadingMore: false,
+      );
+    }
+  }
+
+  Future<void> searchTransactions(String query) async {
+    await loadTransactions(refresh: true, search: query);
+  }
+
+  Future<void> filterByPaymentMethod(String? paymentMethod) async {
+    await loadTransactions(refresh: true, paymentMethod: paymentMethod);
+  }
+
+  Future<void> filterByDateRange(DateTime? startDate, DateTime? endDate) async {
+    await loadTransactions(refresh: true, startDate: startDate, endDate: endDate);
+  }
+
+  Future<void> loadMore() async {
+    if (state.pagination?.hasNextPage == true && !state.isLoadingMore) {
+      await loadTransactions();
+    }
+  }
+
+  void clearError() {
+    state = state.copyWith(error: null);
+  }
+
+  Future<void> refresh() async {
+    await loadTransactions(refresh: true);
+  }
+}
+
 class _HistoryPageState extends ConsumerState<HistoryPage> {
   final TextEditingController _searchController = TextEditingController();
-  final List<TransactionHistory> _history = [
-    // Dummy data untuk testing
-    TransactionHistory(
-      id: '1',
-      transactionNumber: 'TRX-20241216-001',
-      date: DateTime.now().subtract(const Duration(hours: 2)),
-      totalAmount: 150000,
-      status: 'Berhasil',
-      items: ['Produk A', 'Produk B'],
-    ),
-    TransactionHistory(
-      id: '2',
-      transactionNumber: 'TRX-20241216-002',
-      date: DateTime.now().subtract(const Duration(hours: 5)),
-      totalAmount: 250000,
-      status: 'Berhasil',
-      items: ['Produk C'],
-    ),
-  ];
-  bool _isLoading = false;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _loadHistory();
+    _scrollController.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(transactionHistoryProvider.notifier).loadTransactions(refresh: true);
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadHistory() async {
-    setState(() {
-      _isLoading = true;
-    });
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.8) {
+      ref.read(transactionHistoryProvider.notifier).loadMore();
+    }
+  }
 
-    // TODO: Implement actual API call
-    await Future.delayed(const Duration(seconds: 1));
+  Future<void> _onSearch(String query) async {
+    await ref.read(transactionHistoryProvider.notifier).searchTransactions(query);
+  }
 
-    setState(() {
-      _isLoading = false;
-    });
+  Future<void> _onRefresh() async {
+    await ref.read(transactionHistoryProvider.notifier).refresh();
   }
 
   @override
@@ -84,24 +232,29 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            onPressed: _isLoading ? null : _loadHistory,
-            icon: _isLoading
-                ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        theme.colorScheme.onSurface,
+          Consumer(
+            builder: (context, ref, child) {
+              final historyState = ref.watch(transactionHistoryProvider);
+              return IconButton(
+                onPressed: historyState.isLoading ? null : _onRefresh,
+                icon: historyState.isLoading
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      )
+                    : Icon(
+                        CupertinoIcons.refresh,
+                        color: theme.colorScheme.onSurface,
                       ),
-                    ),
-                  )
-                : Icon(
-                    CupertinoIcons.refresh,
-                    color: theme.colorScheme.onSurface,
-                  ),
-            tooltip: 'Refresh',
+                tooltip: 'Refresh',
+              );
+            },
           ),
           const Gap(8),
         ],
@@ -115,42 +268,65 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
               controller: _searchController,
               hint: 'Cari history transaksi...',
               onChanged: (value) {
-                // TODO: Implement search
+                if (value.isEmpty) {
+                  _onSearch('');
+                }
               },
+              onSubmitted: _onSearch,
               onClear: () {
                 _searchController.clear();
-                // TODO: Clear search and reload
+                _onSearch('');
               },
             ),
           ),
           
           Expanded(
-            child: _buildHistoryList(context, theme),
+            child: Consumer(
+              builder: (context, ref, child) {
+                final historyState = ref.watch(transactionHistoryProvider);
+                return _buildHistoryList(context, theme, historyState);
+              },
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHistoryList(BuildContext context, ThemeData theme) {
-    if (_isLoading) {
+  Widget _buildHistoryList(BuildContext context, ThemeData theme, TransactionHistoryState historyState) {
+    if (historyState.error != null) {
+      return _buildErrorState(context, theme, historyState.error!);
+    }
+
+    if (historyState.isLoading && historyState.transactions.isEmpty) {
       return _buildLoadingList();
     }
 
-    if (_history.isEmpty) {
+    if (historyState.transactions.isEmpty && !historyState.isLoading) {
       return _buildEmptyState(context, theme);
     }
 
     return RefreshIndicator(
-      onRefresh: _loadHistory,
+      onRefresh: _onRefresh,
       child: ListView.builder(
+        controller: _scrollController,
         padding: const EdgeInsets.all(16),
-        itemCount: _history.length,
+        itemCount: historyState.transactions.length + (historyState.isLoadingMore ? 1 : 0),
         itemBuilder: (context, index) {
-          return HistoryCard(
-            history: _history[index],
+          if (index >= historyState.transactions.length) {
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+
+          final transaction = historyState.transactions[index];
+          return TransactionHistoryCard(
+            transaction: transaction,
             onTap: () {
-              _showHistoryDetail(_history[index]);
+              _showTransactionDetail(transaction);
             },
           );
         },
@@ -216,113 +392,155 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     );
   }
 
-  void _showHistoryDetail(TransactionHistory history) {
+  Widget _buildErrorState(BuildContext context, ThemeData theme, String error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              CupertinoIcons.exclamationmark_triangle,
+              size: 64,
+              color: theme.colorScheme.error,
+            ),
+            const Gap(16),
+            Text(
+              'Terjadi Kesalahan',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: theme.colorScheme.error,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const Gap(8),
+            Text(
+              error,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const Gap(24),
+            ElevatedButton(
+              onPressed: _onRefresh,
+              child: const Text('Coba Lagi'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showTransactionDetail(TransactionModel transaction) {
     showDialog(
       context: context,
-      builder: (context) => HistoryDetailDialog(history: history),
+      builder: (context) => TransactionDetailDialog(transaction: transaction),
     );
   }
 }
 
-// Transaction History Model - sama seperti sebelumnya
-class TransactionHistory {
-  final String? id;
-  final String transactionNumber;
-  final DateTime date;
-  final double totalAmount;
-  final String status;
-  final List<String> items;
-
-  const TransactionHistory({
-    this.id,
-    required this.transactionNumber,
-    required this.date,
-    required this.totalAmount,
-    required this.status,
-    required this.items,
-  });
-}
-
-// History Card Component - sama seperti sebelumnya
-class HistoryCard extends StatelessWidget {
-  final TransactionHistory history;
+// Transaction History Card Widget
+class TransactionHistoryCard extends StatelessWidget {
+  final TransactionModel transaction;
   final VoidCallback onTap;
 
-  const HistoryCard({
-    Key? key,
-    required this.history,
+  const TransactionHistoryCard({
+    super.key,
+    required this.transaction,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    return ModernCard(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: ModernCard(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: _getStatusColor(history.status, theme).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: Icon(
-                  CupertinoIcons.clock,
-                  color: _getStatusColor(history.status, theme),
-                  size: 24,
-                ),
-              ),
-              const Gap(16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      history.transactionNumber,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          transaction.transactionNumber ?? 'No Invoice',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Gap(4),
+                        Text(
+                          _formatDate(transaction.createdAt),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
-                    const Gap(4),
-                    Text(
-                      '${history.date.day}/${history.date.month}/${history.date.year} - ${history.date.hour}:${history.date.minute.toString().padLeft(2, '0')}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const Gap(4),
-                    Text(
-                      CurrencyFormat.formatCurrency(history.totalAmount),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Gap(16),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _getStatusColor(history.status, theme).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  history.status,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: _getStatusColor(history.status, theme),
-                    fontWeight: FontWeight.w500,
                   ),
-                ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        CurrencyFormat.formatCurrency(transaction.totalAmount),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      const Gap(4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(transaction.status).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          _getStatusText(transaction.status),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: _getStatusColor(transaction.status),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const Gap(12),
+              Row(
+                children: [
+                  Icon(
+                    CupertinoIcons.creditcard,
+                    size: 16,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const Gap(6),
+                  Text(
+                    transaction.paymentInfo?.method ?? 'Unknown',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${transaction.items.length} item${transaction.items.length > 1 ? 's' : ''}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -331,151 +549,273 @@ class HistoryCard extends StatelessWidget {
     );
   }
 
-  Color _getStatusColor(String status, ThemeData theme) {
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+    
+    if (difference.inDays == 0) {
+      return 'Hari ini ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    } else if (difference.inDays == 1) {
+      return 'Kemarin ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} hari lalu';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
+  Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'success':
+      case 'completed':
       case 'berhasil':
         return Colors.green;
       case 'pending':
+      case 'menunggu':
         return Colors.orange;
       case 'failed':
       case 'gagal':
         return Colors.red;
       default:
-        return theme.colorScheme.primary;
+        return Colors.grey;
+    }
+  }
+
+  String _getStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return 'Berhasil';
+      case 'pending':
+        return 'Menunggu';
+      case 'failed':
+        return 'Gagal';
+      default:
+        return status;
     }
   }
 }
 
-// History Detail Dialog - sama seperti sebelumnya
-class HistoryDetailDialog extends StatelessWidget {
-  final TransactionHistory history;
 
-  const HistoryDetailDialog({
-    Key? key,
-    required this.history,
-  }) : super(key: key);
+
+// Dialog untuk detail transaksi
+class TransactionDetailDialog extends StatelessWidget {
+  final TransactionModel transaction;
+
+  const TransactionDetailDialog({
+    super.key,
+    required this.transaction,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
+    
     return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.9,
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
+        constraints: const BoxConstraints(maxHeight: 600),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
                     'Detail Transaksi',
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(CupertinoIcons.xmark),
-                ),
-              ],
-            ),
-            const Gap(16),
-            
-            _buildInfoRow(
-              context,
-              CupertinoIcons.number,
-              'No. Transaksi',
-              history.transactionNumber,
-            ),
-            
-            _buildInfoRow(
-              context,
-              CupertinoIcons.calendar,
-              'Tanggal',
-              '${history.date.day}/${history.date.month}/${history.date.year}',
-            ),
-            
-            _buildInfoRow(
-              context,
-              CupertinoIcons.clock,
-              'Waktu',
-              '${history.date.hour}:${history.date.minute.toString().padLeft(2, '0')}',
-            ),
-            
-            _buildInfoRow(
-              context,
-              CupertinoIcons.money_dollar_circle,
-              'Total',
-              CurrencyFormat.formatCurrency(history.totalAmount),
-            ),
-            
-            _buildInfoRow(
-              context,
-              CupertinoIcons.checkmark_seal,
-              'Status',
-              history.status,
-            ),
-            
-            const Gap(24),
-            
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(CupertinoIcons.xmark),
+                  ),
+                ],
+              ),
+              const Gap(16),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildDetailRow('No. Invoice', transaction.transactionNumber, theme),
+                      _buildDetailRow('Tanggal', _formatFullDate(transaction.createdAt), theme),
+                      _buildDetailRow('Status', _getStatusText(transaction.status), theme),
+                      _buildDetailRow('Metode Bayar', transaction.paymentInfo?.method ?? '-', theme),
+                      if (transaction.customerInfo != null) ...[
+                        _buildDetailRow('Customer', transaction.customerInfo!.name, theme),
+                        if (transaction.customerInfo!.phone.isNotEmpty)
+                          _buildDetailRow('Telepon', transaction.customerInfo!.phone, theme),
+                      ],
+                      const Gap(16),
+                      Text(
+                        'Items:',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Gap(8),
+                      ...transaction.items.map((item) => Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.productName,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${item.quantity} x ${CurrencyFormat.formatCurrency(item.price)}',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              CurrencyFormat.formatCurrency(item.totalPrice),
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                      const Gap(16),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            _buildSummaryRow('Subtotal', CurrencyFormat.formatCurrency(transaction.totalAmount), theme),
+                            const Divider(),
+                            _buildSummaryRow(
+                              'Total',
+                              CurrencyFormat.formatCurrency(transaction.totalAmount),
+                              theme,
+                              isTotal: true,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: const Text('Tutup'),
               ),
-            ),
-          ],
+              const Gap(16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Tutup'),
+                    ),
+                  ),
+                  const Gap(12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // TODO: Implement print functionality
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Print'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildInfoRow(BuildContext context, IconData icon, String label, String value) {
-    final theme = Theme.of(context);
-    
+  Widget _buildDetailRow(String label, String value, ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 20,
-            color: theme.colorScheme.primary,
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
-          const Gap(12),
+          const Text(': '),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  value,
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ],
+            child: Text(
+              value,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildSummaryRow(String label, String value, ThemeData theme, {bool isTotal = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+              color: isTotal ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          Text(
+            value,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: isTotal ? theme.colorScheme.primary : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatFullDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _getStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return 'Berhasil';
+      case 'pending':
+        return 'Menunggu';
+      case 'failed':
+        return 'Gagal';
+      default:
+        return status;
+    }
   }
 }
