@@ -31,16 +31,20 @@ class ModernCard extends StatelessWidget {
         elevation: elevation ?? 2,
         borderRadius: borderRadius ?? BorderRadius.circular(16),
         color: color ?? theme.colorScheme.surface,
-        child: Container(
-          padding: padding ?? const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: borderRadius ?? BorderRadius.circular(16),
-            border: Border.all(
-              color: theme.colorScheme.outline.withOpacity(0.1),
-              width: 1,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: (borderRadius ?? BorderRadius.circular(16)) as BorderRadius,
+          child: Container(
+            padding: padding ?? const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: borderRadius ?? BorderRadius.circular(16),
+              border: Border.all(
+                color: theme.colorScheme.outline.withOpacity(0.1),
+                width: 1,
+              ),
             ),
+            child: child,
           ),
-          child: child,
         ),
       ),
     );

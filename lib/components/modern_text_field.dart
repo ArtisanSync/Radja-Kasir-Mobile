@@ -88,6 +88,7 @@ class ModernSearchField extends StatefulWidget {
   final TextEditingController controller;
   final String hint;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
   final VoidCallback? onClear;
 
   const ModernSearchField({
@@ -95,6 +96,7 @@ class ModernSearchField extends StatefulWidget {
     required this.controller,
     required this.hint,
     this.onChanged,
+    this.onSubmitted,
     this.onClear,
   }) : super(key: key);
 
@@ -113,6 +115,7 @@ class _ModernSearchFieldState extends State<ModernSearchField> {
         setState(() {});
         widget.onChanged?.call(value);
       },
+      onSubmitted: widget.onSubmitted,
       decoration: InputDecoration(
         hintText: widget.hint,
         prefixIcon: Icon(

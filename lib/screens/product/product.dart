@@ -10,6 +10,7 @@ import 'package:kasir/helpers/currency_format.dart';
 import 'package:kasir/models/product_model.dart';
 import 'package:kasir/providers/product_providers.dart';
 import 'package:kasir/providers/category_providers.dart';
+import 'package:kasir/providers/cart_providers.dart';
 import 'package:kasir/screens/product/form_product.dart';
 import 'package:kasir/screens/product/product_detail.dart';
 import 'package:kasir/screens/home_page.dart';
@@ -525,8 +526,8 @@ class _ProductPageState extends ConsumerState<ProductPage> {
   }
 }
 
-// Product Card tetap sama
-class ProductCard extends StatelessWidget {
+// Product Card dengan Add to Cart
+class ProductCard extends ConsumerWidget {
   final Product product;
   final VoidCallback onTap;
   final VoidCallback onFavoriteToggle;
@@ -539,8 +540,9 @@ class ProductCard extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final cartNotifier = ref.read(cartProvider.notifier);
 
     return GestureDetector(
       onTap: onTap,
@@ -681,7 +683,7 @@ class ProductCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    CurrencyFormat.formatPrice(product.displayPrice),
+                    CurrencyFormat.formatPrice(double.tryParse(product.displayPrice) ?? 0.0),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.primary,
@@ -705,6 +707,55 @@ class ProductCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+            
+            const Gap(8),
+            
+            // Add to Cart Button
+            SizedBox(
+              width: double.infinity,
+              height: 32,
+              child: ElevatedButton.icon(
+                onPressed: product.hasStock ? () {
+                  cartNotifier.addItem(
+                    productId: product.id!,
+                    name: product.name,
+                    image: product.image ?? '',
+                    price: double.tryParse(product.displayPrice) ?? 0.0,
+                    unit: product.displayUnit,
+                  );
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${product.name} ditambahkan ke keranjang'),
+                      backgroundColor: Colors.green,
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                } : null,
+                icon: Icon(
+                  Icons.add_shopping_cart,
+                  size: 14,
+                ),
+                label: Text(
+                  'Tambah',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: product.hasStock 
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.surfaceVariant,
+                  foregroundColor: product.hasStock
+                      ? theme.colorScheme.onPrimary
+                      : theme.colorScheme.onSurfaceVariant,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
