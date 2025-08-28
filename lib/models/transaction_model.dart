@@ -25,25 +25,55 @@ class TransactionModel {
     this.customerInfo,
   });
 
+  // Helper function to safely parse numeric values that might be strings
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value) ?? 0.0;
+    }
+    return 0.0;
+  }
+
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
     return TransactionModel(
       id: json['id'] ?? '',
-      transactionNumber: json['transaction_number'] ?? '',
-      storeId: json['store_id'] ?? '',
-      totalAmount: (json['total_amount'] ?? 0).toDouble(),
-      paymentMethod: json['payment_method'] ?? '',
+      transactionNumber:
+          json['invoiceNumber']?.toString() ?? json['transaction_number'] ?? '',
+      storeId: json['storeId'] ?? json['store_id'] ?? '',
+      totalAmount: _parseDouble(json['total'] ?? json['total_amount']),
+      paymentMethod: json['paymentMethod'] ?? json['payment_method'] ?? '',
       status: json['status'] ?? '',
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
+      createdAt: DateTime.parse(json['createdAt'] ??
+          json['created_at'] ??
+          DateTime.now().toIso8601String()),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'])
+          : json['updated_at'] != null
+              ? DateTime.parse(json['updated_at'])
+              : null,
       items: (json['items'] as List<dynamic>? ?? [])
           .map((item) => TransactionItemModel.fromJson(item))
           .toList(),
-      paymentInfo: json['payment_info'] != null 
+      paymentInfo: json['payment_info'] != null
           ? PaymentInfoModel.fromJson(json['payment_info'])
-          : null,
-      customerInfo: json['customer_info'] != null 
+          : PaymentInfoModel(
+              id: json['id'] ?? '',
+              transactionId: json['id'] ?? '',
+              method: json['paymentMethod'] ?? json['payment_method'] ?? '',
+              totalAmount: _parseDouble(json['total'] ?? json['total_amount']),
+              receivedAmount: _parseDouble(json['amountPaid']),
+              changeAmount: _parseDouble(json['change']),
+              createdAt: DateTime.parse(json['createdAt'] ??
+                  json['created_at'] ??
+                  DateTime.now().toIso8601String()),
+            ),
+      customerInfo: json['customer_info'] != null
           ? CustomerInfoModel.fromJson(json['customer_info'])
-          : null,
+          : json['customer'] != null
+              ? CustomerInfoModel.fromJson(json['customer'])
+              : null,
     );
   }
 
@@ -126,15 +156,36 @@ class TransactionItemModel {
     this.notes,
   });
 
+  // Helper function to safely parse numeric values that might be strings
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value) ?? 0.0;
+    }
+    return 0.0;
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) {
+      return int.tryParse(value) ?? 0;
+    }
+    return 0;
+  }
+
   factory TransactionItemModel.fromJson(Map<String, dynamic> json) {
     return TransactionItemModel(
       id: json['id'] ?? '',
-      transactionId: json['transaction_id'] ?? '',
-      productId: json['product_id'] ?? '',
-      productName: json['product_name'] ?? '',
-      price: (json['price'] ?? 0).toDouble(),
-      quantity: json['quantity'] ?? 0,
-      totalPrice: (json['total_price'] ?? 0).toDouble(),
+      transactionId: json['transactionId'] ?? json['transaction_id'] ?? '',
+      productId: json['productId'] ?? json['product_id'] ?? '',
+      productName: json['name'] ?? json['product_name'] ?? '',
+      price: _parseDouble(json['price']),
+      quantity: _parseInt(json['quantity']),
+      totalPrice: _parseDouble(json['subtotal'] ?? json['total_price']),
       unit: json['unit'],
       category: json['category'],
       image: json['image'],
@@ -212,22 +263,34 @@ class PaymentInfoModel {
     required this.createdAt,
   });
 
+  // Helper function to safely parse numeric values that might be strings
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value) ?? 0.0;
+    }
+    return 0.0;
+  }
+
   factory PaymentInfoModel.fromJson(Map<String, dynamic> json) {
     return PaymentInfoModel(
       id: json['id'] ?? '',
       transactionId: json['transaction_id'] ?? '',
       method: json['method'] ?? '',
-      totalAmount: (json['total_amount'] ?? 0).toDouble(),
-      receivedAmount: json['received_amount'] != null 
-          ? (json['received_amount']).toDouble() 
+      totalAmount: _parseDouble(json['total_amount']),
+      receivedAmount: json['received_amount'] != null
+          ? _parseDouble(json['received_amount'])
           : null,
-      changeAmount: json['change_amount'] != null 
-          ? (json['change_amount']).toDouble() 
+      changeAmount: json['change_amount'] != null
+          ? _parseDouble(json['change_amount'])
           : null,
       referenceNumber: json['reference_number'],
       notes: json['notes'],
       otherPaymentType: json['other_payment_type'],
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.parse(
+          json['created_at'] ?? DateTime.now().toIso8601String()),
     );
   }
 
@@ -316,7 +379,8 @@ class CustomerInfoModel {
       phone: json['phone'] ?? '',
       address: json['address'] ?? '',
       notes: json['notes'],
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.parse(
+          json['created_at'] ?? DateTime.now().toIso8601String()),
     );
   }
 
@@ -424,8 +488,10 @@ class TransactionSummary {
       totalCreditPayments: (json['total_credit_payments'] ?? 0).toDouble(),
       totalOtherPayments: (json['total_other_payments'] ?? 0).toDouble(),
       totalItems: json['total_items'] ?? 0,
-      periodStart: DateTime.parse(json['period_start'] ?? DateTime.now().toIso8601String()),
-      periodEnd: DateTime.parse(json['period_end'] ?? DateTime.now().toIso8601String()),
+      periodStart: DateTime.parse(
+          json['period_start'] ?? DateTime.now().toIso8601String()),
+      periodEnd: DateTime.parse(
+          json['period_end'] ?? DateTime.now().toIso8601String()),
     );
   }
 

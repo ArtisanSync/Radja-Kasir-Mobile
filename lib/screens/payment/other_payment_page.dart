@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/cart_providers.dart';
+import '../../services/transaction_services.dart';
 import 'payment_success_page.dart';
 
 class OtherPaymentPage extends ConsumerStatefulWidget {
@@ -70,7 +71,7 @@ class _OtherPaymentPageState extends ConsumerState<OtherPaymentPage> {
     super.dispose();
   }
 
-  void _processPayment() {
+  void _processPayment() async {
     if (_selectedPaymentMethod.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -81,30 +82,86 @@ class _OtherPaymentPageState extends ConsumerState<OtherPaymentPage> {
       return;
     }
 
-    // Clear cart after successful payment
-    ref.read(cartProvider.notifier).clearCart();
-
-    // Get selected payment method name
-    final selectedMethod = _paymentMethods.firstWhere(
-      (method) => method['id'] == _selectedPaymentMethod,
-    );
-
-    // Navigate to success page
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentSuccessPage(
-          transactionNumber: widget.transactionNumber,
-          totalAmount: widget.totalAmount,
-          receivedAmount: widget.totalAmount,
-          changeAmount: 0,
-          paymentMethod: selectedMethod['name'],
-          cartItems: widget.cartItems,
-          referenceNumber: _referenceController.text,
-          notes: _notesController.text,
-        ),
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
       ),
     );
+
+    try {
+      // Get selected payment method name
+      final selectedMethod = _paymentMethods.firstWhere(
+        (method) => method['id'] == _selectedPaymentMethod,
+      );
+
+      // Prepare transaction data for backend (use TUNAI as fallback since backend only supports TUNAI/KASBON)
+      final transactionData = {
+        'items': widget.cartItems
+            .map((item) => {
+                  'variantId': item.variantId,
+                  'quantity': item.quantity,
+                })
+            .toList(),
+        'paymentMethod': 'TUNAI', // Backend only supports TUNAI/KASBON
+        'amountPaid': widget.totalAmount,
+        'notes':
+            _notesController.text.isNotEmpty ? _notesController.text : null,
+        'customerData': null,
+      };
+
+      // Call backend API
+      final transactionService = TransactionServices();
+      final result =
+          await transactionService.createTransaction(transactionData);
+
+      // Hide loading
+      Navigator.of(context).pop();
+
+      if (result['success'] == true) {
+        // Clear cart after successful payment
+        ref.read(cartProvider.notifier).clearCart();
+
+        // Navigate to success page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentSuccessPage(
+              transactionNumber:
+                  result['data']['invoiceNumber'] ?? widget.transactionNumber,
+              totalAmount: widget.totalAmount,
+              receivedAmount: widget.totalAmount,
+              changeAmount: 0,
+              paymentMethod: selectedMethod['name'],
+              cartItems: widget.cartItems,
+              referenceNumber: _referenceController.text,
+              notes: _notesController.text,
+            ),
+          ),
+        );
+      } else {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Gagal membuat transaksi'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Hide loading
+      Navigator.of(context).pop();
+
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Terjadi kesalahan: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -164,7 +221,7 @@ class _OtherPaymentPageState extends ConsumerState<OtherPaymentPage> {
               ],
             ),
           ),
-          
+
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -180,7 +237,7 @@ class _OtherPaymentPageState extends ConsumerState<OtherPaymentPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Payment Methods
                   Container(
                     decoration: BoxDecoration(
@@ -197,7 +254,8 @@ class _OtherPaymentPageState extends ConsumerState<OtherPaymentPage> {
                     ),
                     child: Column(
                       children: _paymentMethods.map((method) {
-                        final isSelected = _selectedPaymentMethod == method['id'];
+                        final isSelected =
+                            _selectedPaymentMethod == method['id'];
                         return Container(
                           decoration: BoxDecoration(
                             border: Border(
@@ -220,26 +278,33 @@ class _OtherPaymentPageState extends ConsumerState<OtherPaymentPage> {
                                 Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: isSelected ? Colors.blue.withOpacity(0.1) : Colors.grey[100],
+                                    color: isSelected
+                                        ? Colors.blue.withOpacity(0.1)
+                                        : Colors.grey[100],
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
                                     method['icon'],
-                                    color: isSelected ? Colors.blue : Colors.grey[600],
+                                    color: isSelected
+                                        ? Colors.blue
+                                        : Colors.grey[600],
                                     size: 20,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         method['name'],
                                         style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
-                                          color: isSelected ? Colors.blue : Colors.black87,
+                                          color: isSelected
+                                              ? Colors.blue
+                                              : Colors.black87,
                                         ),
                                       ),
                                       Text(
@@ -261,7 +326,7 @@ class _OtherPaymentPageState extends ConsumerState<OtherPaymentPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Reference Number Field
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -311,7 +376,7 @@ class _OtherPaymentPageState extends ConsumerState<OtherPaymentPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Notes Field
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -365,7 +430,7 @@ class _OtherPaymentPageState extends ConsumerState<OtherPaymentPage> {
               ),
             ),
           ),
-          
+
           // Bottom Action Button
           Container(
             padding: const EdgeInsets.all(16),
@@ -383,7 +448,8 @@ class _OtherPaymentPageState extends ConsumerState<OtherPaymentPage> {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _selectedPaymentMethod.isNotEmpty ? _processPayment : null,
+                onPressed:
+                    _selectedPaymentMethod.isNotEmpty ? _processPayment : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,

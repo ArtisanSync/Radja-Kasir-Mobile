@@ -2,7 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class CartItem {
   final String id;
-  final String productId;
+  final String productId; // This will store variantId for backend compatibility
+  final String variantId; // Explicit variantId field
   final String name;
   final String image;
   final double price;
@@ -12,6 +13,7 @@ class CartItem {
   const CartItem({
     required this.id,
     required this.productId,
+    required this.variantId,
     required this.name,
     required this.image,
     required this.price,
@@ -22,6 +24,7 @@ class CartItem {
   CartItem copyWith({
     String? id,
     String? productId,
+    String? variantId,
     String? name,
     String? image,
     double? price,
@@ -31,6 +34,7 @@ class CartItem {
     return CartItem(
       id: id ?? this.id,
       productId: productId ?? this.productId,
+      variantId: variantId ?? this.variantId,
       name: name ?? this.name,
       image: image ?? this.image,
       price: price ?? this.price,
@@ -80,15 +84,17 @@ class CartNotifier extends StateNotifier<CartState> {
 
   // Add item to cart
   void addItem({
-    required String productId,
+    required String
+        productId, // This is actually variantId for backend compatibility
     required String name,
     required String image,
     required double price,
     required String unit,
     int quantity = 1,
   }) {
-    final existingIndex = state.items.indexWhere((item) => item.productId == productId);
-    
+    final existingIndex =
+        state.items.indexWhere((item) => item.productId == productId);
+
     if (existingIndex >= 0) {
       // Update existing item quantity
       final updatedItems = [...state.items];
@@ -100,7 +106,8 @@ class CartNotifier extends StateNotifier<CartState> {
       // Add new item
       final newItem = CartItem(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        productId: productId,
+        productId: productId, // This is variantId
+        variantId: productId, // Same as productId for backend compatibility
         name: name,
         image: image,
         price: price,
@@ -113,7 +120,8 @@ class CartNotifier extends StateNotifier<CartState> {
 
   // Remove item from cart
   void removeItem(String itemId) {
-    final updatedItems = state.items.where((item) => item.id != itemId).toList();
+    final updatedItems =
+        state.items.where((item) => item.id != itemId).toList();
     state = state.copyWith(items: updatedItems);
   }
 

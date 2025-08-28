@@ -23,7 +23,7 @@ class TransactionServices {
       final resp = await _dio.get("$_baseUrl/order/${store['id']}");
       return resp;
     } on DioException catch (e) {
-      print(e.response);
+      // Handle error silently
     }
   }
 
@@ -35,7 +35,7 @@ class TransactionServices {
       return resp;
     } on DioException catch (e) {
       context.loaderOverlay.hide();
-      print(e.response);
+      // Handle error silently
     }
   }
 
@@ -44,7 +44,7 @@ class TransactionServices {
       final resp = await _dio.get("$_baseUrl/order/$id/detail");
       return resp;
     } on DioException catch (e) {
-      print(e.response);
+      // Handle error silently
     }
   }
 
@@ -53,7 +53,7 @@ class TransactionServices {
       final resp = await _dio.delete("$_baseUrl/order/$id/destroy");
       return resp;
     } on DioException catch (e) {
-      print(e.response);
+      // Handle error silently
     }
   }
 
@@ -63,12 +63,13 @@ class TransactionServices {
           await _dio.post("$_baseUrl/order/store/$orderId/payment", data: body);
       return resp;
     } on DioException catch (e) {
-      print(e.response);
+      // Handle error silently
     }
   }
 
   // Create complete transaction with payment
-  Future<Map<String, dynamic>> createTransaction(Map<String, dynamic> transactionData) async {
+  Future<Map<String, dynamic>> createTransaction(
+      Map<String, dynamic> transactionData) async {
     final store = await Store.getStore();
     if (store == null || store['id'] == null) {
       return {
@@ -78,14 +79,10 @@ class TransactionServices {
     }
 
     try {
-      // Add store_id to transaction data
-      final body = {
-        ...transactionData,
-        'store_id': store['id'],
-      };
+      final storeId = store['id'];
+      final resp = await _dio.post("$_baseUrl/stores/$storeId/transactions",
+          data: transactionData);
 
-      final resp = await _dio.post("$_baseUrl/transaction/create", data: body);
-      
       if (resp.statusCode == 200 || resp.statusCode == 201) {
         return {
           'success': true,
@@ -99,13 +96,11 @@ class TransactionServices {
         };
       }
     } on DioException catch (e) {
-      print('Transaction creation error: ${e.response}');
       return {
         'success': false,
         'message': e.response?.data['message'] ?? 'Network error occurred',
       };
     } catch (e) {
-      print('Unexpected error: $e');
       return {
         'success': false,
         'message': 'An unexpected error occurred',
@@ -131,17 +126,17 @@ class TransactionServices {
     }
 
     try {
+      final storeId = store['id'];
       final queryParams = {
         'page': page.toString(),
         'limit': limit.toString(),
-        'store_id': store['id'],
       };
 
       if (search != null && search.isNotEmpty) {
         queryParams['search'] = search;
       }
       if (paymentMethod != null && paymentMethod.isNotEmpty) {
-        queryParams['payment_method'] = paymentMethod;
+        queryParams['paymentMethod'] = paymentMethod;
       }
       if (startDate != null) {
         queryParams['start_date'] = startDate.toIso8601String().split('T')[0];
@@ -151,31 +146,34 @@ class TransactionServices {
       }
 
       final resp = await _dio.get(
-        "$_baseUrl/transaction/history",
+        "$_baseUrl/stores/$storeId/transactions",
         queryParameters: queryParams,
       );
-      
+
       if (resp.statusCode == 200) {
+        // Extract the nested data structure
+        final responseData = resp.data['data'];
         return {
           'success': true,
-          'data': resp.data['data'],
-          'pagination': resp.data['pagination'],
-          'message': resp.data['message'] ?? 'Transaction history loaded successfully',
+          'data': responseData['data'], // Extract the actual transaction array
+          'pagination':
+              responseData['pagination'], // Extract pagination from nested data
+          'message':
+              resp.data['message'] ?? 'Transaction history loaded successfully',
         };
       } else {
         return {
           'success': false,
-          'message': resp.data['message'] ?? 'Failed to load transaction history',
+          'message':
+              resp.data['message'] ?? 'Failed to load transaction history',
         };
       }
     } on DioException catch (e) {
-      print('Transaction history error: ${e.response}');
       return {
         'success': false,
         'message': e.response?.data['message'] ?? 'Network error occurred',
       };
     } catch (e) {
-      print('Unexpected error: $e');
       return {
         'success': false,
         'message': 'An unexpected error occurred',
@@ -184,30 +182,31 @@ class TransactionServices {
   }
 
   // Get transaction detail
-  Future<Map<String, dynamic>> getTransactionDetail(String transactionId) async {
+  Future<Map<String, dynamic>> getTransactionDetail(
+      String transactionId) async {
     try {
-      final resp = await _dio.get("$_baseUrl/transaction/$transactionId");
-      
+      final resp = await _dio.get("$_baseUrl/transactions/$transactionId");
+
       if (resp.statusCode == 200) {
         return {
           'success': true,
           'data': resp.data['data'],
-          'message': resp.data['message'] ?? 'Transaction detail loaded successfully',
+          'message':
+              resp.data['message'] ?? 'Transaction detail loaded successfully',
         };
       } else {
         return {
           'success': false,
-          'message': resp.data['message'] ?? 'Failed to load transaction detail',
+          'message':
+              resp.data['message'] ?? 'Failed to load transaction detail',
         };
       }
     } on DioException catch (e) {
-      print('Transaction detail error: ${e.response}');
       return {
         'success': false,
         'message': e.response?.data['message'] ?? 'Network error occurred',
       };
     } catch (e) {
-      print('Unexpected error: $e');
       return {
         'success': false,
         'message': 'An unexpected error occurred',
@@ -215,11 +214,11 @@ class TransactionServices {
     }
   }
 
-  // Delete transaction
+  // Delete transaction (if needed in the future)
   Future<Map<String, dynamic>> deleteTransaction(String transactionId) async {
     try {
-      final resp = await _dio.delete("$_baseUrl/transaction/$transactionId");
-      
+      final resp = await _dio.delete("$_baseUrl/transactions/$transactionId");
+
       if (resp.statusCode == 200) {
         return {
           'success': true,
@@ -232,13 +231,11 @@ class TransactionServices {
         };
       }
     } on DioException catch (e) {
-      print('Transaction deletion error: ${e.response}');
       return {
         'success': false,
         'message': e.response?.data['message'] ?? 'Network error occurred',
       };
     } catch (e) {
-      print('Unexpected error: $e');
       return {
         'success': false,
         'message': 'An unexpected error occurred',

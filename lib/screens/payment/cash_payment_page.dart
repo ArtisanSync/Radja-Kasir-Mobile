@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/cart_providers.dart';
+import '../../services/transaction_services.dart';
 import 'payment_success_page.dart';
 
 class CashPaymentPage extends ConsumerStatefulWidget {
@@ -51,34 +52,90 @@ class _CashPaymentPageState extends ConsumerState<CashPaymentPage> {
     });
   }
 
-  void _processPayment() {
+  void _processPayment() async {
     if (_receivedAmount < widget.totalAmount) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Jumlah uang yang diterima kurang dari total pembayaran'),
+          content:
+              Text('Jumlah uang yang diterima kurang dari total pembayaran'),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
 
-    // Clear cart after successful payment
-    ref.read(cartProvider.notifier).clearCart();
-
-    // Navigate to success page
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentSuccessPage(
-          transactionNumber: widget.transactionNumber,
-          totalAmount: widget.totalAmount,
-          receivedAmount: _receivedAmount,
-          changeAmount: _changeAmount,
-          paymentMethod: 'Tunai',
-          cartItems: widget.cartItems,
-        ),
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
       ),
     );
+
+    try {
+      // Prepare transaction data for backend
+      final transactionData = {
+        'items': widget.cartItems
+            .map((item) => {
+                  'variantId': item.variantId,
+                  'quantity': item.quantity,
+                })
+            .toList(),
+        'paymentMethod': 'TUNAI',
+        'amountPaid': _receivedAmount,
+        'notes': null,
+        'customerData': null,
+      };
+
+      // Call backend API
+      final transactionService = TransactionServices();
+      final result =
+          await transactionService.createTransaction(transactionData);
+
+      // Hide loading
+      Navigator.of(context).pop();
+
+      if (result['success'] == true) {
+        // Clear cart after successful payment
+        ref.read(cartProvider.notifier).clearCart();
+
+        // Navigate to success page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentSuccessPage(
+              transactionNumber:
+                  result['data']['invoiceNumber'] ?? widget.transactionNumber,
+              totalAmount: widget.totalAmount,
+              receivedAmount: _receivedAmount,
+              changeAmount: _changeAmount,
+              paymentMethod: 'Tunai',
+              cartItems: widget.cartItems,
+            ),
+          ),
+        );
+      } else {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Gagal membuat transaksi'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Hide loading
+      Navigator.of(context).pop();
+
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Terjadi kesalahan: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -138,7 +195,7 @@ class _CashPaymentPageState extends ConsumerState<CashPaymentPage> {
               ],
             ),
           ),
-          
+
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -204,7 +261,7 @@ class _CashPaymentPageState extends ConsumerState<CashPaymentPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Quick Amount Buttons
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -235,7 +292,8 @@ class _CashPaymentPageState extends ConsumerState<CashPaymentPage> {
                         Row(
                           children: [
                             Expanded(
-                              child: _buildQuickAmountButton('Uang Pas', widget.totalAmount),
+                              child: _buildQuickAmountButton(
+                                  'Uang Pas', widget.totalAmount),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
@@ -251,17 +309,21 @@ class _CashPaymentPageState extends ConsumerState<CashPaymentPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Change Amount Display
                   if (_receivedAmount >= widget.totalAmount)
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: _changeAmount > 0 ? Colors.green[50] : Colors.blue[50],
+                        color: _changeAmount > 0
+                            ? Colors.green[50]
+                            : Colors.blue[50],
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: _changeAmount > 0 ? Colors.green[200]! : Colors.blue[200]!,
+                          color: _changeAmount > 0
+                              ? Colors.green[200]!
+                              : Colors.blue[200]!,
                         ),
                       ),
                       child: Column(
@@ -279,19 +341,21 @@ class _CashPaymentPageState extends ConsumerState<CashPaymentPage> {
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: _changeAmount > 0 ? Colors.green[700] : Colors.blue[700],
+                              color: _changeAmount > 0
+                                  ? Colors.green[700]
+                                  : Colors.blue[700],
                             ),
                           ),
                         ],
                       ),
                     ),
-                  
+
                   const Spacer(),
                 ],
               ),
             ),
           ),
-          
+
           // Bottom Action Button
           Container(
             padding: const EdgeInsets.all(16),
@@ -309,7 +373,9 @@ class _CashPaymentPageState extends ConsumerState<CashPaymentPage> {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _receivedAmount >= widget.totalAmount ? _processPayment : null,
+                onPressed: _receivedAmount >= widget.totalAmount
+                    ? _processPayment
+                    : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
                   foregroundColor: Colors.white,
@@ -336,7 +402,7 @@ class _CashPaymentPageState extends ConsumerState<CashPaymentPage> {
 
   Widget _buildQuickAmountButton(String label, double amount) {
     final isSelected = _receivedAmount == amount;
-    
+
     return GestureDetector(
       onTap: () => _setQuickAmount(amount),
       child: Container(

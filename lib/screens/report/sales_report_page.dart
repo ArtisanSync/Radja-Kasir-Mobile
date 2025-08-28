@@ -42,7 +42,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
     try {
       String? startDate;
       String? endDate;
-      
+
       if (_selectedPeriod == 'custom' && _customDateRange != null) {
         startDate = DateFormat('yyyy-MM-dd').format(_customDateRange!.start);
         endDate = DateFormat('yyyy-MM-dd').format(_customDateRange!.end);
@@ -53,7 +53,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
         startDate: startDate,
         endDate: endDate,
       );
-      
+
       if (result['success'] && result['data'] != null) {
         setState(() {
           _reportData = SalesReportModel.fromJson(result['data']);
@@ -94,7 +94,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
     try {
       String? startDate;
       String? endDate;
-      
+
       if (_selectedPeriod == 'custom' && _customDateRange != null) {
         startDate = DateFormat('yyyy-MM-dd').format(_customDateRange!.start);
         endDate = DateFormat('yyyy-MM-dd').format(_customDateRange!.end);
@@ -109,7 +109,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Download started. Please check your downloads folder.'),
+            content:
+                Text('Download started. Please check your downloads folder.'),
             backgroundColor: Colors.green,
           ),
         );
@@ -196,7 +197,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
               itemBuilder: (context, index) {
                 final period = _periods[index];
                 final isSelected = _selectedPeriod == period['value'];
-                
+
                 return FilterChip(
                   label: Text(
                     period['label']!,
@@ -305,7 +306,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
 
   Widget _buildSummarySection() {
     final summary = _reportData!.summary;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -379,7 +380,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
     );
   }
 
-  Widget _buildSummaryItem(String title, String value, IconData icon, Color color) {
+  Widget _buildSummaryItem(
+      String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -497,7 +499,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('${transaction.date} • ${transaction.customer}'),
-                    Text('${transaction.items} item • ${transaction.paymentMethod}'),
+                    Text(
+                        '${transaction.items} item • ${transaction.paymentMethod}'),
                   ],
                 ),
                 trailing: Text(
