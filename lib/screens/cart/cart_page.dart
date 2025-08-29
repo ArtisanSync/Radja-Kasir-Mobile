@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:lottie/lottie.dart';
 import '../../components/modern_card.dart';
 import '../../components/modern_buttons.dart';
 import '../../helpers/currency_format.dart';
@@ -71,38 +72,40 @@ class CartPage extends ConsumerWidget {
 
   Widget _buildEmptyCart(BuildContext context, ThemeData theme) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.shopping_cart_outlined,
-            size: 80,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          const Gap(16),
-          Text(
-            'Keranjang Kosong',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.bold,
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Lottie Animation
+            Container(
+              width: 200,
+              height: 200,
+              child: Lottie.asset(
+                'assets/animations/Shopping cart.json',
+                fit: BoxFit.contain,
+                repeat: true,
+              ),
             ),
-          ),
-          const Gap(8),
-          Text(
-            'Tambahkan produk ke keranjang untuk melanjutkan',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            const Gap(24),
+            Text(
+              'Keranjang Kosong',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                color: theme.colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            textAlign: TextAlign.center,
-          ),
-          const Gap(24),
-          ModernButton(
-            text: 'Belanja Sekarang',
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-        ],
+            const Gap(12),
+            Text(
+              'Tambahkan produk ke keranjang untuk melanjutkan',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+
+          ],
+        ),
       ),
     );
   }
