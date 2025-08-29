@@ -11,7 +11,6 @@ import 'package:kasir/screens/profile/profile_page.dart';
 import 'package:kasir/screens/report/report_page.dart';
 import 'package:kasir/screens/login_page.dart';
 import 'package:kasir/helpers/colors_theme.dart';
-
 class NavDrawer extends StatefulWidget {
   final String? currentRoute;
 
@@ -129,8 +128,7 @@ class _NavDrawerState extends State<NavDrawer> {
                 if (_isAdmin) ...[
                   const SizedBox(height: 8),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
@@ -153,8 +151,7 @@ class _NavDrawerState extends State<NavDrawer> {
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              children:
-                  _isAdmin ? _buildAdminMenuItems() : _buildUserMenuItems(),
+              children: _isAdmin ? _buildAdminMenuItems() : _buildUserMenuItems(),
             ),
           ),
 
@@ -286,8 +283,7 @@ class _NavDrawerState extends State<NavDrawer> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color:
-                  isActive ? primaryColor.withOpacity(0.1) : Colors.transparent,
+              color: isActive ? primaryColor.withOpacity(0.1) : Colors.transparent,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -313,8 +309,9 @@ class _NavDrawerState extends State<NavDrawer> {
                     title,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                      color:
-                          isActive ? primaryColor : theme.colorScheme.onSurface,
+                      color: isActive
+                          ? primaryColor
+                          : theme.colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -382,10 +379,8 @@ class _NavDrawerState extends State<NavDrawer> {
         Navigator.pushAndRemoveUntil(
           context,
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const LoginPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
+            pageBuilder: (context, animation, secondaryAnimation) => const LoginPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
               return FadeTransition(
                 opacity: animation,
                 child: child,

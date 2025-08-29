@@ -651,9 +651,7 @@ class ProductCard extends ConsumerWidget {
                 ],
               ),
             ),
-
             const Gap(8),
-
             Text(
               product.name,
               style: theme.textTheme.titleSmall?.copyWith(
@@ -663,9 +661,7 @@ class ProductCard extends ConsumerWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-
             const Gap(4),
-
             if (product.category != null)
               Text(
                 product.category!.name,
@@ -673,9 +669,7 @@ class ProductCard extends ConsumerWidget {
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-
             const Gap(4),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -708,8 +702,6 @@ class ProductCard extends ConsumerWidget {
                 ),
               ],
             ),
-
-
           ],
         ),
       ),
