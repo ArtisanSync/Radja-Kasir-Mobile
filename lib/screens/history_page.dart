@@ -227,106 +227,149 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    return Scaffold(
-      backgroundColor: theme.colorScheme.background,
-      drawer: const NavDrawer(currentRoute: 'history'),
-      appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface,
-        elevation: 0,
-        leading: const MenuBuilder(),
-        title: Text(
-          'History Transaksi',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          Consumer(
-            builder: (context, ref, child) {
-              final historyState = ref.watch(transactionHistoryProvider);
-              return IconButton(
-                onPressed: historyState.isLoading ? null : _onRefresh,
-                icon: historyState.isLoading
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            theme.colorScheme.onSurface,
-                          ),
-                        ),
-                      )
-                    : Icon(
-                        CupertinoIcons.refresh,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                tooltip: 'Refresh',
-              );
-            },
-          ),
-          const Gap(8),
-        ],
-      ),
-      body: Column(
-        children: [
-          Container(
-            color: theme.colorScheme.surface,
-            padding: const EdgeInsets.all(16),
-            child: ModernSearchField(
-              controller: _searchController,
-              hint: 'Cari history transaksi...',
-              onChanged: (value) {
-                if (value.isEmpty) {
-                  _onSearch('');
-                }
-              },
-              onSubmitted: _onSearch,
-              onClear: () {
-                _searchController.clear();
-                _onSearch('');
-              },
+    return DefaultTabController(
+      length: 2,
+      initialIndex: 0,
+      child: Scaffold(
+        backgroundColor: theme.colorScheme.background,
+        drawer: const NavDrawer(currentRoute: 'history'),
+        appBar: AppBar(
+          backgroundColor: theme.colorScheme.surface,
+          elevation: 0,
+          leading: const MenuBuilder(),
+          title: Text(
+            'History Transaksi',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface,
             ),
           ),
-          Expanded(
-            child: Consumer(
+          centerTitle: true,
+          bottom: TabBar(
+            labelColor: theme.colorScheme.onSurface,
+            indicatorColor: theme.colorScheme.primary,
+            unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
+            indicatorWeight: 3,
+            indicatorSize: TabBarIndicatorSize.label,
+            labelStyle: theme.textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w600),
+            unselectedLabelStyle: theme.textTheme.titleMedium,
+            tabs: const [
+              Tab(text: 'LUNAS'),
+              Tab(text: 'KASBON'),
+            ],
+          ),
+          actions: [
+            Consumer(
               builder: (context, ref, child) {
                 final historyState = ref.watch(transactionHistoryProvider);
-                return _buildHistoryList(context, theme, historyState);
+                return IconButton(
+                  onPressed: historyState.isLoading ? null : _onRefresh,
+                  icon: historyState.isLoading
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              theme.colorScheme.onSurface,
+                            ),
+                          ),
+                        )
+                      : Icon(
+                          CupertinoIcons.refresh,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                  tooltip: 'Refresh',
+                );
               },
             ),
-          ),
-        ],
+            const Gap(8),
+          ],
+        ),
+        body: Column(
+          children: [
+            Container(
+              color: theme.colorScheme.surface,
+              padding: const EdgeInsets.all(16),
+              child: ModernSearchField(
+                controller: _searchController,
+                hint: 'Cari history transaksi...',
+                onChanged: (value) {
+                  if (value.isEmpty) {
+                    _onSearch('');
+                  }
+                },
+                onSubmitted: _onSearch,
+                onClear: () {
+                  _searchController.clear();
+                  _onSearch('');
+                },
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final historyState =
+                          ref.watch(transactionHistoryProvider);
+                      // Filter LUNAS: status == 'lunas' || 'completed' || 'berhasil'
+                      final lunasList = historyState.transactions.where((tx) {
+                        final status = tx.status.toLowerCase();
+                        return status == 'lunas' ||
+                            status == 'completed' ||
+                            status == 'berhasil';
+                      }).toList();
+                      return _buildHistoryList(context, theme, historyState,
+                          filtered: lunasList);
+                    },
+                  ),
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final historyState =
+                          ref.watch(transactionHistoryProvider);
+                      // Filter KASBON: status == 'kasbon' || 'hutang' || 'pending'
+                      final kasbonList = historyState.transactions.where((tx) {
+                        final status = tx.status.toLowerCase();
+                        return status == 'kasbon' ||
+                            status == 'hutang' ||
+                            status == 'pending';
+                      }).toList();
+                      return _buildHistoryList(context, theme, historyState,
+                          filtered: kasbonList);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildHistoryList(BuildContext context, ThemeData theme,
-      TransactionHistoryState historyState) {
+      TransactionHistoryState historyState,
+      {List<TransactionModel>? filtered}) {
+    final list = filtered ?? historyState.transactions;
     if (historyState.error != null) {
       return _buildErrorState(context, theme, historyState.error!);
     }
-
     if (historyState.isLoading && historyState.transactions.isEmpty) {
       return _buildLoadingList();
     }
-
-    if (historyState.transactions.isEmpty && !historyState.isLoading) {
+    if (list.isEmpty && !historyState.isLoading) {
       return _buildEmptyState(context, theme);
     }
-
     return RefreshIndicator(
       onRefresh: _onRefresh,
       child: ListView.builder(
         controller: _scrollController,
         padding: const EdgeInsets.all(16),
-        itemCount: historyState.transactions.length +
-            (historyState.isLoadingMore ? 1 : 0),
+        itemCount: list.length + (historyState.isLoadingMore ? 1 : 0),
         itemBuilder: (context, index) {
-          if (index >= historyState.transactions.length) {
+          if (index >= list.length) {
             return const Padding(
               padding: EdgeInsets.all(16),
               child: Center(
@@ -334,8 +377,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
               ),
             );
           }
-
-          final transaction = historyState.transactions[index];
+          final transaction = list[index];
           return TransactionHistoryCard(
             transaction: transaction,
             onTap: () {
