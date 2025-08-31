@@ -312,32 +312,34 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                 children: [
                   Consumer(
                     builder: (context, ref, child) {
-                      final historyState =
-                          ref.watch(transactionHistoryProvider);
-                      // Filter LUNAS: status == 'lunas' || 'completed' || 'berhasil'
+                      final historyState = ref.watch(transactionHistoryProvider);
+                      // Filter LUNAS: status == 'lunas' || 'completed' || 'berhasil' DAN BUKAN kasbon
                       final lunasList = historyState.transactions.where((tx) {
                         final status = tx.status.toLowerCase();
-                        return status == 'lunas' ||
-                            status == 'completed' ||
-                            status == 'berhasil';
+                        final isKasbon = (tx.paymentMethod.toLowerCase() == 'kasbon' ||
+                          (tx.paymentInfo != null && (
+                            tx.paymentInfo!.method.toLowerCase() == 'kasbon' ||
+                            (tx.paymentInfo!.otherPaymentType != null && tx.paymentInfo!.otherPaymentType!.toLowerCase() == 'kasbon')
+                          )));
+                        return (status == 'lunas' || status == 'completed' || status == 'berhasil') && !isKasbon;
                       }).toList();
-                      return _buildHistoryList(context, theme, historyState,
-                          filtered: lunasList);
+                      return _buildHistoryList(context, theme, historyState, filtered: lunasList);
                     },
                   ),
                   Consumer(
                     builder: (context, ref, child) {
-                      final historyState =
-                          ref.watch(transactionHistoryProvider);
-                      // Filter KASBON: status == 'kasbon' || 'hutang' || 'pending'
+                      final historyState = ref.watch(transactionHistoryProvider);
+                      // Filter KASBON: status == 'kasbon' || 'hutang' || 'pending' || kasbon
                       final kasbonList = historyState.transactions.where((tx) {
                         final status = tx.status.toLowerCase();
-                        return status == 'kasbon' ||
-                            status == 'hutang' ||
-                            status == 'pending';
+                        final isKasbon = (tx.paymentMethod.toLowerCase() == 'kasbon' ||
+                          (tx.paymentInfo != null && (
+                            tx.paymentInfo!.method.toLowerCase() == 'kasbon' ||
+                            (tx.paymentInfo!.otherPaymentType != null && tx.paymentInfo!.otherPaymentType!.toLowerCase() == 'kasbon')
+                          )));
+                        return status == 'kasbon' || status == 'hutang' || status == 'pending' || isKasbon;
                       }).toList();
-                      return _buildHistoryList(context, theme, historyState,
-                          filtered: kasbonList);
+                      return _buildHistoryList(context, theme, historyState, filtered: kasbonList);
                     },
                   ),
                 ],
@@ -563,7 +565,7 @@ class TransactionHistoryCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          _getStatusText(transaction.status),
+                          _getStatusText(transaction),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: _getStatusColor(transaction.status),
                             fontWeight: FontWeight.w500,
@@ -636,8 +638,17 @@ class TransactionHistoryCard extends StatelessWidget {
     }
   }
 
-  String _getStatusText(String status) {
-    switch (status.toLowerCase()) {
+  String _getStatusText(TransactionModel tx) {
+    final status = tx.status.toLowerCase();
+    final isKasbon = (tx.paymentMethod.toLowerCase() == 'kasbon' ||
+        (tx.paymentInfo != null && (
+          tx.paymentInfo!.method.toLowerCase() == 'kasbon' ||
+          (tx.paymentInfo!.otherPaymentType != null && tx.paymentInfo!.otherPaymentType!.toLowerCase() == 'kasbon')
+        )));
+    if (isKasbon) {
+      return 'Menunggu';
+    }
+    switch (status) {
       case 'completed':
         return 'Berhasil';
       case 'pending':
