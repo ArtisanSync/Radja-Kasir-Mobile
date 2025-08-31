@@ -1,3 +1,4 @@
+// ignore_for_file: use_build_context_synchronously, prefer_const_constructors
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir/models/product_model.dart';
 import 'package:kasir/services/transaction_services.dart';
