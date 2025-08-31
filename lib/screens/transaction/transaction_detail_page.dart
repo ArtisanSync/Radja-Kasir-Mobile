@@ -1,8 +1,8 @@
+// ignore_for_file: use_build_context_synchronously, prefer_const_constructors
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/cart_providers.dart';
 import '../payment/payment_page.dart';
-import '../../helpers/colors_theme.dart';
 
 class TransactionDetailPage extends ConsumerWidget {
   const TransactionDetailPage({super.key});
@@ -10,9 +10,7 @@ class TransactionDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cartState = ref.watch(cartProvider);
-    final cartNotifier = ref.read(cartProvider.notifier);
     final totalAmount = ref.watch(cartTotalAmountProvider);
-    final totalQuantity = ref.watch(cartTotalQuantityProvider);
 
     // Generate transaction number
     final transactionNumber =

@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+// ignore_for_file: use_build_context_synchronously, prefer_const_constructors
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
@@ -8,16 +8,15 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kasir/components/builder_menu.dart';
 import 'package:kasir/components/nav_drawer.dart';
-import 'package:kasir/components/modern_card.dart';
-import 'package:kasir/components/modern_text_field.dart';
-import 'package:kasir/helpers/colors_theme.dart';
 import 'package:kasir/helpers/currency_format.dart';
 import 'package:kasir/models/product_model.dart';
 import 'package:kasir/providers/cart_providers.dart';
 import 'package:kasir/providers/product_providers.dart';
-import 'package:kasir/providers/category_providers.dart';
 import 'package:kasir/screens/cart/cart_page.dart';
-import 'package:kasir/screens/product/product_detail.dart';
+
+// Define your static colors
+const Color primary = Color(0xFF00ADFE);
+const Color badgeYellow = Color(0xFFFACC15);
 
 class MyHomePage extends ConsumerStatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -29,8 +28,6 @@ class MyHomePage extends ConsumerStatefulWidget {
 class _MyHomePageState extends ConsumerState<MyHomePage> {
   @override
   Widget build(BuildContext context) {
-    final cartCount = ref.watch(cartItemCountProvider);
-
     return Scaffold(
       body: DefaultTabController(
         length: 2,
@@ -43,14 +40,14 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
             title: Text(
               "Radja Kasir",
               style: GoogleFonts.inter(
-                fontWeight: FontWeight.bold, 
+                fontWeight: FontWeight.bold,
                 color: Colors.black87,
                 fontSize: 20,
               ),
             ),
             bottom: TabBar(
-              labelColor: Colors.black87,
-              indicatorColor: Colors.black87,
+              labelColor: Colors.black,
+              indicatorColor: Colors.black,
               unselectedLabelColor: Colors.black54,
               indicatorWeight: 3,
               indicatorSize: TabBarIndicatorSize.label,
@@ -102,7 +99,6 @@ class HomeProductCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final cartNotifier = ref.read(cartProvider.notifier);
 
     return GestureDetector(
       onTap: onTap,
@@ -134,247 +130,121 @@ class HomeProductCard extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-            Expanded(
-              child: Stack(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                          theme.colorScheme.surfaceVariant.withOpacity(0.1),
-                        ],
-                      ),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: product.image != null
-                          ? CachedNetworkImage(
-                              imageUrl: product.image!,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      theme.colorScheme.surfaceVariant.withOpacity(0.4),
-                                      theme.colorScheme.surfaceVariant.withOpacity(0.2),
-                                    ],
-                                  ),
-                                ),
-                                child: Icon(
-                                  Icons.image_outlined,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                  size: 32,
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      theme.colorScheme.errorContainer.withOpacity(0.3),
-                                      theme.colorScheme.errorContainer.withOpacity(0.1),
-                                    ],
-                                  ),
-                                ),
-                                child: Icon(
-                                  Icons.broken_image_outlined,
-                                  color: theme.colorScheme.onErrorContainer,
-                                  size: 32,
-                                ),
-                              ),
-                            )
-                          : Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    theme.colorScheme.surfaceVariant.withOpacity(0.4),
-                                    theme.colorScheme.surfaceVariant.withOpacity(0.2),
-                                  ],
-                                ),
-                              ),
+              // Gambar produk atau ikon toko di tengah tanpa latar
+              Expanded(
+                child: Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: product.image != null
+                        ? CachedNetworkImage(
+                            imageUrl: product.image!,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Center(
                               child: Icon(
-                                Icons.image_outlined,
+                                Icons.store,
+                                color: primary.withOpacity(0.5),
                                 size: 40,
-                                color: theme.colorScheme.onSurfaceVariant,
                               ),
                             ),
-                    ),
-                  ),
-
-                  if (!product.hasStock)
-                    Positioned(
-                      bottom: 12,
-                      left: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.error,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: theme.colorScheme.error.withOpacity(0.3),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
+                            errorWidget: (context, url, error) => Center(
+                              child: Icon(
+                                Icons.broken_image_outlined,
+                                color: theme.colorScheme.onErrorContainer,
+                                size: 40,
+                              ),
                             ),
-                          ],
-                        ),
-                        child: Text(
-                          'Habis',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onError,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ),
-                    )
-                  else if (product.isLowStock)
-                    Positioned(
-                      bottom: 12,
-                      left: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Colors.orange.shade400, Colors.orange.shade600],
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.orange.withOpacity(0.3),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
+                          )
+                        : Center(
+                            child: Icon(
+                              Icons.store,
+                              size: 40,
+                              color: primary.withOpacity(0.5),
                             ),
-                          ],
-                        ),
-                        child: Text(
-                          'Menipis',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11,
                           ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-
-            const Gap(12),
-
-            Text(
-              product.name,
-              style: GoogleFonts.inter(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface,
-                height: 1.3,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-
-            const Gap(8),
-
-            if (product.category != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.secondaryContainer.withOpacity(0.8),
-                      theme.colorScheme.secondaryContainer.withOpacity(0.6),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: theme.colorScheme.secondary.withOpacity(0.2),
-                    width: 1,
                   ),
                 ),
-                child: Text(
-                  product.category!.name,
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    color: theme.colorScheme.onSecondaryContainer,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
               ),
-
-            const Gap(12),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
+              const Gap(12),
+              Text(
+                product.name,
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurface,
+                  height: 1.3,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const Gap(8),
+              // Badge kategori dengan background 10% opacity
+              if (product.category != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: badgeYellow.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: badgeYellow.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
                   child: Text(
-                    CurrencyFormat.formatPrice(
-                        double.tryParse(product.displayPrice) ?? 0.0),
+                    product.category!.name,
                     style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                      letterSpacing: -0.5,
+                      fontSize: 11,
+                      color: theme.colorScheme.onSecondaryContainer,
+                      fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: product.hasStock 
-                          ? [
-                              theme.colorScheme.primaryContainer,
-                              theme.colorScheme.primaryContainer.withOpacity(0.8),
-                            ]
-                          : [
-                              theme.colorScheme.errorContainer,
-                              theme.colorScheme.errorContainer.withOpacity(0.8),
-                            ],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: product.hasStock 
-                          ? theme.colorScheme.primary.withOpacity(0.2)
-                          : theme.colorScheme.error.withOpacity(0.2),
-                      width: 1,
+              const Gap(12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      CurrencyFormat.formatPrice(
+                          double.tryParse(product.displayPrice) ?? 0.0),
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                        letterSpacing: -0.5,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  child: Text(
-                    product.hasStock ? '${product.totalQuantity}' : 'Habis',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: product.hasStock 
-                          ? theme.colorScheme.onPrimaryContainer
-                          : theme.colorScheme.onErrorContainer,
-                      fontWeight: FontWeight.w600,
+                  // Badge stock dengan background 10% opacity
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: product.hasStock
+                          ? primary.withOpacity(0.3)
+                          : theme.colorScheme.error.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: product.hasStock
+                            ? primary.withOpacity(0.3)
+                            : theme.colorScheme.error.withOpacity(0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      product.hasStock ? '${product.totalQuantity}' : 'Habis',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-
-
+                ],
+              ),
             ],
           ),
         ),
@@ -383,7 +253,6 @@ class HomeProductCard extends ConsumerWidget {
   }
 }
 
-// Product Tab Content
 class ProductTabContent extends ConsumerStatefulWidget {
   const ProductTabContent({Key? key}) : super(key: key);
 
@@ -392,7 +261,6 @@ class ProductTabContent extends ConsumerStatefulWidget {
 }
 
 class _ProductTabContentState extends ConsumerState<ProductTabContent> {
-
   @override
   void initState() {
     super.initState();
@@ -495,7 +363,8 @@ class _ProductTabContentState extends ConsumerState<ProductTabContent> {
                   : AnimationLimiter(
                       child: GridView.builder(
                         physics: const BouncingScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
                           childAspectRatio: 0.7,
                           crossAxisSpacing: 16,
@@ -514,27 +383,32 @@ class _ProductTabContentState extends ConsumerState<ProductTabContent> {
                                   product: product,
                                   onTap: () {
                                     if (product.hasStock) {
-                                      final cartNotifier = ref.read(cartProvider.notifier);
-                                      // Use variant ID instead of product ID for backend compatibility
-                                      final variantId = product.variants.isNotEmpty
-                                          ? product.variants.first.id
-                                          : product.id!;
+                                      final cartNotifier =
+                                          ref.read(cartProvider.notifier);
+                                      final variantId =
+                                          product.variants.isNotEmpty
+                                              ? product.variants.first.id
+                                              : product.id!;
                                       cartNotifier.addItem(
                                         productId: variantId,
                                         name: product.name,
                                         image: product.image ?? '',
-                                        price: double.tryParse(product.displayPrice) ?? 0.0,
+                                        price: double.tryParse(
+                                                product.displayPrice) ?? 0.0,
                                         unit: product.displayUnit,
                                       );
 
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
                                         SnackBar(
                                           content: Row(
                                             children: [
                                               Container(
-                                                padding: const EdgeInsets.all(4),
+                                                padding:
+                                                    const EdgeInsets.all(4),
                                                 decoration: BoxDecoration(
-                                                  color: Colors.white.withOpacity(0.2),
+                                                  color: Colors.white
+                                                      .withOpacity(0.2),
                                                   shape: BoxShape.circle,
                                                 ),
                                                 child: const Icon(
@@ -555,17 +429,19 @@ class _ProductTabContentState extends ConsumerState<ProductTabContent> {
                                               ),
                                             ],
                                           ),
-                                          backgroundColor: Colors.green.shade600,
+                                          backgroundColor:
+                                              Colors.green.shade600,
                                           behavior: SnackBarBehavior.floating,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(16),
+                                            borderRadius:
+                                                BorderRadius.circular(16),
                                           ),
                                           margin: const EdgeInsets.all(16),
                                           duration: const Duration(seconds: 2),
                                         ),
                                       );
                                     }
-                                   },
+                                  },
                                 ),
                               ),
                             ),
@@ -577,7 +453,6 @@ class _ProductTabContentState extends ConsumerState<ProductTabContent> {
   }
 }
 
-// Favorite Tab Content
 class FavoriteTabContent extends StatelessWidget {
   const FavoriteTabContent({Key? key}) : super(key: key);
 
@@ -627,7 +502,6 @@ class FavoriteTabContent extends StatelessWidget {
   }
 }
 
-// Button Cart with Badge
 class ButtonCartWithBadge extends ConsumerWidget {
   const ButtonCartWithBadge({Key? key}) : super(key: key);
 
@@ -717,4 +591,3 @@ class ButtonCartWithBadge extends ConsumerWidget {
     );
   }
 }
-            
