@@ -1,7 +1,10 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:image_picker/image_picker.dart';
 import 'package:kasir/core/dio_intercaptor.dart';
 import 'package:kasir/helpers/store.dart';
 import 'package:kasir/services/service_utils.dart';
+import 'package:http_parser/http_parser.dart';
 
 class StoreServices {
   late final Dio _dio;
@@ -12,99 +15,40 @@ class StoreServices {
     _dio.interceptors.add(DioInterceptor());
   }
 
-  // Mendapatkan daftar toko user
-  Future<Map<String, dynamic>> getMyStores() async {
-    try {
-      final response = await _dio.get("$_baseUrl/stores/my-stores");
+  Future<FormData> _createStoreFormData(
+      Map<String, dynamic> storeData, XFile? logoFile) async {
+    storeData.removeWhere((key, value) => value == null);
+    final formData = FormData.fromMap(storeData);
 
-      if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'data': response.data['data'],
-          'message': response.data['message'] ?? 'Daftar toko berhasil diambil'
-        };
+    if (logoFile != null) {
+      final mediaType = MediaType('image', logoFile.name.split('.').last);
+      if (kIsWeb) {
+        final bytes = await logoFile.readAsBytes();
+        formData.files.add(MapEntry(
+          'logo',
+          MultipartFile.fromBytes(bytes,
+              filename: logoFile.name, contentType: mediaType),
+        ));
+      } else {
+        formData.files.add(MapEntry(
+          'logo',
+          await MultipartFile.fromFile(logoFile.path,
+              filename: logoFile.name, contentType: mediaType),
+        ));
       }
-
-      return {
-        'success': false,
-        'message': response.data['message'] ?? 'Gagal mengambil daftar toko',
-        'data': []
-      };
-    } on DioException catch (e) {
-      return {
-        'success': false,
-        'message': e.response?.data['message'] ?? 'Terjadi kesalahan jaringan',
-        'data': []
-      };
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan tidak terduga',
-        'data': []
-      };
     }
+    return formData;
   }
 
-  // Mendapatkan detail toko
-  Future<Map<String, dynamic>> getStoreDetail(String storeId) async {
+  Future<Map<String, dynamic>> createFirstStore(
+      Map<String, dynamic> storeData, XFile? logo) async {
     try {
-      final response = await _dio.get("$_baseUrl/stores/$storeId");
-
-      if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'data': response.data['data'],
-          'message': response.data['message'] ?? 'Detail toko berhasil diambil'
-        };
-      }
-
-      return {
-        'success': false,
-        'message': response.data['message'] ?? 'Gagal mengambil detail toko',
-        'data': null
-      };
+      final formData = await _createStoreFormData(storeData, logo);
+      final response =
+          await _dio.post("$_baseUrl/stores/first", data: formData);
+      return response.data;
     } on DioException catch (e) {
-      return {
-        'success': false,
-        'message': e.response?.data['message'] ?? 'Terjadi kesalahan jaringan',
-        'data': null
-      };
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan tidak terduga',
-        'data': null
-      };
-    }
-  }
-
-  // Membuat toko pertama
-  Future<Map<String, dynamic>> createFirstStore(Map<String, dynamic> storeData) async {
-    try {
-      final response = await _dio.post(
-        "$_baseUrl/stores/first",
-        data: storeData,
-      );
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        // Simpan toko baru ke local storage
-        await Store.saveStore(response.data['data']);
-        
-        return {
-          'success': true,
-          'data': response.data['data'],
-          'message': response.data['message'] ?? 'Toko pertama berhasil dibuat'
-        };
-      }
-
-      return {
-        'success': false,
-        'message': response.data['message'] ?? 'Gagal membuat toko',
-        'data': null
-      };
-    } on DioException catch (e) {
-      // Cek apakah error karena subscription
-      if (e.response?.statusCode == 403 && 
+      if (e.response?.statusCode == 403 &&
           e.response?.data['data']?['subscriptionRequired'] == true) {
         return {
           'success': false,
@@ -113,45 +57,23 @@ class StoreServices {
           'subscriptionRequired': true
         };
       }
-      
-      return {
-        'success': false,
-        'message': e.response?.data['message'] ?? 'Terjadi kesalahan jaringan',
-        'data': null
-      };
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan tidak terduga',
-        'data': null
-      };
+      return e.response?.data ??
+          {
+            'success': false,
+            'message':
+                e.response?.data['message'] ?? 'Terjadi kesalahan jaringan'
+          };
     }
   }
 
-  // Membuat toko tambahan
-  Future<Map<String, dynamic>> createStore(Map<String, dynamic> storeData) async {
+  Future<Map<String, dynamic>> createStore(
+      Map<String, dynamic> storeData, XFile? logo) async {
     try {
-      final response = await _dio.post(
-        "$_baseUrl/stores",
-        data: storeData,
-      );
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        return {
-          'success': true,
-          'data': response.data['data'],
-          'message': response.data['message'] ?? 'Toko berhasil dibuat'
-        };
-      }
-
-      return {
-        'success': false,
-        'message': response.data['message'] ?? 'Gagal membuat toko',
-        'data': null
-      };
+      final formData = await _createStoreFormData(storeData, logo);
+      final response = await _dio.post("$_baseUrl/stores", data: formData);
+      return response.data;
     } on DioException catch (e) {
-      // Cek apakah error karena subscription
-      if (e.response?.statusCode == 403 && 
+      if (e.response?.statusCode == 403 &&
           e.response?.data['data']?['subscriptionRequired'] == true) {
         return {
           'success': false,
@@ -160,99 +82,72 @@ class StoreServices {
           'subscriptionRequired': true
         };
       }
-      
-      return {
-        'success': false,
-        'message': e.response?.data['message'] ?? 'Terjadi kesalahan jaringan',
-        'data': null
-      };
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan tidak terduga',
-        'data': null
-      };
+      return e.response?.data ??
+          {
+            'success': false,
+            'message':
+                e.response?.data['message'] ?? 'Terjadi kesalahan jaringan'
+          };
     }
   }
 
-  // Update toko
-  Future<Map<String, dynamic>> updateStore(String storeId, Map<String, dynamic> updateData) async {
+  Future<Map<String, dynamic>> updateStore(
+      String storeId, Map<String, dynamic> updateData, XFile? logo) async {
     try {
-      final response = await _dio.put(
-        "$_baseUrl/stores/$storeId",
-        data: updateData,
-      );
+      final formData = await _createStoreFormData(updateData, logo);
+      final response =
+          await _dio.put("$_baseUrl/stores/$storeId", data: formData);
 
       if (response.statusCode == 200) {
-        // Update toko di local storage jika itu toko aktif
         final currentStore = await Store.getStore();
         if (currentStore != null && currentStore['id'] == storeId) {
           await Store.saveStore(response.data['data']);
         }
-        
-        return {
-          'success': true,
-          'data': response.data['data'],
-          'message': response.data['message'] ?? 'Toko berhasil diperbarui'
-        };
       }
-
-      return {
-        'success': false,
-        'message': response.data['message'] ?? 'Gagal memperbarui toko',
-        'data': null
-      };
+      return response.data;
     } on DioException catch (e) {
-      return {
-        'success': false,
-        'message': e.response?.data['message'] ?? 'Terjadi kesalahan jaringan',
-        'data': null
-      };
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan tidak terduga',
-        'data': null
-      };
+      return e.response?.data ??
+          {
+            'success': false,
+            'message':
+                e.response?.data['message'] ?? 'Terjadi kesalahan jaringan'
+          };
     }
   }
 
-  // Delete toko
+  Future<Map<String, dynamic>> getMyStores() async {
+    try {
+      final response = await _dio.get("$_baseUrl/stores/my-stores");
+      return response.data;
+    } on DioException catch (e) {
+      return e.response?.data ??
+          {'success': false, 'message': 'Terjadi kesalahan jaringan'};
+    }
+  }
+
+  Future<Map<String, dynamic>> getStoreDetail(String storeId) async {
+    try {
+      final response = await _dio.get("$_baseUrl/stores/$storeId");
+      return response.data;
+    } on DioException catch (e) {
+      return e.response?.data ??
+          {'success': false, 'message': 'Terjadi kesalahan jaringan'};
+    }
+  }
+
   Future<Map<String, dynamic>> deleteStore(String storeId) async {
     try {
       final response = await _dio.delete("$_baseUrl/stores/$storeId");
-
       if (response.statusCode == 200) {
-        // Jika toko yang dihapus adalah toko aktif, hapus dari local storage
         final currentStore = await Store.getStore();
         if (currentStore != null && currentStore['id'] == storeId) {
           await Store.removeStore();
         }
-        
-        return {
-          'success': true,
-          'data': response.data['data'],
-          'message': response.data['message'] ?? 'Toko berhasil dihapus'
-        };
       }
-
-      return {
-        'success': false,
-        'message': response.data['message'] ?? 'Gagal menghapus toko',
-        'data': null
-      };
+      return response.data;
     } on DioException catch (e) {
-      return {
-        'success': false,
-        'message': e.response?.data['message'] ?? 'Terjadi kesalahan jaringan',
-        'data': null
-      };
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan tidak terduga',
-        'data': null
-      };
+      return e.response?.data ??
+          {'success': false, 'message': 'Gagal menghapus toko'};
     }
   }
 }

@@ -1,5 +1,5 @@
-// ignore_for_file: use_build_context_synchronously, prefer_const_constructors
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir/components/modern_buttons.dart';
 import 'package:kasir/models/store_model.dart';
@@ -7,6 +7,7 @@ import 'package:kasir/providers/store_providers.dart';
 import 'package:kasir/screens/profile/business_profile_page.dart';
 import 'package:kasir/screens/store/add_store_page.dart';
 import 'package:kasir/helpers/colors_theme.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class StoreListPage extends ConsumerStatefulWidget {
   const StoreListPage({Key? key}) : super(key: key);
@@ -32,7 +33,6 @@ class _StoreListPageState extends ConsumerState<StoreListPage> {
   Widget build(BuildContext context) {
     final storeState = ref.watch(storeProvider);
     final theme = Theme.of(context);
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -49,7 +49,6 @@ class _StoreListPageState extends ConsumerState<StoreListPage> {
               builder: (context) => const AddStorePage(),
             ),
           );
-
           if (result == true) {
             _loadStores();
           }
@@ -105,7 +104,6 @@ class _StoreListPageState extends ConsumerState<StoreListPage> {
                   builder: (context) => const AddStorePage(),
                 ),
               );
-
               if (result == true) {
                 _loadStores();
               }
@@ -152,7 +150,6 @@ class _StoreListPageState extends ConsumerState<StoreListPage> {
               ),
             ),
           ),
-          // Content card
           InkWell(
             onTap: () {
               Navigator.push(
@@ -171,7 +168,6 @@ class _StoreListPageState extends ConsumerState<StoreListPage> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Icon container
                       Container(
                         width: 60,
                         height: 60,
@@ -180,55 +176,40 @@ class _StoreListPageState extends ConsumerState<StoreListPage> {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.grey.shade300, width: 1),
                         ),
-                        child: Center(
-                          child: store.logo != null
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.network(
-                                    store.logo!,
-                                    fit: BoxFit.cover,
-                                    width: 60,
-                                    height: 60,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Icon(
-                                        Icons.business,
-                                        size: 30,
-                                        color: Colors.grey[600],
-                                      );
-                                    },
-                                  ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          // --- [PERBAIKAN] Menambahkan pengecekan `isNotEmpty` ---
+                          child: (store.logo != null && store.logo!.isNotEmpty)
+                              ? CachedNetworkImage(
+                                  imageUrl: store.logo!,
+                                  fit: BoxFit.cover,
+                                  width: 60,
+                                  height: 60,
+                                  errorWidget: (context, error, stackTrace) {
+                                    return Icon(Icons.business, size: 30, color: Colors.grey[600]);
+                                  },
                                 )
-                              : Icon(
-                                  Icons.business,
-                                  size: 30,
-                                  color: Colors.grey[600],
-                                ),
+                              : Icon(Icons.business, size: 30, color: Colors.grey[600]),
                         ),
                       ),
                       const SizedBox(width: 16),
-                      // Store info
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               store.name,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
                               store.description,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: Colors.grey[600],
-                              ),
+                              style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 8),
-                            // Badge produk dan member
                             Row(
                               children: [
                                 _buildStatChip(
@@ -254,62 +235,33 @@ class _StoreListPageState extends ConsumerState<StoreListPage> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  // Address and phone
                   Row(
                     children: [
-                      // Address
+                      Icon(Icons.location_on_outlined, size: 16, color: Colors.grey[600]),
+                      const SizedBox(width: 4),
                       Expanded(
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.location_on_outlined,
-                              size: 16,
-                              color: Colors.grey[600],
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                store.address,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey[600],
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          store.address,
+                          style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      // Phone if available
                       if (store.phone != null && store.phone!.isNotEmpty) ...[
                         const SizedBox(width: 8),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.phone,
-                              size: 16,
-                              color: Colors.grey[600],
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              store.phone!,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
+                        Icon(Icons.phone, size: 16, color: Colors.grey[600]),
+                        const SizedBox(width: 4),
+                        Text(
+                          store.phone!,
+                          style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                         ),
                       ],
                     ],
                   ),
                   const SizedBox(height: 16),
-                  // Store type badge and options
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Badge tipe toko
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
@@ -325,15 +277,11 @@ class _StoreListPageState extends ConsumerState<StoreListPage> {
                           ),
                         ),
                       ),
-                      // Options button
                       IconButton(
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                         onPressed: () => _showStoreOptions(store),
-                        icon: Icon(
-                          Icons.more_vert,
-                          color: Colors.grey[700],
-                        ),
+                        icon: Icon(Icons.more_vert, color: Colors.grey[700]),
                         tooltip: 'Opsi',
                       ),
                     ],
@@ -347,7 +295,6 @@ class _StoreListPageState extends ConsumerState<StoreListPage> {
     );
   }
 
-  // Badge dengan warna kustom
   Widget _buildStatChip(IconData icon, int count, String label, Color bgColor, Color textColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -358,11 +305,7 @@ class _StoreListPageState extends ConsumerState<StoreListPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 14,
-            color: textColor,
-          ),
+          Icon(icon, size: 14, color: textColor),
           const SizedBox(width: 4),
           Text(
             '$count $label',
@@ -389,10 +332,7 @@ class _StoreListPageState extends ConsumerState<StoreListPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(
-                Icons.edit,
-                color: Colors.grey[700],
-              ),
+              leading: Icon(Icons.edit, color: Colors.grey[700]),
               title: const Text('Edit Profil Usaha'),
               onTap: () {
                 Navigator.pop(context);
@@ -404,26 +344,9 @@ class _StoreListPageState extends ConsumerState<StoreListPage> {
                 ).then((_) => _loadStores());
               },
             ),
-            ListTile(
-              leading: Icon(
-                Icons.person_add,
-                color: AppColor.primary,
-              ),
-              title: Text(
-                'Undang Anggota',
-                style: TextStyle(color: AppColor.primary),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                // Navigasi ke halaman undang anggota
-              },
-            ),
             const Divider(),
             ListTile(
-              leading: const Icon(
-                Icons.delete,
-                color: Colors.red,
-              ),
+              leading: const Icon(Icons.delete, color: Colors.red),
               title: const Text(
                 'Hapus Toko',
                 style: TextStyle(color: Colors.red),
@@ -454,7 +377,7 @@ class _StoreListPageState extends ConsumerState<StoreListPage> {
             onPressed: () async {
               Navigator.pop(context);
               final result = await ref.read(storeProvider.notifier).deleteStore(store.id);
-
+              if (!mounted) return;
               if (result['success'] == true) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
