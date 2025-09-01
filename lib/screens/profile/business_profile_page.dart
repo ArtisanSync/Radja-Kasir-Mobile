@@ -1,92 +1,87 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kasir/components/modern_card.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:kasir/components/modern_buttons.dart';
+import 'package:kasir/components/modern_card.dart';
 import 'package:kasir/components/modern_text_field.dart';
 import 'package:kasir/providers/store_providers.dart';
 import 'package:loader_overlay/loader_overlay.dart';
 
 class BusinessProfilePage extends ConsumerStatefulWidget {
   final String storeId;
-  
-  const BusinessProfilePage({
-    Key? key, 
-    required this.storeId
-  }) : super(key: key);
+
+  const BusinessProfilePage({Key? key, required this.storeId}) : super(key: key);
 
   @override
-  ConsumerState<BusinessProfilePage> createState() => _BusinessProfilePageState();
+  ConsumerState<BusinessProfilePage> createState() =>
+      _BusinessProfilePageState();
 }
 
 class _BusinessProfilePageState extends ConsumerState<BusinessProfilePage> {
   final _formKey = GlobalKey<FormState>();
-  
+
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _typeController = TextEditingController();
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
   final _whatsappController = TextEditingController();
   final _emailController = TextEditingController();
-  
+
+  XFile? _logoImageFile;
+  String? _currentLogoUrl;
+  final ImagePicker _picker = ImagePicker();
+
   bool _isLoading = true;
   bool _isSaving = false;
-  
+
   @override
   void initState() {
     super.initState();
     Future.microtask(() => _loadStoreProfile());
   }
-  
+
   @override
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
-    _typeController.dispose();
     _addressController.dispose();
     _phoneController.dispose();
     _whatsappController.dispose();
     _emailController.dispose();
     super.dispose();
   }
-  
+
   Future<void> _loadStoreProfile() async {
     if (!mounted) return;
-    
     setState(() => _isLoading = true);
+
     try {
       await ref.read(storeProvider.notifier).loadStoreDetail(widget.storeId);
       final storeState = ref.read(storeProvider);
-      
+
       if (!mounted) return;
-      
+
       if (storeState.currentStore != null) {
+        final store = storeState.currentStore!;
         setState(() {
-          final store = storeState.currentStore!;
           _nameController.text = store.name;
           _descriptionController.text = store.description;
-          _typeController.text = store.storeType;
           _addressController.text = store.address;
           _phoneController.text = store.phone ?? '';
           _whatsappController.text = store.whatsapp ?? '';
           _emailController.text = store.email ?? '';
+          _currentLogoUrl = store.logo;
         });
       } else if (storeState.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(storeState.error!),
-            backgroundColor: Colors.red,
-          )
-        );
+        _showSnackBar(storeState.error!, isError: true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          )
-        );
+        _showSnackBar('Terjadi kesalahan: ${e.toString()}', isError: true);
       }
     } finally {
       if (mounted) {
@@ -94,66 +89,93 @@ class _BusinessProfilePageState extends ConsumerState<BusinessProfilePage> {
       }
     }
   }
-  
+
+  Future<void> _pickImage() async {
+    final XFile? pickedFile =
+        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (pickedFile != null) {
+      setState(() {
+        _logoImageFile = pickedFile;
+      });
+    }
+  }
+
   Future<void> _saveStoreProfile() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() => _isSaving = true);
     context.loaderOverlay.show();
-    
+
     try {
-      final response = await ref.read(storeProvider.notifier).updateStore(
-        widget.storeId,
-        {
-          "name": _nameController.text,
-          "description": _descriptionController.text,
-          "storeType": _typeController.text,
-          "address": _addressController.text,
-          "phone": _phoneController.text,
-          "whatsapp": _whatsappController.text,
-          "email": _emailController.text
-        }
-      );
-      
+      final updateData = {
+        "name": _nameController.text,
+        "description": _descriptionController.text,
+        "address": _addressController.text,
+        "phone": _phoneController.text,
+        "whatsapp": _whatsappController.text,
+        "email": _emailController.text,
+      };
+      final response = await ref
+          .read(storeProvider.notifier)
+          .updateStore(widget.storeId, updateData, _logoImageFile);
+
+      if (!mounted) return;
+
       if (response['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profil usaha berhasil diperbarui'), 
-            backgroundColor: Colors.green
-          )
-        );
+        _showSnackBar('Profil usaha berhasil diperbarui', isError: false);
+        Navigator.pop(context, true); 
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response['message'] ?? 'Gagal memperbarui profil usaha'),
-            backgroundColor: Colors.red
-          )
-        );
+        _showSnackBar(response['message'] ?? 'Gagal memperbarui profil usaha', isError: true);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red
-        )
-      );
+      _showSnackBar('Terjadi kesalahan: ${e.toString()}', isError: true);
     } finally {
-      setState(() => _isSaving = false);
-      context.loaderOverlay.hide();
+      if (mounted) {
+        setState(() => _isSaving = false);
+        context.loaderOverlay.hide();
+      }
     }
+  }
+  
+  void _showSnackBar(String message, {required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message),
+      backgroundColor: isError ? Colors.red : Colors.green,
+    ));
+  }
+  
+  Widget _buildImagePreview(ThemeData theme) {
+    if (_logoImageFile != null) {
+      if (kIsWeb) {
+        return Image.network(_logoImageFile!.path, fit: BoxFit.cover);
+      } else {
+        return Image.file(File(_logoImageFile!.path), fit: BoxFit.cover);
+      }
+    }
+
+    if (_currentLogoUrl != null && _currentLogoUrl!.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: _currentLogoUrl!,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => const Center(child: CupertinoActivityIndicator()),
+        errorWidget: (context, url, error) => _buildImagePlaceholder(theme),
+      );
+    }
+
+    return _buildImagePlaceholder(theme);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profil Usaha'),
         elevation: 0,
       ),
-      body: _isLoading 
-          ? const Center(child: CircularProgressIndicator()) 
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Form(
@@ -165,55 +187,70 @@ class _BusinessProfilePageState extends ConsumerState<BusinessProfilePage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text('Logo Toko', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 16),
+                          GestureDetector(
+                            onTap: _pickImage,
+                            child: Container(
+                              width: double.infinity,
+                              height: 150,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: theme.colorScheme.outline.withOpacity(0.3)),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: _buildImagePreview(theme),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ModernCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
                             'Informasi Bisnis',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 16),
                           ModernTextField(
                             label: 'Nama Usaha',
                             controller: _nameController,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Nama usaha tidak boleh kosong';
-                              }
-                              return null;
-                            },
+                            validator: (value) => (value == null || value.isEmpty) ? 'Nama usaha tidak boleh kosong' : null,
                             prefixIcon: const Icon(Icons.business),
                           ),
                           const SizedBox(height: 16),
                           ModernTextField(
                             label: 'Deskripsi',
                             controller: _descriptionController,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Deskripsi tidak boleh kosong';
-                              }
-                              return null;
-                            },
+                            validator: (value) => (value == null || value.isEmpty) ? 'Deskripsi tidak boleh kosong' : null,
                             maxLines: 2,
                             prefixIcon: const Icon(Icons.description),
                           ),
                           const SizedBox(height: 16),
                           ModernTextField(
-                            label: 'Jenis Usaha',
-                            controller: _typeController,
-                            prefixIcon: const Icon(Icons.category),
-                          ),
-                          const SizedBox(height: 16),
-                          ModernTextField(
                             label: 'Alamat',
                             controller: _addressController,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Alamat tidak boleh kosong';
-                              }
-                              return null;
-                            },
+                            validator: (value) => (value == null || value.isEmpty) ? 'Alamat tidak boleh kosong' : null,
                             maxLines: 3,
                             prefixIcon: const Icon(Icons.location_on),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ModernCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                           Text(
+                            'Kontak (Opsional)',
+                            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 16),
                           ModernTextField(
@@ -252,5 +289,17 @@ class _BusinessProfilePageState extends ConsumerState<BusinessProfilePage> {
             ),
     );
   }
+
+  Widget _buildImagePlaceholder(ThemeData theme) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(CupertinoIcons.photo_on_rectangle, size: 40, color: theme.colorScheme.onSurfaceVariant),
+          const SizedBox(height: 8),
+          Text('Ganti Logo', style: theme.textTheme.bodyMedium),
+        ],
+      ),
+    );
+  }
 }
-  

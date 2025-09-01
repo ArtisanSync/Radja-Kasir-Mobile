@@ -1,7 +1,9 @@
-// ignore_for_file: use_build_context_synchronously, prefer_const_constructors
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:kasir/components/modern_buttons.dart';
 import 'package:kasir/components/modern_card.dart';
 import 'package:kasir/components/modern_text_field.dart';
@@ -11,7 +13,6 @@ import 'package:loader_overlay/loader_overlay.dart';
 
 class AddStorePage extends ConsumerStatefulWidget {
   final bool isFirstStore;
-
   const AddStorePage({
     Key? key,
     this.isFirstStore = false,
@@ -23,7 +24,6 @@ class AddStorePage extends ConsumerStatefulWidget {
 
 class _AddStorePageState extends ConsumerState<AddStorePage> {
   final _formKey = GlobalKey<FormState>();
-
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _addressController = TextEditingController();
@@ -31,9 +31,11 @@ class _AddStorePageState extends ConsumerState<AddStorePage> {
   final _whatsappController = TextEditingController();
   final _emailController = TextEditingController();
 
+  XFile? _logoImageFile;
+  final ImagePicker _picker = ImagePicker();
+
   String _storeType = 'RETAIL';
   bool _isSaving = false;
-
   final List<Map<String, String>> _storeTypes = [
     {'value': 'RETAIL', 'label': 'Retail'},
     {'value': 'FOOD', 'label': 'Makanan & Minuman'},
@@ -53,9 +55,17 @@ class _AddStorePageState extends ConsumerState<AddStorePage> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (pickedFile != null) {
+      setState(() {
+        _logoImageFile = pickedFile;
+      });
+    }
+  }
+
   Future<void> _saveStore() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isSaving = true);
     context.loaderOverlay.show();
 
@@ -70,9 +80,12 @@ class _AddStorePageState extends ConsumerState<AddStorePage> {
         "email": _emailController.text
       };
 
+      // --- [PERBAIKAN UTAMA] Kirim _logoImageFile (XFile) langsung ke provider ---
       final result = widget.isFirstStore
-          ? await ref.read(storeProvider.notifier).createFirstStore(storeData)
-          : await ref.read(storeProvider.notifier).createStore(storeData);
+          ? await ref.read(storeProvider.notifier).createFirstStore(storeData, _logoImageFile)
+          : await ref.read(storeProvider.notifier).createStore(storeData, _logoImageFile);
+
+      if (!mounted) return;
 
       if (result['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -80,7 +93,7 @@ class _AddStorePageState extends ConsumerState<AddStorePage> {
             backgroundColor: Colors.green));
         Navigator.pop(context, true);
       } else {
-        if (result['subscriptionRequired'] == true) {
+        if (result['data'] != null && result['data']['subscriptionRequired'] == true) {
           _showSubscriptionRequiredDialog(result['message'] ??
               'Anda memerlukan langganan untuk membuat toko');
         } else {
@@ -94,8 +107,10 @@ class _AddStorePageState extends ConsumerState<AddStorePage> {
           content: Text('Error: ${e.toString()}'),
           backgroundColor: Colors.red));
     } finally {
-      setState(() => _isSaving = false);
-      context.loaderOverlay.hide();
+      if(mounted) {
+        setState(() => _isSaving = false);
+        context.loaderOverlay.hide();
+      }
     }
   }
 
@@ -127,10 +142,30 @@ class _AddStorePageState extends ConsumerState<AddStorePage> {
     );
   }
 
+  Widget _buildImagePreview(ThemeData theme) {
+    if (_logoImageFile == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(CupertinoIcons.photo_on_rectangle, size: 40, color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(height: 8),
+            Text('Pilih Logo', style: theme.textTheme.bodyMedium),
+          ],
+        ),
+      );
+    }
+
+    if (kIsWeb) {
+      return Image.network(_logoImageFile!.path, fit: BoxFit.cover);
+    } else {
+      return Image.file(File(_logoImageFile!.path), fit: BoxFit.cover);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.isFirstStore ? 'Buat Toko Pertama' : 'Tambah Toko'),
@@ -148,86 +183,27 @@ class _AddStorePageState extends ConsumerState<AddStorePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Informasi Toko',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
+                      'Logo Toko (Opsional)',
+                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 16),
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child: Container(
+                        width: double.infinity,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: theme.colorScheme.outline.withOpacity(0.3),
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: _buildImagePreview(theme),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    ModernTextField(
-                      label: 'Nama Toko',
-                      controller: _nameController,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Nama toko tidak boleh kosong';
-                        }
-                        return null;
-                      },
-                      prefixIcon: const Icon(CupertinoIcons.building_2_fill),
-                    ),
-                    const SizedBox(height: 16),
-                    ModernTextField(
-                      label: 'Deskripsi Toko',
-                      controller: _descriptionController,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Deskripsi toko tidak boleh kosong';
-                        }
-                        return null;
-                      },
-                      maxLines: 2,
-                      prefixIcon: const Icon(CupertinoIcons.doc_text),
-                    ),
-                    const SizedBox(height: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Jenis Usaha',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: theme.colorScheme.outline.withOpacity(0.5),
-                            ),
-                          ),
-                          child: DropdownButton<String>(
-                            value: _storeType,
-                            isExpanded: true,
-                            underline: Container(),
-                            icon: const Icon(CupertinoIcons.chevron_down),
-                            items: _storeTypes.map<DropdownMenuItem<String>>(
-                                (Map<String, String> type) {
-                              return DropdownMenuItem<String>(
-                                value: type['value'],
-                                child: Text(type['label'] ?? ''),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() => _storeType = value ?? 'RETAIL');
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    ModernTextField(
-                      label: 'Alamat',
-                      controller: _addressController,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Alamat tidak boleh kosong';
-                        }
-                        return null;
-                      },
-                      maxLines: 3,
-                      prefixIcon: const Icon(CupertinoIcons.location),
                     ),
                   ],
                 ),
@@ -238,7 +214,44 @@ class _AddStorePageState extends ConsumerState<AddStorePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Kontak',
+                      'Informasi Toko',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ModernTextField(
+                      label: 'Nama Toko',
+                      controller: _nameController,
+                      validator: (value) => (value == null || value.isEmpty) ? 'Nama toko tidak boleh kosong' : null,
+                      prefixIcon: const Icon(CupertinoIcons.building_2_fill),
+                    ),
+                    const SizedBox(height: 16),
+                    ModernTextField(
+                      label: 'Deskripsi Toko',
+                      controller: _descriptionController,
+                      validator: (value) => (value == null || value.isEmpty) ? 'Deskripsi toko tidak boleh kosong' : null,
+                      maxLines: 2,
+                      prefixIcon: const Icon(CupertinoIcons.doc_text),
+                    ),
+                    const SizedBox(height: 16),
+                    ModernTextField(
+                      label: 'Alamat',
+                      controller: _addressController,
+                      validator: (value) => (value == null || value.isEmpty) ? 'Alamat tidak boleh kosong' : null,
+                      maxLines: 3,
+                      prefixIcon: const Icon(CupertinoIcons.location),
+                    ),
+                  ],
+                ),
+              ),
+               const SizedBox(height: 16),
+              ModernCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                     Text(
+                      'Kontak (Opsional)',
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -248,21 +261,21 @@ class _AddStorePageState extends ConsumerState<AddStorePage> {
                       label: 'Telepon',
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
-                      prefixIcon: const Icon(CupertinoIcons.phone),
+                      prefixIcon: const Icon(Icons.phone),
                     ),
                     const SizedBox(height: 16),
                     ModernTextField(
                       label: 'WhatsApp',
                       controller: _whatsappController,
                       keyboardType: TextInputType.phone,
-                      prefixIcon: const Icon(CupertinoIcons.chat_bubble_text),
+                      prefixIcon: const Icon(Icons.chat),
                     ),
                     const SizedBox(height: 16),
                     ModernTextField(
                       label: 'Email',
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      prefixIcon: const Icon(CupertinoIcons.mail),
+                      prefixIcon: const Icon(Icons.email),
                     ),
                   ],
                 ),
