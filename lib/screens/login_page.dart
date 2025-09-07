@@ -112,7 +112,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               child: Container(
                 width: double.infinity,
                 height: double.infinity,
-                color: primary.withOpacity(0.1),
+                color: primary.withOpacity(0.2),
               ),
             ),
             SafeArea(

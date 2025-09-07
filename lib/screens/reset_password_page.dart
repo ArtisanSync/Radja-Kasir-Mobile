@@ -95,7 +95,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         ),
         child: Stack(
           children: [
-            // Background with adjusted diagonal angle - same as LoginPage
             Container(
               width: double.infinity,
               height: double.infinity,
@@ -106,7 +105,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
               child: Container(
                 width: double.infinity,
                 height: double.infinity,
-                color: primary.withOpacity(0.1), // Primary color with 10% opacity
+                color: primary.withOpacity(0.2),
               ),
             ),
             
