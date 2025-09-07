@@ -173,7 +173,7 @@ class _PasswordResetVerifyPageState extends State<PasswordResetVerifyPage> {
                 width: double.infinity,
                 height: double.infinity,
                 color:
-                    primary.withOpacity(0.1), // Primary color with 10% opacity
+                    primary.withOpacity(0.2),
               ),
             ),
 

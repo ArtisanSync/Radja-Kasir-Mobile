@@ -101,7 +101,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         ),
         child: Stack(
           children: [
-            // Background with adjusted diagonal angle - same as LoginPage
             Container(
               width: double.infinity,
               height: double.infinity,
@@ -112,7 +111,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               child: Container(
                 width: double.infinity,
                 height: double.infinity,
-                color: primary.withOpacity(0.1),
+                color: primary.withOpacity(0.2),
               ),
             ),
             
@@ -136,16 +135,16 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                             Text(
                               'Buat Akun Baru',
                               style: TextStyle(
-                                fontSize: 24, // Increased from 18 to 24
-                                fontWeight: FontWeight.w700, // Bolder font
+                                fontSize: 24,
+                                fontWeight: FontWeight.w700,
                                 color: Color(0xFF2D3748),
                               ),
                             ),
-                            SizedBox(height: 4), // Slightly increased spacing
+                            SizedBox(height: 4),
                             Text(
                               'Lengkapi form di bawah untuk mendaftar',
                               style: TextStyle(
-                                fontSize: 14, // Increased from 12 to 14
+                                fontSize: 14,
                                 color: Color(0xFF6B7280),
                               ),
                             ),
@@ -153,7 +152,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         ),
                       ),
                       
-                      const SizedBox(height: 20), // Slightly increased spacing
+                      const SizedBox(height: 20),
                       
                       // Registration Form Card
                       Container(
