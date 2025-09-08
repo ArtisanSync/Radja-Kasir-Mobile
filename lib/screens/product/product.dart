@@ -1,7 +1,10 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:gap/gap.dart';
+import 'package:kasir/helpers/colors_theme.dart';
 import 'package:lottie/lottie.dart';
 import 'package:kasir/components/modern_card.dart';
 import 'package:kasir/components/modern_buttons.dart';
@@ -10,7 +13,6 @@ import 'package:kasir/helpers/currency_format.dart';
 import 'package:kasir/models/product_model.dart';
 import 'package:kasir/providers/product_providers.dart';
 import 'package:kasir/providers/category_providers.dart';
-
 import 'package:kasir/screens/product/form_product.dart';
 import 'package:kasir/screens/product/product_detail.dart';
 import 'package:kasir/screens/home_page.dart';
@@ -18,7 +20,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 class ProductPage extends ConsumerStatefulWidget {
   const ProductPage({Key? key}) : super(key: key);
-
   @override
   ConsumerState<ProductPage> createState() => _ProductPageState();
 }
@@ -26,9 +27,7 @@ class ProductPage extends ConsumerStatefulWidget {
 class _ProductPageState extends ConsumerState<ProductPage> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  String? _selectedCategoryId;
-  bool _showFavoritesOnly = false;
-  bool _showLowStockOnly = false;
+  bool _isFabVisible = true;
 
   @override
   void initState() {
@@ -46,6 +45,23 @@ class _ProductPageState extends ConsumerState<ProductPage> {
 
   void _setupScrollListener() {
     _scrollController.addListener(() {
+      if (_scrollController.position.userScrollDirection ==
+          ScrollDirection.reverse) {
+        if (_isFabVisible) {
+          setState(() {
+            _isFabVisible = false;
+          });
+        }
+      }
+      if (_scrollController.position.userScrollDirection ==
+          ScrollDirection.forward) {
+        if (!_isFabVisible) {
+          setState(() {
+            _isFabVisible = true;
+          });
+        }
+      }
+
       if (_scrollController.position.pixels ==
           _scrollController.position.maxScrollExtent) {
         ref.read(productProvider.notifier).loadMoreProducts();
@@ -72,154 +88,12 @@ class _ProductPageState extends ConsumerState<ProductPage> {
   }
 
   void _showFilterBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const Gap(20),
-            Row(
-              children: [
-                Icon(
-                  Icons.tune,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const Gap(8),
-                Text(
-                  'Filter Produk',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-              ],
-            ),
-            const Gap(24),
-            Consumer(
-              builder: (context, ref, _) {
-                final categoryState = ref.watch(categoryProvider);
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Kategori',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const Gap(12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        FilterChip(
-                          label: const Text('Semua'),
-                          selected: _selectedCategoryId == null,
-                          onSelected: (selected) {
-                            setState(() {
-                              _selectedCategoryId = null;
-                            });
-                          },
-                        ),
-                        ...categoryState.categories.map(
-                          (category) => FilterChip(
-                            label: Text(category.name),
-                            selected: _selectedCategoryId == category.id,
-                            onSelected: (selected) {
-                              setState(() {
-                                _selectedCategoryId =
-                                    selected ? category.id : null;
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                );
-              },
-            ),
-            const Gap(24),
-            Column(
-              children: [
-                SwitchListTile(
-                  title: const Text('Hanya Favorit'),
-                  value: _showFavoritesOnly,
-                  onChanged: (value) {
-                    setState(() {
-                      _showFavoritesOnly = value;
-                    });
-                  },
-                ),
-                SwitchListTile(
-                  title: const Text('Stok Menipis'),
-                  value: _showLowStockOnly,
-                  onChanged: (value) {
-                    setState(() {
-                      _showLowStockOnly = value;
-                    });
-                  },
-                ),
-              ],
-            ),
-            const Gap(24),
-            Row(
-              children: [
-                Expanded(
-                  child: ModernOutlinedButton(
-                    text: 'Reset',
-                    onPressed: () {
-                      setState(() {
-                        _selectedCategoryId = null;
-                        _showFavoritesOnly = false;
-                        _showLowStockOnly = false;
-                      });
-                      ref.read(productProvider.notifier).clearFilters();
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-                const Gap(12),
-                Expanded(
-                  child: ModernButton(
-                    text: 'Terapkan',
-                    onPressed: () {
-                      ref.read(productProvider.notifier).loadProducts(
-                            refresh: true,
-                            categoryId: _selectedCategoryId,
-                            isFavorite: _showFavoritesOnly ? true : null,
-                            lowStock: _showLowStockOnly ? true : null,
-                          );
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-              ],
-            ),
-            Gap(MediaQuery.of(context).viewInsets.bottom),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     final productState = ref.watch(productProvider);
     final theme = Theme.of(context);
-
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
@@ -298,6 +172,7 @@ class _ProductPageState extends ConsumerState<ProductPage> {
                 ref.read(productProvider.notifier).searchProducts(value);
               },
               onClear: () {
+                _searchController.clear();
                 ref.read(productProvider.notifier).searchProducts('');
               },
             ),
@@ -307,19 +182,33 @@ class _ProductPageState extends ConsumerState<ProductPage> {
           ),
         ],
       ),
-      floatingActionButton: ModernFloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const FormProduct(),
+
+      floatingActionButton: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        height: _isFabVisible ? 56.0 : 0.0,
+        width: _isFabVisible ? 160.0 : 0.0,
+        child: Visibility(
+          visible: _isFabVisible,
+          child: FloatingActionButton.extended(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const FormProduct(),
+                ),
+              ).then((_) {
+                ref.read(productProvider.notifier).refresh();
+              });
+            },
+            backgroundColor: AppColor.primary,
+            icon: const Icon(Icons.add, color: Colors.white),
+            label: const Text(
+              'Tambah Produk',
+              style: TextStyle(color: Colors.white),
             ),
-          ).then((_) {
-            ref.read(productProvider.notifier).refresh();
-          });
-        },
-        icon: const Icon(Icons.add),
-        label: 'Tambah Produk',
+          ),
+        ),
       ),
     );
   }
@@ -329,15 +218,12 @@ class _ProductPageState extends ConsumerState<ProductPage> {
     if (state.isLoading && state.products.isEmpty) {
       return _buildLoadingGrid();
     }
-
     if (state.hasError && state.products.isEmpty) {
       return _buildErrorState(context, theme);
     }
-
     if (state.products.isEmpty) {
       return _buildEmptyState(context, theme);
     }
-
     return RefreshIndicator(
       onRefresh: () async {
         await ref.read(productProvider.notifier).refresh();
@@ -348,23 +234,22 @@ class _ProductPageState extends ConsumerState<ProductPage> {
           padding: const EdgeInsets.all(16),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 0.7,
+            childAspectRatio: 0.75,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
           ),
-          itemCount: state.products.length + (state.isLoadingMore ? 2 : 0),
+          itemCount: state.products.length + (state.isLoadingMore ? 1 : 0),
           itemBuilder: (context, index) {
             if (index >= state.products.length) {
               return const ProductShimmerCard();
             }
-
             return AnimationConfiguration.staggeredGrid(
               position: index,
               columnCount: 2,
               duration: const Duration(milliseconds: 375),
               child: ScaleAnimation(
                 child: FadeInAnimation(
-                  child: ProductCard(
+                  child: ProductGridCard(
                     product: state.products[index],
                     onTap: () {
                       Navigator.push(
@@ -377,11 +262,6 @@ class _ProductPageState extends ConsumerState<ProductPage> {
                       ).then((_) {
                         ref.read(productProvider.notifier).refresh();
                       });
-                    },
-                    onFavoriteToggle: () {
-                      ref.read(productProvider.notifier).toggleFavorite(
-                            state.products[index].id!,
-                          );
                     },
                   ),
                 ),
@@ -416,10 +296,8 @@ class _ProductPageState extends ConsumerState<ProductPage> {
     );
   }
 
-  // ERROR STATE - HAPUS TOMBOL "KEMBALI KE HOME"
   Widget _buildErrorState(BuildContext context, ThemeData theme) {
     final productState = ref.watch(productProvider);
-
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -449,7 +327,6 @@ class _ProductPageState extends ConsumerState<ProductPage> {
               ),
             ),
             const Gap(24),
-            // HANYA SATU TOMBOL - COBA LAGI
             ModernButton(
               text: 'Coba Lagi',
               onPressed: () {
@@ -459,14 +336,12 @@ class _ProductPageState extends ConsumerState<ProductPage> {
               icon: const Icon(Icons.refresh),
               isExpanded: false,
             ),
-            // HAPUS TOMBOL "KEMBALI KE HOME" - TIDAK DIPERLUKAN KARENA SUDAH ADA BACK BUTTON DI APPBAR
           ],
         ),
       ),
     );
   }
 
-  // EMPTY STATE - HAPUS TOMBOL "KEMBALI KE HOME"
   Widget _buildEmptyState(BuildContext context, ThemeData theme) {
     return Center(
       child: Padding(
@@ -497,7 +372,6 @@ class _ProductPageState extends ConsumerState<ProductPage> {
               ),
             ),
             const Gap(24),
-            // HANYA SATU TOMBOL - TAMBAH PRODUK
             ModernButton(
               text: 'Tambah Produk',
               onPressed: () {
@@ -513,7 +387,6 @@ class _ProductPageState extends ConsumerState<ProductPage> {
               icon: const Icon(Icons.add),
               isExpanded: false,
             ),
-            // HAPUS TOMBOL "KEMBALI KE HOME" - TIDAK DIPERLUKAN KARENA SUDAH ADA BACK BUTTON DI APPBAR
           ],
         ),
       ),
@@ -521,186 +394,76 @@ class _ProductPageState extends ConsumerState<ProductPage> {
   }
 }
 
-// Product Card untuk manajemen produk
-class ProductCard extends ConsumerWidget {
+class ProductGridCard extends ConsumerWidget {
   final Product product;
   final VoidCallback onTap;
-  final VoidCallback onFavoriteToggle;
 
-  const ProductCard({
+  const ProductGridCard({
     Key? key,
     required this.product,
     required this.onTap,
-    required this.onFavoriteToggle,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-
     return GestureDetector(
       onTap: onTap,
-      child: ModernCard(
-        padding: const EdgeInsets.all(12),
-        margin: EdgeInsets.zero,
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: Stack(
+              child: Container(
+                width: double.infinity,
+                color: Colors.grey[200],
+                child: product.image != null && product.image!.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: product.image!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => const Center(child: CupertinoActivityIndicator()),
+                        errorWidget: (context, url, error) =>
+                            const Icon(Icons.broken_image, color: Colors.grey),
+                      )
+                    : const Icon(Icons.image_not_supported, color: Colors.grey),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                  Text(
+                    product.name,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: product.image != null
-                          ? CachedNetworkImage(
-                              imageUrl: product.image!,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(
-                                color: theme.colorScheme.surfaceVariant
-                                    .withOpacity(0.3),
-                                child: Icon(
-                                  Icons.image,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                color: theme.colorScheme.surfaceVariant
-                                    .withOpacity(0.3),
-                                child: Icon(
-                                  Icons.broken_image,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            )
-                          : Icon(
-                              Icons.image,
-                              size: 40,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const Gap(4),
+                  Text(
+                    'Stok: ${product.totalQuantity}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: GestureDetector(
-                      onTap: onFavoriteToggle,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface.withOpacity(0.9),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          product.isFavorite
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          size: 16,
-                          color: product.isFavorite
-                              ? Colors.red
-                              : theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (!product.hasStock)
-                    Positioned(
-                      bottom: 8,
-                      left: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.error,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'Habis',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onError,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    )
-                  else if (product.isLowStock)
-                    Positioned(
-                      bottom: 8,
-                      left: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.orange,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'Menipis',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const Gap(8),
-            Text(
-              product.name,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const Gap(4),
-            if (product.category != null)
-              Text(
-                product.category!.name,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            const Gap(4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
+                  const Gap(4),
+                  Text(
                     CurrencyFormat.formatPrice(
                         double.tryParse(product.displayPrice) ?? 0.0),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    '${product.totalQuantity}',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.w600,
+                      color: AppColor.primary,
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -709,20 +472,16 @@ class ProductCard extends ConsumerWidget {
   }
 }
 
-// Category Management Sheet tetap sama
 class CategoryManagementSheet extends ConsumerStatefulWidget {
   const CategoryManagementSheet({Key? key}) : super(key: key);
-
   @override
   ConsumerState<CategoryManagementSheet> createState() =>
       _CategoryManagementSheetState();
 }
-
 class _CategoryManagementSheetState
     extends ConsumerState<CategoryManagementSheet> {
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
@@ -730,14 +489,12 @@ class _CategoryManagementSheetState
       ref.read(categoryProvider.notifier).loadCategories();
     });
   }
-
   @override
   void dispose() {
     _searchController.dispose();
     _nameController.dispose();
     super.dispose();
   }
-
   void _showAddCategoryDialog() {
     showDialog(
       context: context,
@@ -765,10 +522,8 @@ class _CategoryManagementSheetState
                 final success = await ref
                     .read(categoryProvider.notifier)
                     .createCategory(_nameController.text.trim());
-
                 Navigator.of(context).pop();
                 _nameController.clear();
-
                 if (success) {
                   showDialog(
                     context: context,
@@ -800,7 +555,6 @@ class _CategoryManagementSheetState
                       ),
                     ),
                   );
-
                   await Future.delayed(const Duration(seconds: 2));
                   if (mounted) Navigator.of(context).pop();
                 }
@@ -812,12 +566,10 @@ class _CategoryManagementSheetState
       ),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final categoryState = ref.watch(categoryProvider);
-
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
       decoration: BoxDecoration(
@@ -934,7 +686,8 @@ class _CategoryManagementSheetState
                                   ),
                                   child: Icon(
                                     Icons.category,
-                                    color: theme.colorScheme.onPrimaryContainer,
+                                    color:
+                                        theme.colorScheme.onPrimaryContainer,
                                     size: 20,
                                   ),
                                 ),
