@@ -17,6 +17,7 @@ import 'package:kasir/screens/product/form_product.dart';
 import 'package:kasir/screens/product/product_detail.dart';
 import 'package:kasir/screens/home_page.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:confirm_dialog/confirm_dialog.dart';
 
 class ProductPage extends ConsumerStatefulWidget {
   const ProductPage({Key? key}) : super(key: key);
@@ -82,12 +83,11 @@ class _ProductPageState extends ConsumerState<ProductPage> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const CategoryManagementSheet(),
-    ).then((_) {
-      ref.read(categoryProvider.notifier).loadCategories();
-    });
+    );
   }
 
   void _showFilterBottomSheet() {
+    // Implementasi bottom sheet filter Anda tetap di sini
   }
 
   @override
@@ -123,48 +123,28 @@ class _ProductPageState extends ConsumerState<ProductPage> {
         actions: [
           IconButton(
             onPressed: _showCategoryBottomSheet,
-            icon: Icon(
+            icon: const Icon(
               Icons.category,
-              color: theme.colorScheme.onSurface,
+              color: AppColor.secondary,
             ),
             tooltip: 'Kelola Kategori',
           ),
           IconButton(
             onPressed: _showFilterBottomSheet,
-            icon: Icon(
+            icon: const Icon(
               Icons.tune,
-              color: theme.colorScheme.onSurface,
+              color: AppColor.secondary,
             ),
             tooltip: 'Filter',
           ),
-          IconButton(
-            onPressed: productState.isLoading
-                ? null
-                : () => ref.read(productProvider.notifier).refresh(),
-            icon: productState.isLoading
-                ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  )
-                : Icon(
-                    Icons.refresh,
-                    color: theme.colorScheme.onSurface,
-                  ),
-            tooltip: 'Refresh',
-          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(
         children: [
           Container(
             color: theme.colorScheme.surface,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: ModernSearchField(
               controller: _searchController,
               hint: 'Cari produk...',
@@ -182,7 +162,6 @@ class _ProductPageState extends ConsumerState<ProductPage> {
           ),
         ],
       ),
-
       floatingActionButton: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -205,7 +184,11 @@ class _ProductPageState extends ConsumerState<ProductPage> {
             icon: const Icon(Icons.add, color: Colors.white),
             label: const Text(
               'Tambah Produk',
-              style: TextStyle(color: Colors.white),
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
           ),
         ),
@@ -228,9 +211,11 @@ class _ProductPageState extends ConsumerState<ProductPage> {
       onRefresh: () async {
         await ref.read(productProvider.notifier).refresh();
       },
+      color: AppColor.primary,
       child: AnimationLimiter(
         child: GridView.builder(
           controller: _scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
@@ -251,17 +236,20 @@ class _ProductPageState extends ConsumerState<ProductPage> {
                 child: FadeInAnimation(
                   child: ProductGridCard(
                     product: state.products[index],
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      final result = await Navigator.push<String>(
                         context,
                         MaterialPageRoute(
                           builder: (context) => ProductDetail(
                             product: state.products[index],
                           ),
                         ),
-                      ).then((_) {
+                      );
+
+                      // Hanya refresh jika ada sinyal 'edited' atau 'deleted'
+                      if (result == 'edited' || result == 'deleted') {
                         ref.read(productProvider.notifier).refresh();
-                      });
+                      }
                     },
                   ),
                 ),
@@ -349,11 +337,10 @@ class _ProductPageState extends ConsumerState<ProductPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Lottie.asset(
-              'assets/animations/no data.json',
-              width: 120,
-              height: 120,
-              fit: BoxFit.contain,
+            Icon(
+              Icons.store,
+              size: 40,
+              color: AppColor.primary.withOpacity(0.5),
             ),
             const Gap(16),
             Text(
@@ -421,16 +408,27 @@ class ProductGridCard extends ConsumerWidget {
             Expanded(
               child: Container(
                 width: double.infinity,
-                color: Colors.grey[200],
                 child: product.image != null && product.image!.isNotEmpty
                     ? CachedNetworkImage(
                         imageUrl: product.image!,
                         fit: BoxFit.cover,
-                        placeholder: (context, url) => const Center(child: CupertinoActivityIndicator()),
-                        errorWidget: (context, url, error) =>
-                            const Icon(Icons.broken_image, color: Colors.grey),
+                        placeholder: (context, url) =>
+                            const Center(child: CupertinoActivityIndicator()),
+                        errorWidget: (context, url, error) => Center(
+                          child: Icon(
+                            Icons.store,
+                            size: 40,
+                            color: AppColor.primary.withOpacity(0.5),
+                          ),
+                        ),
                       )
-                    : const Icon(Icons.image_not_supported, color: Colors.grey),
+                    : Center(
+                        child: Icon(
+                          Icons.store,
+                          size: 40,
+                          color: AppColor.primary.withOpacity(0.5),
+                        ),
+                      ),
               ),
             ),
             Padding(
@@ -478,28 +476,94 @@ class CategoryManagementSheet extends ConsumerStatefulWidget {
   ConsumerState<CategoryManagementSheet> createState() =>
       _CategoryManagementSheetState();
 }
+
 class _CategoryManagementSheetState
     extends ConsumerState<CategoryManagementSheet> {
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(categoryProvider.notifier).loadCategories();
     });
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text;
+      });
+    });
   }
+
   @override
   void dispose() {
     _searchController.dispose();
     _nameController.dispose();
     super.dispose();
   }
-  void _showAddCategoryDialog() {
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Colors.green,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showSuccessAnimationDialog(bool isEditing) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Tambah Kategori'),
+      barrierDismissible: false,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Lottie.asset(
+                'assets/animations/Check Mark.json',
+                width: 100,
+                height: 100,
+                fit: BoxFit.contain,
+                repeat: false,
+              ),
+              const Gap(16),
+              Text(
+                isEditing
+                    ? 'Kategori Berhasil Diubah!'
+                    : 'Kategori Berhasil Ditambahkan!',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    Future.delayed(const Duration(seconds: 2)).then((_) {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    });
+  }
+
+  void _showAddOrEditCategoryDialog({CategoryModel? category}) {
+    bool isEditing = category != null;
+    _nameController.text = isEditing ? category.name : '';
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(isEditing ? 'Edit Kategori' : 'Tambah Kategori'),
         content: TextField(
           controller: _nameController,
           decoration: const InputDecoration(
@@ -511,65 +575,82 @@ class _CategoryManagementSheetState
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop();
+              Navigator.of(dialogContext).pop();
               _nameController.clear();
             },
             child: const Text('Batal'),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColor.primary,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
               if (_nameController.text.trim().isNotEmpty) {
-                final success = await ref
-                    .read(categoryProvider.notifier)
-                    .createCategory(_nameController.text.trim());
-                Navigator.of(context).pop();
-                _nameController.clear();
-                if (success) {
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (context) => Dialog(
-                      child: Container(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Lottie.asset(
-                              'assets/animations/Check Mark.json',
-                              width: 100,
-                              height: 100,
-                              fit: BoxFit.contain,
-                              repeat: false,
-                            ),
-                            const Gap(16),
-                            const Text(
-                              'Kategori Berhasil Ditambahkan!',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                  await Future.delayed(const Duration(seconds: 2));
-                  if (mounted) Navigator.of(context).pop();
+                final notifier = ref.read(categoryProvider.notifier);
+                bool success;
+
+                Navigator.of(dialogContext).pop();
+
+                if (isEditing) {
+                  success = await notifier.updateCategory(
+                      category.id!, _nameController.text.trim());
+                } else {
+                  success = await notifier
+                      .createCategory(_nameController.text.trim());
                 }
+
+                if (success) {
+                  _showSuccessAnimationDialog(isEditing);
+                } else {
+                  final error = ref.read(categoryProvider).error;
+                  _showSnackBar(error ?? 'Operasi gagal', isError: true);
+                }
+                _nameController.clear();
               }
             },
-            child: const Text('Simpan'),
+            child: Text(isEditing ? 'Update' : 'Simpan'),
           ),
         ],
       ),
     );
   }
+
+  void _onDeleteCategory(CategoryModel category) async {
+    if (await confirm(
+      context,
+      title: const Text('Konfirmasi Hapus'),
+      content: Text(
+          'Apakah Anda yakin ingin menghapus kategori "${category.name}"?'),
+      textOK: const Text('Hapus', style: TextStyle(color: Colors.red)),
+      textCancel: const Text('Batal'),
+    )) {
+      final success = await ref
+          .read(categoryProvider.notifier)
+          .deleteCategory(category.id!);
+      if (success) {
+        _showSnackBar('Kategori berhasil dihapus');
+      } else {
+        final error = ref.read(categoryProvider).error;
+        _showSnackBar(error ?? 'Gagal menghapus kategori', isError: true);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final categoryState = ref.watch(categoryProvider);
+
+    final allCategories = categoryState.categories;
+    final filteredCategories = _searchQuery.isEmpty
+        ? allCategories
+        : allCategories
+            .where((category) => category.name
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase()))
+            .toList();
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
       decoration: BoxDecoration(
@@ -605,7 +686,7 @@ class _CategoryManagementSheetState
                 ),
                 const Spacer(),
                 IconButton(
-                  onPressed: _showAddCategoryDialog,
+                  onPressed: () => _showAddOrEditCategoryDialog(),
                   icon: Icon(
                     Icons.add,
                     color: theme.colorScheme.primary,
@@ -625,22 +706,8 @@ class _CategoryManagementSheetState
           const Gap(16),
           Expanded(
             child: categoryState.isLoading
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Lottie.asset(
-                          'assets/animations/Loading.json',
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.contain,
-                        ),
-                        const Gap(16),
-                        const Text('Memuat kategori...'),
-                      ],
-                    ),
-                  )
-                : categoryState.categories.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : filteredCategories.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -653,25 +720,29 @@ class _CategoryManagementSheetState
                             ),
                             const Gap(16),
                             Text(
-                              'Belum ada kategori',
+                              _searchQuery.isEmpty
+                                  ? 'Belum ada kategori'
+                                  : 'Kategori tidak ditemukan',
                               style: theme.textTheme.titleMedium?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
                             ),
-                            const Gap(8),
-                            ElevatedButton.icon(
-                              onPressed: _showAddCategoryDialog,
-                              icon: const Icon(Icons.add),
-                              label: const Text('Tambah Kategori'),
-                            ),
+                            if (_searchQuery.isEmpty) ...[
+                              const Gap(8),
+                              ElevatedButton.icon(
+                                onPressed: () => _showAddOrEditCategoryDialog(),
+                                icon: const Icon(Icons.add),
+                                label: const Text('Tambah Kategori'),
+                              ),
+                            ]
                           ],
                         ),
                       )
                     : ListView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
-                        itemCount: categoryState.categories.length,
+                        itemCount: filteredCategories.length,
                         itemBuilder: (context, index) {
-                          final category = categoryState.categories[index];
+                          final category = filteredCategories[index];
                           return ModernCard(
                             margin: const EdgeInsets.only(bottom: 8),
                             padding: const EdgeInsets.all(16),
@@ -686,8 +757,7 @@ class _CategoryManagementSheetState
                                   ),
                                   child: Icon(
                                     Icons.category,
-                                    color:
-                                        theme.colorScheme.onPrimaryContainer,
+                                    color: theme.colorScheme.onPrimaryContainer,
                                     size: 20,
                                   ),
                                 ),
@@ -719,9 +789,9 @@ class _CategoryManagementSheetState
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
-                                      onPressed: () {
-                                        // TODO: Edit category
-                                      },
+                                      onPressed: () =>
+                                          _showAddOrEditCategoryDialog(
+                                              category: category),
                                       icon: Icon(
                                         Icons.edit,
                                         color: theme.colorScheme.primary,
@@ -729,9 +799,8 @@ class _CategoryManagementSheetState
                                       ),
                                     ),
                                     IconButton(
-                                      onPressed: () {
-                                        // TODO: Delete category
-                                      },
+                                      onPressed: () =>
+                                          _onDeleteCategory(category),
                                       icon: Icon(
                                         Icons.delete,
                                         color: theme.colorScheme.error,
