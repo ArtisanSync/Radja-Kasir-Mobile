@@ -1,5 +1,6 @@
 // screens/product/form_product.dart
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,9 +15,7 @@ import 'package:loader_overlay/loader_overlay.dart';
 
 class FormProduct extends ConsumerStatefulWidget {
   final Product? product;
-
   const FormProduct({Key? key, this.product}) : super(key: key);
-
   @override
   ConsumerState<FormProduct> createState() => _FormProductState();
 }
@@ -31,7 +30,8 @@ class _FormProductState extends ConsumerState<FormProduct> {
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _taxController = TextEditingController();
   final TextEditingController _discountRpController = TextEditingController();
-  final TextEditingController _discountPercentController = TextEditingController();
+  final TextEditingController _discountPercentController =
+      TextEditingController();
 
   String? selectedCategoryId;
   String? selectedUnitId;
@@ -42,7 +42,7 @@ class _FormProductState extends ConsumerState<FormProduct> {
   void initState() {
     super.initState();
     isEditing = widget.product != null;
-    
+
     if (isEditing) {
       _populateFields();
     } else {
@@ -67,7 +67,7 @@ class _FormProductState extends ConsumerState<FormProduct> {
     _codeController.text = product.code ?? '';
     _brandController.text = product.brand ?? '';
     selectedCategoryId = product.categoryId;
-    
+
     if (product.variants.isNotEmpty) {
       final variant = product.variants.first;
       _quantityController.text = variant.quantity.toString();
@@ -96,7 +96,7 @@ class _FormProductState extends ConsumerState<FormProduct> {
 
   Future<void> _pickImage() async {
     final theme = Theme.of(context);
-    
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -116,7 +116,6 @@ class _FormProductState extends ConsumerState<FormProduct> {
               ),
             ),
             const SizedBox(height: 20),
-            
             Text(
               'Pilih Gambar',
               style: theme.textTheme.titleLarge?.copyWith(
@@ -124,7 +123,6 @@ class _FormProductState extends ConsumerState<FormProduct> {
               ),
             ),
             const SizedBox(height: 20),
-            
             Row(
               children: [
                 Expanded(
@@ -170,7 +168,6 @@ class _FormProductState extends ConsumerState<FormProduct> {
                 ),
               ],
             ),
-            
             SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 20),
           ],
         ),
@@ -179,47 +176,57 @@ class _FormProductState extends ConsumerState<FormProduct> {
   }
 
   Future<void> _saveProduct() async {
-    // No client-side validation - let backend handle it
     bool success;
-    
+
     if (isEditing) {
       success = await ref.read(productProvider.notifier).updateProduct(
-        widget.product!.id!,
-        name: _nameController.text.trim(),
-        code: _codeController.text.trim().isEmpty ? null : _codeController.text.trim(),
-        brand: _brandController.text.trim().isEmpty ? null : _brandController.text.trim(),
-        categoryId: selectedCategoryId,
-        image: selectedImage?.path,
-        unitId: selectedUnitId,
-        quantity: int.tryParse(_quantityController.text),
-        capitalPrice: _capitalPriceController.text.trim(),
-        price: _priceController.text.trim(),
-        tax: int.tryParse(_taxController.text),
-        discountRp: _discountRpController.text.trim(),
-        discountPercent: int.tryParse(_discountPercentController.text),
-      );
+            widget.product!.id!,
+            name: _nameController.text.trim(),
+            code: _codeController.text.trim().isEmpty
+                ? null
+                : _codeController.text.trim(),
+            brand: _brandController.text.trim().isEmpty
+                ? null
+                : _brandController.text.trim(),
+            categoryId: selectedCategoryId,
+            // [PERBAIKAN] Kirim objek XFile, bukan path-nya
+            imageFile: selectedImage,
+            unitId: selectedUnitId,
+            quantity: int.tryParse(_quantityController.text),
+            capitalPrice: _capitalPriceController.text.trim(),
+            price: _priceController.text.trim(),
+            tax: int.tryParse(_taxController.text),
+            discountRp: _discountRpController.text.trim(),
+            discountPercent: int.tryParse(_discountPercentController.text),
+          );
     } else {
       success = await ref.read(productProvider.notifier).createProduct(
-        name: _nameController.text.trim(),
-        code: _codeController.text.trim().isEmpty ? null : _codeController.text.trim(),
-        brand: _brandController.text.trim().isEmpty ? null : _brandController.text.trim(),
-        categoryId: selectedCategoryId,
-        image: selectedImage?.path,
-        unitId: selectedUnitId ?? '',
-        quantity: int.tryParse(_quantityController.text) ?? 0,
-        capitalPrice: _capitalPriceController.text.trim(),
-        price: _priceController.text.trim(),
-        tax: int.tryParse(_taxController.text) ?? 0,
-        discountRp: _discountRpController.text.trim(),
-        discountPercent: int.tryParse(_discountPercentController.text) ?? 0,
-      );
+            name: _nameController.text.trim(),
+            code: _codeController.text.trim().isEmpty
+                ? null
+                : _codeController.text.trim(),
+            brand: _brandController.text.trim().isEmpty
+                ? null
+                : _brandController.text.trim(),
+            categoryId: selectedCategoryId,
+            // [PERBAIKAN] Kirim objek XFile, bukan path-nya
+            imageFile: selectedImage,
+            unitId: selectedUnitId ?? '',
+            quantity: int.tryParse(_quantityController.text) ?? 0,
+            capitalPrice: _capitalPriceController.text.trim(),
+            price: _priceController.text.trim(),
+            tax: int.tryParse(_taxController.text) ?? 0,
+            discountRp: _discountRpController.text.trim(),
+            discountPercent:
+                int.tryParse(_discountPercentController.text) ?? 0,
+          );
     }
-
     final productState = ref.read(productProvider);
-    
+
     if (success) {
       _showSnackBar(
-        message: isEditing ? 'Produk berhasil diperbarui' : 'Produk berhasil ditambahkan',
+        message:
+            isEditing ? 'Produk berhasil diperbarui' : 'Produk berhasil ditambahkan',
         isError: false,
       );
       Navigator.pop(context);
@@ -235,7 +242,8 @@ class _FormProductState extends ConsumerState<FormProduct> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Theme.of(context).colorScheme.error : Colors.green,
+        backgroundColor:
+            isError ? Theme.of(context).colorScheme.error : Colors.green,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -309,36 +317,40 @@ class _FormProductState extends ConsumerState<FormProduct> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        
                         GestureDetector(
                           onTap: _pickImage,
                           child: Container(
                             width: double.infinity,
                             height: 200,
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                              color: theme.colorScheme.surfaceVariant
+                                  .withOpacity(0.3),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: theme.colorScheme.outline.withOpacity(0.3),
+                                color:
+                                    theme.colorScheme.outline.withOpacity(0.3),
                                 style: BorderStyle.solid,
                               ),
                             ),
                             child: selectedImage != null
                                 ? ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
-                                    child: Image.file(
-                                      File(selectedImage!.path),
-                                      fit: BoxFit.cover,
-                                    ),
+                                    child: kIsWeb
+                                        ? Image.network(selectedImage!.path,
+                                            fit: BoxFit.cover)
+                                        : Image.file(File(selectedImage!.path),
+                                            fit: BoxFit.cover),
                                   )
-                                : widget.product?.image != null && selectedImage == null
+                                : widget.product?.image != null &&
+                                        selectedImage == null
                                     ? ClipRRect(
                                         borderRadius: BorderRadius.circular(12),
                                         child: Image.network(
                                           widget.product!.image!,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) => 
-                                              _buildImagePlaceholder(theme),
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  _buildImagePlaceholder(theme),
                                         ),
                                       )
                                     : _buildImagePlaceholder(theme),
@@ -348,7 +360,6 @@ class _FormProductState extends ConsumerState<FormProduct> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 16),
 
                 // Basic Info Section
@@ -374,28 +385,24 @@ class _FormProductState extends ConsumerState<FormProduct> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        
                         ModernTextField(
                           label: "Nama Produk *",
                           controller: _nameController,
                           prefixIcon: const Icon(CupertinoIcons.cube_box),
                         ),
                         const SizedBox(height: 16),
-                        
                         ModernTextField(
                           label: "Kode Produk",
                           controller: _codeController,
                           prefixIcon: const Icon(CupertinoIcons.barcode),
                         ),
                         const SizedBox(height: 16),
-                        
                         ModernTextField(
                           label: "Merek/Brand",
                           controller: _brandController,
                           prefixIcon: const Icon(CupertinoIcons.tag),
                         ),
                         const SizedBox(height: 16),
-
                         // Category Dropdown
                         DropdownButtonFormField<String>(
                           value: selectedCategoryId,
@@ -428,7 +435,6 @@ class _FormProductState extends ConsumerState<FormProduct> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 16),
 
                 // Stock & Price Section
@@ -454,7 +460,6 @@ class _FormProductState extends ConsumerState<FormProduct> {
                           ],
                         ),
                         const SizedBox(height: 16),
-
                         Row(
                           children: [
                             Expanded(
@@ -468,35 +473,40 @@ class _FormProductState extends ConsumerState<FormProduct> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: unitsAsyncValue.when(
-                                data: (units) => DropdownButtonFormField<String>(
+                                data: (units) =>
+                                    DropdownButtonFormField<String>(
                                   value: selectedUnitId,
                                   decoration: InputDecoration(
                                     labelText: "Satuan *",
-                                    prefixIcon: const Icon(CupertinoIcons.textformat_size),
+                                    prefixIcon: const Icon(
+                                        CupertinoIcons.textformat_size),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                  items: units.map(
-                                    (unit) => DropdownMenuItem<String>(
-                                      value: unit.id,
-                                      child: Text(unit.name),
-                                    ),
-                                  ).toList(),
+                                  items: units
+                                      .map(
+                                        (unit) => DropdownMenuItem<String>(
+                                          value: unit.id,
+                                          child: Text(unit.name),
+                                        ),
+                                      )
+                                      .toList(),
                                   onChanged: (value) {
                                     setState(() {
                                       selectedUnitId = value;
                                     });
                                   },
                                 ),
-                                loading: () => const CircularProgressIndicator(),
-                                error: (error, stack) => const Text('Error loading units'),
+                                loading: () =>
+                                    const CircularProgressIndicator(),
+                                error: (error, stack) =>
+                                    const Text('Error loading units'),
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 16),
-
                         ModernTextField(
                           label: "Harga Modal *",
                           controller: _capitalPriceController,
@@ -504,15 +514,14 @@ class _FormProductState extends ConsumerState<FormProduct> {
                           prefixIcon: const Icon(CupertinoIcons.money_dollar),
                         ),
                         const SizedBox(height: 16),
-                        
                         ModernTextField(
                           label: "Harga Jual *",
                           controller: _priceController,
                           keyboardType: TextInputType.number,
-                          prefixIcon: const Icon(CupertinoIcons.money_dollar_circle_fill),
+                          prefixIcon:
+                              const Icon(CupertinoIcons.money_dollar_circle_fill),
                         ),
                         const SizedBox(height: 16),
-                        
                         ModernTextField(
                           label: "Pajak (%)",
                           controller: _taxController,
@@ -523,7 +532,6 @@ class _FormProductState extends ConsumerState<FormProduct> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 16),
 
                 // Discount Section
@@ -549,7 +557,6 @@ class _FormProductState extends ConsumerState<FormProduct> {
                           ],
                         ),
                         const SizedBox(height: 16),
-
                         Row(
                           children: [
                             Expanded(
@@ -557,7 +564,8 @@ class _FormProductState extends ConsumerState<FormProduct> {
                                 label: "Diskon (Rp)",
                                 controller: _discountRpController,
                                 keyboardType: TextInputType.number,
-                                prefixIcon: const Icon(CupertinoIcons.minus_circle),
+                                prefixIcon:
+                                    const Icon(CupertinoIcons.minus_circle),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -575,7 +583,6 @@ class _FormProductState extends ConsumerState<FormProduct> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 32),
 
                 // Action Buttons
@@ -594,13 +601,14 @@ class _FormProductState extends ConsumerState<FormProduct> {
                         text: isEditing ? 'Perbarui' : 'Simpan',
                         onPressed: _saveProduct,
                         icon: Icon(
-                          isEditing ? CupertinoIcons.checkmark_circle : CupertinoIcons.plus_circle,
+                          isEditing
+                              ? CupertinoIcons.checkmark_circle
+                              : CupertinoIcons.plus_circle,
                         ),
                       ),
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 40),
               ],
             ),
