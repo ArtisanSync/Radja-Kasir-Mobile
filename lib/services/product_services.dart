@@ -1,21 +1,17 @@
-import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http_parser/http_parser.dart';
-import 'package:path/path.dart' as path;
+import 'package:image_picker/image_picker.dart';
 import 'package:kasir/core/dio_intercaptor.dart';
 import 'package:kasir/core/use_store.dart';
 import 'package:kasir/services/service_utils.dart';
 
-
 class ProductServices {
   late final Dio _dio;
-
   ProductServices() {
     _dio = Dio();
     _dio.interceptors.add(DioInterceptor());
   }
-
   final String _baseUrl = ServiceUtils().baseUrl;
 
   // ============ PRODUCT METHODS ============
@@ -31,7 +27,6 @@ class ProductServices {
     int stockThreshold = 10,
   }) async {
     final store = await Store.getStore();
-
     if (store == null || store['id'] == null) {
       return {
         'success': false,
@@ -39,13 +34,11 @@ class ProductServices {
         'data': null
       };
     }
-
     try {
       Map<String, dynamic> queryParams = {
         'page': page.toString(),
         'limit': limit.toString(),
       };
-
       if (search != null && search.isNotEmpty) queryParams['search'] = search;
       if (categoryId != null) queryParams['categoryId'] = categoryId;
       if (isFavorite != null) queryParams['isFavorite'] = isFavorite.toString();
@@ -58,7 +51,6 @@ class ProductServices {
         "$_baseUrl/products/store/${store['id']}",
         queryParameters: queryParams,
       );
-
       if (response.data['success'] == true) {
         return {
           'success': true,
@@ -93,7 +85,6 @@ class ProductServices {
   Future<Map<String, dynamic>> detailProduct(String id) async {
     try {
       final response = await _dio.get("$_baseUrl/products/$id");
-
       if (response.data['success'] == true) {
         return {
           'success': true,
@@ -111,7 +102,8 @@ class ProductServices {
       debugPrint('DioException in detailProduct: ${e.message}');
       return {
         'success': false,
-        'message': e.response?.data['message'] ?? 'Failed to fetch product details',
+        'message':
+            e.response?.data['message'] ?? 'Failed to fetch product details',
         'data': null
       };
     } catch (e) {
@@ -130,7 +122,7 @@ class ProductServices {
     String? code,
     String? brand,
     String? categoryId,
-    String? image,
+    XFile? imageFile,
     required String unitId,
     required int quantity,
     required String capitalPrice,
@@ -140,7 +132,6 @@ class ProductServices {
     int discountPercent = 0,
   }) async {
     final store = await Store.getStore();
-
     if (store == null || store['id'] == null) {
       return {
         'success': false,
@@ -148,14 +139,14 @@ class ProductServices {
         'data': null
       };
     }
-
     try {
       FormData formData = FormData.fromMap({
         'name': name,
         'storeId': store['id'],
         if (code != null && code.isNotEmpty) 'code': code,
         if (brand != null && brand.isNotEmpty) 'brand': brand,
-        if (categoryId != null && categoryId.isNotEmpty) 'categoryId': categoryId,
+        if (categoryId != null && categoryId.isNotEmpty)
+          'categoryId': categoryId,
         'unitId': unitId,
         'quantity': quantity,
         'capitalPrice': capitalPrice,
@@ -165,57 +156,17 @@ class ProductServices {
         'discountPercent': discountPercent,
       });
 
-      if (image != null) {
-        if (kIsWeb) {
-          try {
-            Uint8List bytes;
-            String filename = 'product_image.png';
-            String contentType = 'image/png';
-
-            if (image.startsWith('data:image/')) {
-              final mimeMatch = RegExp(r'data:image/(\w+);base64,').firstMatch(image);
-              if (mimeMatch != null) {
-                final extension = mimeMatch.group(1)!.toLowerCase();
-                filename = 'product_image.$extension';
-                contentType = 'image/$extension';
-                final base64String = image.split(',')[1];
-                bytes = base64Decode(base64String);
-              } else {
-                bytes = base64Decode(image);
-              }
-            } else {
-              bytes = base64Decode(image);
-            }
-
-            formData.files.add(MapEntry(
-              'image',
-              MultipartFile.fromBytes(
-                bytes,
-                filename: filename,
-                contentType: MediaType.parse(contentType),
-              ),
-            ));
-          } catch (e) {
-            debugPrint('Error processing image for web: $e');
-          }
-        } else {
-          final extension = path.extension(image).toLowerCase();
-          String contentType = 'image/png';
-
-          if (extension == '.jpg' || extension == '.jpeg') {
-            contentType = 'image/jpeg';
-          } else if (extension == '.png') {
-            contentType = 'image/png';
-          }
-
-          formData.files.add(MapEntry(
-            'image',
-            await MultipartFile.fromFile(
-              image,
-              contentType: MediaType.parse(contentType),
-            ),
-          ));
-        }
+      if (imageFile != null) {
+        final bytes = await imageFile.readAsBytes();
+        final mediaType = MediaType('image', imageFile.name.split('.').last);
+        formData.files.add(MapEntry(
+          'image',
+          MultipartFile.fromBytes(
+            bytes,
+            filename: imageFile.name,
+            contentType: mediaType,
+          ),
+        ));
       }
 
       final response = await _dio.post(
@@ -260,7 +211,7 @@ class ProductServices {
     String? code,
     String? brand,
     String? categoryId,
-    String? image,
+    XFile? imageFile,
     bool? active,
     bool? isFavorite,
     String? unitId,
@@ -273,7 +224,6 @@ class ProductServices {
   }) async {
     try {
       Map<String, dynamic> updateData = {};
-
       if (name != null) updateData['name'] = name;
       if (code != null) updateData['code'] = code;
       if (brand != null) updateData['brand'] = brand;
@@ -286,66 +236,27 @@ class ProductServices {
       if (price != null) updateData['price'] = price;
       if (tax != null) updateData['tax'] = tax;
       if (discountRp != null) updateData['discountRp'] = discountRp;
-      if (discountPercent != null) updateData['discountPercent'] = discountPercent;
+      if (discountPercent != null)
+        updateData['discountPercent'] = discountPercent;
+      
+      FormData formData = FormData.fromMap(updateData);
 
-      FormData? formData;
-      if (image != null) {
-        formData = FormData.fromMap(updateData);
-        if (kIsWeb) {
-          try {
-            Uint8List bytes;
-            String filename = 'product_image.png';
-            String contentType = 'image/png';
-
-            if (image.startsWith('data:image/')) {
-              final mimeMatch = RegExp(r'data:image/(\w+);base64,').firstMatch(image);
-              if (mimeMatch != null) {
-                final extension = mimeMatch.group(1)!.toLowerCase();
-                filename = 'product_image.$extension';
-                contentType = 'image/$extension';
-                final base64String = image.split(',')[1];
-                bytes = base64Decode(base64String);
-              } else {
-                bytes = base64Decode(image);
-              }
-            } else {
-              bytes = base64Decode(image);
-            }
-
-            formData.files.add(MapEntry(
-              'image',
-              MultipartFile.fromBytes(
-                bytes,
-                filename: filename,
-                contentType: MediaType.parse(contentType),
-              ),
-            ));
-          } catch (e) {
-            debugPrint('Error processing image for web: $e');
-          }
-        } else {
-          final extension = path.extension(image).toLowerCase();
-          String contentType = 'image/png';
-
-          if (extension == '.jpg' || extension == '.jpeg') {
-            contentType = 'image/jpeg';
-          } else if (extension == '.png') {
-            contentType = 'image/png';
-          }
-
-          formData.files.add(MapEntry(
-            'image',
-            await MultipartFile.fromFile(
-              image,
-              contentType: MediaType.parse(contentType),
-            ),
-          ));
-        }
+      if (imageFile != null) {
+        final bytes = await imageFile.readAsBytes();
+        final mediaType = MediaType('image', imageFile.name.split('.').last);
+        formData.files.add(MapEntry(
+          'image',
+          MultipartFile.fromBytes(
+            bytes,
+            filename: imageFile.name,
+            contentType: mediaType,
+          ),
+        ));
       }
 
       final response = await _dio.put(
         "$_baseUrl/products/$id",
-        data: formData ?? updateData,
+        data: formData,
       );
 
       if (response.data['success'] == true) {
@@ -381,8 +292,8 @@ class ProductServices {
   /// Toggle favorite
   Future<Map<String, dynamic>> setFavorite(String productId) async {
     try {
-      final response = await _dio.patch("$_baseUrl/products/$productId/favorite");
-
+      final response =
+          await _dio.patch("$_baseUrl/products/$productId/favorite");
       if (response.data['success'] == true) {
         return {
           'success': true,
@@ -417,7 +328,6 @@ class ProductServices {
   Future<Map<String, dynamic>> destroyProduct(String id) async {
     try {
       final response = await _dio.delete("$_baseUrl/products/$id");
-
       if (response.data['success'] == true) {
         return {
           'success': true,
@@ -452,7 +362,6 @@ class ProductServices {
   Future<Map<String, dynamic>> getUnits() async {
     try {
       final response = await _dio.get("$_baseUrl/products/units");
-
       if (response.data['success'] == true) {
         return {
           'success': true,
@@ -487,7 +396,6 @@ class ProductServices {
 
   Future<Map<String, dynamic>> listCategory() async {
     final store = await Store.getStore();
-
     if (store == null || store['id'] == null) {
       return {
         'success': false,
@@ -495,10 +403,9 @@ class ProductServices {
         'data': []
       };
     }
-
     try {
-      final response = await _dio.get("$_baseUrl/categories/store/${store['id']}");
-
+      final response =
+          await _dio.get("$_baseUrl/categories/store/${store['id']}");
       if (response.data['success'] == true) {
         return {
           'success': true,
@@ -523,7 +430,6 @@ class ProductServices {
 
   Future<Map<String, dynamic>> storeCategory(String name) async {
     final store = await Store.getStore();
-
     if (store == null || store['id'] == null) {
       return {
         'success': false,
@@ -531,13 +437,9 @@ class ProductServices {
         'data': null
       };
     }
-
     try {
-      final response = await _dio.post("$_baseUrl/categories", data: {
-        "storeId": store['id'],
-        'name': name
-      });
-
+      final response = await _dio.post("$_baseUrl/categories",
+          data: {"storeId": store['id'], 'name': name});
       if (response.data['success'] == true) {
         return {
           'success': true,
@@ -563,7 +465,6 @@ class ProductServices {
   Future<Map<String, dynamic>> removeCategory(String id) async {
     try {
       final response = await _dio.delete("$_baseUrl/categories/$id");
-
       if (response.data['success'] == true) {
         return {
           'success': true,
@@ -586,10 +487,10 @@ class ProductServices {
     }
   }
 
-  Future<Map<String, dynamic>> updateCategory(Map<String, dynamic> body, String id) async {
+  Future<Map<String, dynamic>> updateCategory(
+      Map<String, dynamic> body, String id) async {
     try {
       final response = await _dio.put("$_baseUrl/categories/$id", data: body);
-
       if (response.data['success'] == true) {
         return {
           'success': true,
@@ -638,9 +539,10 @@ class ProductServices {
     return await detailProduct(productId);
   }
 
-  Future<Map<String, dynamic>> updateVariant(dynamic id, Map<String, dynamic> body) async {
+  Future<Map<String, dynamic>> updateVariant(
+      dynamic id, Map<String, dynamic> body) async {
     String productId = id.toString();
-    
+
     return await updateProduct(
       productId,
       name: body['name'],
@@ -653,18 +555,18 @@ class ProductServices {
     );
   }
 
-  Future<Map<String, dynamic>> updateStock(context, Map<String, dynamic> body, String productId) async {
+  Future<Map<String, dynamic>> updateStock(
+      context, Map<String, dynamic> body, String productId) async {
     Map<String, dynamic> updateData = {};
-
     if (body.containsKey('quantity'))
-      updateData['quantity'] = int.tryParse(body['quantity']?.toString() ?? '0');
-    if (body.containsKey('price')) 
+      updateData['quantity'] =
+          int.tryParse(body['quantity']?.toString() ?? '0');
+    if (body.containsKey('price'))
       updateData['price'] = body['price']?.toString();
     if (body.containsKey('capital_price'))
       updateData['capitalPrice'] = body['capital_price']?.toString();
     if (body.containsKey('tax'))
       updateData['tax'] = int.tryParse(body['tax']?.toString() ?? '0');
-
     return await updateProduct(
       productId,
       quantity: updateData['quantity'],
@@ -674,3 +576,4 @@ class ProductServices {
     );
   }
 }
+
