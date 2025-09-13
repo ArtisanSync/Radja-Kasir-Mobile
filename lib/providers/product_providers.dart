@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:kasir/models/product_model.dart';
 import 'package:kasir/services/product_services.dart';
 import 'package:kasir/core/use_store.dart';
@@ -62,16 +63,18 @@ class ProductState {
 
   bool get hasError => error != null;
   bool get hasProducts => products.isNotEmpty;
-  bool get canLoadMore => pagination != null && currentPage < pagination!.totalPages;
+  bool get canLoadMore =>
+      pagination != null && currentPage < pagination!.totalPages;
   int get totalProducts => pagination?.total ?? 0;
-  List<Product> get favoriteProducts => products.where((p) => p.isFavorite).toList();
-  List<Product> get lowStockProducts => products.where((p) => p.isLowStock).toList();
+  List<Product> get favoriteProducts =>
+      products.where((p) => p.isFavorite).toList();
+  List<Product> get lowStockProducts =>
+      products.where((p) => p.isLowStock).toList();
 }
 
 // Product Notifier
 class ProductNotifier extends StateNotifier<ProductState> {
   final ProductServices _productServices;
-
   ProductNotifier(this._productServices) : super(const ProductState());
 
   Future<void> loadProducts({
@@ -84,7 +87,6 @@ class ProductNotifier extends StateNotifier<ProductState> {
     if (refresh) {
       state = state.copyWith(currentPage: 1, products: []);
     }
-
     state = state.copyWith(
       isLoading: refresh || state.currentPage == 1,
       isLoadingMore: !refresh && state.currentPage > 1,
@@ -94,9 +96,7 @@ class ProductNotifier extends StateNotifier<ProductState> {
       showFavorites: isFavorite ?? state.showFavorites,
       showLowStock: lowStock ?? state.showLowStock,
     );
-
     try {
-      // Check store info first - INI YANG PENTING!
       final store = await Store.getStore();
       if (store == null || store['id'] == null) {
         state = state.copyWith(
@@ -106,7 +106,6 @@ class ProductNotifier extends StateNotifier<ProductState> {
         );
         return;
       }
-
       final response = await _productServices.listProduct(
         search: state.searchQuery.isEmpty ? null : state.searchQuery,
         categoryId: state.selectedCategoryId,
@@ -115,11 +114,11 @@ class ProductNotifier extends StateNotifier<ProductState> {
         isFavorite: state.showFavorites,
         lowStock: state.showLowStock,
       );
-
       if (response['success'] == true && response['data'] != null) {
         final data = response['data'];
         final productList = (data['products'] ?? []) as List;
-        final newProducts = productList.map((json) => Product.fromJson(json)).toList();
+        final newProducts =
+            productList.map((json) => Product.fromJson(json)).toList();
 
         List<Product> updatedProducts;
         if (refresh || state.currentPage == 1) {
@@ -128,9 +127,10 @@ class ProductNotifier extends StateNotifier<ProductState> {
           updatedProducts = [...state.products, ...newProducts];
         }
 
-        final pagination = data['pagination'] != null 
+        final pagination = data['pagination'] != null
             ? ProductPagination.fromJson(data['pagination'])
-            : const ProductPagination(total: 0, page: 1, limit: 20, totalPages: 1);
+            : const ProductPagination(
+                total: 0, page: 1, limit: 20, totalPages: 1);
 
         state = state.copyWith(
           products: updatedProducts,
@@ -156,7 +156,6 @@ class ProductNotifier extends StateNotifier<ProductState> {
 
   Future<void> loadMoreProducts() async {
     if (!state.canLoadMore || state.isLoadingMore) return;
-
     state = state.copyWith(currentPage: state.currentPage + 1);
     await loadProducts();
   }
@@ -166,7 +165,7 @@ class ProductNotifier extends StateNotifier<ProductState> {
     String? code,
     String? brand,
     String? categoryId,
-    String? image,
+    XFile? imageFile,
     required String unitId,
     required int quantity,
     required String capitalPrice,
@@ -181,7 +180,7 @@ class ProductNotifier extends StateNotifier<ProductState> {
         code: code,
         brand: brand,
         categoryId: categoryId,
-        image: image,
+        imageFile: imageFile,
         unitId: unitId,
         quantity: quantity,
         capitalPrice: capitalPrice,
@@ -190,7 +189,6 @@ class ProductNotifier extends StateNotifier<ProductState> {
         discountRp: discountRp,
         discountPercent: discountPercent,
       );
-
       if (response['success'] == true) {
         await refresh();
         return true;
@@ -210,7 +208,7 @@ class ProductNotifier extends StateNotifier<ProductState> {
     String? code,
     String? brand,
     String? categoryId,
-    String? image,
+    XFile? imageFile,
     bool? active,
     bool? isFavorite,
     String? unitId,
@@ -228,7 +226,7 @@ class ProductNotifier extends StateNotifier<ProductState> {
         code: code,
         brand: brand,
         categoryId: categoryId,
-        image: image,
+        imageFile: imageFile,
         active: active,
         isFavorite: isFavorite,
         unitId: unitId,
@@ -239,14 +237,13 @@ class ProductNotifier extends StateNotifier<ProductState> {
         discountRp: discountRp,
         discountPercent: discountPercent,
       );
-
       if (response['success'] == true) {
         final index = state.products.indexWhere((p) => p.id == id);
         if (index != -1 && response['data'] != null) {
           final updatedProduct = Product.fromJson(response['data']);
           final updatedProducts = [...state.products];
           updatedProducts[index] = updatedProduct;
-          
+
           state = state.copyWith(products: updatedProducts);
         }
         return true;
@@ -263,17 +260,16 @@ class ProductNotifier extends StateNotifier<ProductState> {
   Future<bool> deleteProduct(String id) async {
     try {
       final response = await _productServices.destroyProduct(id);
-
       if (response['success'] == true) {
         final updatedProducts = state.products.where((p) => p.id != id).toList();
-        
+
         state = state.copyWith(
           products: updatedProducts,
           pagination: state.pagination?.copyWith(
             total: state.pagination!.total - 1,
           ),
         );
-        
+
         return true;
       } else {
         state = state.copyWith(error: response['message']);
@@ -288,14 +284,13 @@ class ProductNotifier extends StateNotifier<ProductState> {
   Future<bool> toggleFavorite(String id) async {
     try {
       final response = await _productServices.setFavorite(id);
-
       if (response['success'] == true) {
         final index = state.products.indexWhere((p) => p.id == id);
         if (index != -1 && response['data'] != null) {
           final updatedProduct = Product.fromJson(response['data']);
           final updatedProducts = [...state.products];
           updatedProducts[index] = updatedProduct;
-          
+
           state = state.copyWith(products: updatedProducts);
         }
         return true;
@@ -353,7 +348,7 @@ final productProvider = StateNotifierProvider<ProductNotifier, ProductState>((re
 final unitsProvider = FutureProvider<List<UnitModel>>((ref) async {
   final productServices = ref.watch(productServicesProvider);
   final response = await productServices.getUnits();
-  
+
   if (response['success'] == true && response['data'] != null) {
     final unitList = response['data'] as List;
     return unitList.map((json) => UnitModel.fromJson(json)).toList();
