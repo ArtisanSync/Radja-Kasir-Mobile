@@ -5,7 +5,6 @@ import 'package:kasir/components/modern_card.dart';
 import 'package:kasir/helpers/currency_format.dart';
 import 'package:kasir/models/subscription_model.dart';
 import 'package:kasir/providers/subscription_providers.dart';
-import 'package:lottie/lottie.dart';
 
 class SubscriptionPage extends ConsumerStatefulWidget {
   const SubscriptionPage({Key? key}) : super(key: key);
@@ -23,14 +22,15 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
     });
   }
 
-  void _showPaymentDialog(BuildContext context, SubscriptionPackage package, bool isNewUser) {
+  void _showPaymentDialog(BuildContext context, SubscriptionPackage package) {
     final theme = Theme.of(context);
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
             children: [
               Icon(
@@ -53,45 +53,14 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
               Text(
                 'Harga: ${CurrencyFormat.convertToIdr(package.price, 0)}',
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: theme.colorScheme.primary,
                   fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
                 ),
               ),
-              if (isNewUser) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        CupertinoIcons.gift,
-                        size: 16,
-                        color: Colors.green,
-                      ),
-                      const SizedBox(width: 8),
-                      const Expanded(
-                        child: Text(
-                          'Promo: Bayar 1 bulan, dapat 3 bulan!',
-                          style: TextStyle(
-                            color: Colors.green,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
               const SizedBox(height: 16),
               const Text(
                 'Payment gateway akan segera tersedia.',
                 style: TextStyle(
-                  fontSize: 12,
                   color: Colors.grey,
                 ),
               ),
@@ -109,9 +78,13 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
               onPressed: () {
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Payment gateway dalam pengembangan'),
-                    backgroundColor: Colors.orange,
+                  SnackBar(
+                    content: const Text('Payment gateway akan segera tersedia'),
+                    backgroundColor: theme.colorScheme.primary,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 );
               },
@@ -149,26 +122,28 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
         centerTitle: true,
       ),
       body: subscriptionState.isLoading
-          ? _buildLoadingState()
+          ? _buildLoadingState(theme)
           : subscriptionState.error != null
               ? _buildErrorState(context, theme, subscriptionState.error!)
               : _buildContent(context, theme, subscriptionState),
     );
   }
 
-  Widget _buildLoadingState() {
+  Widget _buildLoadingState(ThemeData theme) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Lottie.asset(
-            'assets/animations/Loading.json',
-            width: 120,
-            height: 120,
-            fit: BoxFit.contain,
+          CircularProgressIndicator(
+            color: theme.colorScheme.primary,
           ),
           const SizedBox(height: 16),
-          const Text('Memuat paket langganan...'),
+          Text(
+            'Memuat paket langganan...',
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onBackground.withOpacity(0.7),
+            ),
+          ),
         ],
       ),
     );
@@ -207,6 +182,13 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
               onPressed: () {
                 ref.read(subscriptionProvider.notifier).loadAll();
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               child: const Text('Coba Lagi'),
             ),
           ],
@@ -215,84 +197,104 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
     );
   }
 
-  Widget _buildContent(BuildContext context, ThemeData theme, SubscriptionState state) {
+  Widget _buildContent(
+      BuildContext context, ThemeData theme, SubscriptionState state) {
     final hasActiveSubscription = state.hasActiveSubscription;
-    final isNewUser = state.currentSubscription == null;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Current Subscription Info
-          if (hasActiveSubscription && state.currentSubscription != null) ...[
-            _buildCurrentSubscriptionCard(context, theme, state.currentSubscription!),
-            const SizedBox(height: 24),
-          ],
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.read(subscriptionProvider.notifier).loadAll();
+      },
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Current Subscription Info
+            if (hasActiveSubscription && state.currentSubscription != null) ...[
+              _buildCurrentSubscriptionCard(
+                  context, theme, state.currentSubscription!),
+              const SizedBox(height: 24),
+            ],
 
-          // New User Promo Banner
-          if (isNewUser) ...[
-            _buildPromoBanner(context, theme),
-            const SizedBox(height: 24),
-          ],
-
-          // Package List
-          Text(
-            hasActiveSubscription ? 'Upgrade Paket' : 'Pilih Paket',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
+            // Package List Header
+            Text(
+              hasActiveSubscription ? 'Upgrade Paket' : 'Pilih Paket Langganan',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-
-          ...state.packages.map((package) => Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: _buildPackageCard(
-              context,
-              theme,
-              package,
-              isCurrentPackage: state.currentSubscription?.packageId == package.id,
-              isNewUser: isNewUser,
+            const SizedBox(height: 8),
+            Text(
+              'Pilih paket yang sesuai dengan kebutuhan bisnis Anda',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
-          )),
+            const SizedBox(height: 20),
 
-          const SizedBox(height: 40),
-        ],
+            // Package Cards
+            if (state.packages.isEmpty)
+              _buildEmptyState(theme)
+            else
+              ...state.packages.map((package) => Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildPackageCard(
+                      context,
+                      theme,
+                      package,
+                      isCurrentPackage:
+                          state.currentSubscription?.packageId == package.id,
+                    ),
+                  )),
+
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildCurrentSubscriptionCard(BuildContext context, ThemeData theme, UserSubscription subscription) {
+  Widget _buildCurrentSubscriptionCard(
+      BuildContext context, ThemeData theme, UserSubscription subscription) {
     return ModernCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                CupertinoIcons.checkmark_seal_fill,
-                color: theme.colorScheme.primary,
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  CupertinoIcons.checkmark_seal_fill,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Text(
                 'Langganan Aktif',
                 style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
                   color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          
           Text(
             subscription.package.displayName,
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
-          
           Row(
             children: [
               Icon(
@@ -300,29 +302,33 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
                 size: 16,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 6),
               Text(
                 'Berakhir: ${subscription.endDate.day}/${subscription.endDate.month}/${subscription.endDate.year}',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(width: 16),
+              const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: subscription.isExpiring
                       ? Colors.orange.withOpacity(0.1)
                       : Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: subscription.isExpiring
+                        ? Colors.orange.withOpacity(0.3)
+                        : Colors.green.withOpacity(0.3),
+                  ),
                 ),
                 child: Text(
-                  subscription.isExpiring
-                      ? '${subscription.daysLeft} hari lagi'
-                      : 'Aktif',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: subscription.isExpiring ? Colors.orange : Colors.green,
+                  subscription.isExpiring ? 'Segera Berakhir' : 'Aktif',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color:
+                        subscription.isExpiring ? Colors.orange : Colors.green,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -334,81 +340,44 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
     );
   }
 
-  Widget _buildPromoBanner(BuildContext context, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.purple.shade600, Colors.purple.shade400],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              CupertinoIcons.gift,
-              color: Colors.white,
-              size: 32,
-            ),
-          ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Promo Pengguna Baru!',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Bayar 1 bulan, dapat akses 3 bulan',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+  String _getCleanDisplayName(String displayName) {
+    return displayName.replaceAllMapped(
+      RegExp(r'\(Hemat (\d+\.?\d*)\%\)'),
+      (match) {
+        final percentStr = match.group(1);
+        if (percentStr != null) {
+          final percent = double.tryParse(percentStr) ?? 0;
+          final roundedPercent = percent.round();
+          return '(Hemat ${roundedPercent}%)';
+        }
+        return match.group(0) ?? '';
+      },
     );
   }
 
   Widget _buildPackageCard(
-    BuildContext context,
-    ThemeData theme,
-    SubscriptionPackage package,
-    {bool isCurrentPackage = false, bool isNewUser = false}
-  ) {
-    final isBasic = package.name.toLowerCase() == 'basic';
-    final isPremium = package.name.toLowerCase() == 'premium';
-    final isEnterprise = package.name.toLowerCase() == 'enterprise';
+      BuildContext context, ThemeData theme, SubscriptionPackage package,
+      {bool isCurrentPackage = false}) {
+    final isPro = package.name.toLowerCase() == 'pro';
+    final isBusiness = package.name.toLowerCase() == 'business';
+
+    Color primaryColor = theme.colorScheme.primary;
+    if (isPro) {
+      primaryColor = Colors.purple;
+    } else if (isBusiness) {
+      primaryColor = Colors.orange;
+    }
 
     return GestureDetector(
-      onTap: isCurrentPackage
-          ? null
-          : () => _showPaymentDialog(context, package, isNewUser),
+      onTap:
+          isCurrentPackage ? null : () => _showPaymentDialog(context, package),
       child: Container(
         decoration: BoxDecoration(
           gradient: isCurrentPackage
               ? LinearGradient(
                   colors: [
-                    theme.colorScheme.primary.withOpacity(0.1),
-                    theme.colorScheme.primary.withOpacity(0.05),
+                    primaryColor.withOpacity(0.05),
+                    primaryColor.withOpacity(0.02),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -417,73 +386,75 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isCurrentPackage
-                ? theme.colorScheme.primary
+                ? primaryColor
                 : theme.colorScheme.outline.withOpacity(0.3),
             width: isCurrentPackage ? 2 : 1,
           ),
         ),
         child: ModernCard(
+          margin: EdgeInsets.zero,
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Package Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            package.displayName,
-                            style: theme.textTheme.headlineSmall?.copyWith(
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            _getCleanDisplayName(package.displayName),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: primaryColor,
                               fontWeight: FontWeight.bold,
                             ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
                           ),
-                          if (isPremium) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.orange.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Text(
-                                'POPULER',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.orange,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        ),
+                        if (isPro) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'POPULER',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                          ],
+                          ),
                         ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        isBasic
-                            ? 'Untuk usaha kecil'
-                            : isPremium
-                                ? 'Untuk usaha berkembang'
-                                : 'Untuk perusahaan besar',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 12),
                   if (isCurrentPackage)
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        color: primaryColor,
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       child: Icon(
-                        CupertinoIcons.checkmark_circle_fill,
-                        color: theme.colorScheme.primary,
+                        CupertinoIcons.checkmark,
+                        color: Colors.white,
+                        size: 16,
                       ),
                     ),
                 ],
@@ -498,48 +469,21 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
                     CurrencyFormat.convertToIdr(package.price, 0),
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
+                      color: primaryColor,
                     ),
                   ),
-                  Text(
-                    '/bulan',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                  const SizedBox(width: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      '/${package.duration} bulan',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ],
               ),
-
-              // New User Promo
-              if (isNewUser) ...[
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        CupertinoIcons.gift,
-                        size: 16,
-                        color: Colors.green,
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        'Bayar 1 bulan, dapat 3 bulan',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.green,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
 
               const SizedBox(height: 20),
               const Divider(),
@@ -547,13 +491,21 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
 
               // Features
               Text(
-                'Fitur Utama:',
+                'Fitur yang Anda Dapatkan:',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 12),
 
+              _buildFeatureItem(
+                theme,
+                CupertinoIcons.person_2_fill,
+                '${package.maxMembers} Member Tim',
+                true,
+              ),
+              const SizedBox(height: 8),
               _buildFeatureItem(
                 theme,
                 CupertinoIcons.building_2_fill,
@@ -563,41 +515,34 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
               const SizedBox(height: 8),
               _buildFeatureItem(
                 theme,
-                CupertinoIcons.person_3_fill,
-                '${package.maxMembers} Member',
+                CupertinoIcons.cube_box_fill,
+                'Manajemen Stok Tak Terbatas',
                 true,
               ),
               const SizedBox(height: 8),
               _buildFeatureItem(
                 theme,
-                CupertinoIcons.person_2_fill,
-                '${package.maxUsers} User',
+                CupertinoIcons.chart_bar_fill,
+                'Laporan Penjualan',
                 true,
               ),
 
               // Additional Features based on package
-              if (isPremium || isEnterprise) ...[
-                const SizedBox(height: 8),
-                _buildFeatureItem(
-                  theme,
-                  CupertinoIcons.chart_bar_fill,
-                  'Laporan Lanjutan',
-                  true,
-                ),
-              ],
-              if (isEnterprise) ...[
-                const SizedBox(height: 8),
-                _buildFeatureItem(
-                  theme,
-                  CupertinoIcons.shield_fill,
-                  'Priority Support',
-                  true,
-                ),
+              if (isPro || isBusiness) ...[
                 const SizedBox(height: 8),
                 _buildFeatureItem(
                   theme,
                   CupertinoIcons.cloud_fill,
-                  'Backup Otomatis',
+                  'Backup Cloud Otomatis',
+                  true,
+                ),
+              ],
+              if (isBusiness) ...[
+                const SizedBox(height: 8),
+                _buildFeatureItem(
+                  theme,
+                  CupertinoIcons.phone_fill,
+                  'Support Priority 24/7',
                   true,
                 ),
               ],
@@ -610,20 +555,26 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
                 child: ElevatedButton(
                   onPressed: isCurrentPackage
                       ? null
-                      : () => _showPaymentDialog(context, package, isNewUser),
+                      : () => _showPaymentDialog(context, package),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isCurrentPackage
                         ? theme.colorScheme.surfaceVariant
-                        : theme.colorScheme.primary,
+                        : primaryColor,
+                    foregroundColor: isCurrentPackage
+                        ? theme.colorScheme.onSurfaceVariant
+                        : Colors.white,
+                    disabledBackgroundColor: theme.colorScheme.surfaceVariant,
+                    disabledForegroundColor: theme.colorScheme.onSurfaceVariant,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
+                    elevation: isCurrentPackage ? 0 : 2,
                   ),
                   child: Text(
                     isCurrentPackage ? 'Paket Aktif' : 'Pilih Paket',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
                       color: isCurrentPackage
                           ? theme.colorScheme.onSurfaceVariant
                           : Colors.white,
@@ -647,7 +598,9 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
     return Row(
       children: [
         Icon(
-          included ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.xmark_circle_fill,
+          included
+              ? CupertinoIcons.checkmark_circle_fill
+              : CupertinoIcons.xmark_circle_fill,
           size: 20,
           color: included ? Colors.green : Colors.red,
         ),
@@ -670,6 +623,40 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildEmptyState(ThemeData theme) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              CupertinoIcons.square_stack,
+              size: 64,
+              color: theme.colorScheme.outline,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Belum Ada Paket',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Paket langganan belum tersedia saat ini',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

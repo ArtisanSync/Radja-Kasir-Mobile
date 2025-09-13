@@ -41,14 +41,16 @@ class SubscriptionState {
 
   bool get hasActiveSubscription => currentSubscription?.isActive ?? false;
   bool get isExpiring => currentSubscription?.isExpiring ?? false;
-  String get currentPackageName => currentSubscription?.package.displayName ?? 'No Package';
+  String get currentPackageName =>
+      currentSubscription?.package.displayName ?? 'No Package';
 }
 
 // Subscription Notifier
 class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   final SubscriptionServices _subscriptionServices;
 
-  SubscriptionNotifier(this._subscriptionServices) : super(const SubscriptionState());
+  SubscriptionNotifier(this._subscriptionServices)
+      : super(const SubscriptionState());
 
   // Load all packages
   Future<void> loadPackages() async {
@@ -56,11 +58,13 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 
     try {
       final result = await _subscriptionServices.getPackages();
-      
+
       if (result['success'] == true) {
-        final List<dynamic> data = result['data'] ?? [];
-        final packages = data.map((json) => SubscriptionPackage.fromJson(json)).toList();
-        
+        final Map<String, dynamic> dataMap = result['data'] ?? {};
+        final List<dynamic> data = dataMap['allPackages'] ?? [];
+        final packages =
+            data.map((json) => SubscriptionPackage.fromJson(json)).toList();
+
         state = state.copyWith(packages: packages, isLoading: false);
       } else {
         state = state.copyWith(
@@ -70,7 +74,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       }
     } catch (e) {
       state = state.copyWith(
-        error: 'Network error occurred',
+        error: 'Network error occurred: $e',
         isLoading: false,
       );
     }
@@ -82,10 +86,11 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 
     try {
       final result = await _subscriptionServices.getMySubscription();
-      
+
       if (result['success'] == true && result['data'] != null) {
         final subscription = UserSubscription.fromJson(result['data']);
-        state = state.copyWith(currentSubscription: subscription, isLoading: false);
+        state =
+            state.copyWith(currentSubscription: subscription, isLoading: false);
       } else {
         state = state.copyWith(
           currentSubscription: null,
@@ -104,7 +109,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   Future<void> checkStatus() async {
     try {
       final result = await _subscriptionServices.getSubscriptionStatus();
-      
+
       if (result['success'] == true && result['data'] != null) {
         final status = SubscriptionStatus.fromJson(result['data']);
         state = state.copyWith(status: status);
@@ -116,11 +121,21 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 
   // Load all subscription data
   Future<void> loadAll() async {
-    await Future.wait([
-      loadPackages(),
-      loadMySubscription(),
-      checkStatus(),
-    ]);
+    // Load packages first (most important)
+    await loadPackages();
+
+    // Load other data separately so they don't affect packages loading
+    try {
+      await loadMySubscription();
+    } catch (e) {
+      // Don't let subscription loading error affect packages
+    }
+
+    try {
+      await checkStatus();
+    } catch (e) {
+      // Don't let status check error affect packages
+    }
   }
 
   // Clear error
@@ -130,7 +145,8 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 }
 
 // Subscription Provider
-final subscriptionProvider = StateNotifierProvider<SubscriptionNotifier, SubscriptionState>((ref) {
+final subscriptionProvider =
+    StateNotifierProvider<SubscriptionNotifier, SubscriptionState>((ref) {
   final subscriptionServices = ref.watch(subscriptionServicesProvider);
   return SubscriptionNotifier(subscriptionServices);
 });

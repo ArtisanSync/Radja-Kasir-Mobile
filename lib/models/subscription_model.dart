@@ -5,22 +5,28 @@ class SubscriptionPackage {
   final String name;
   final String displayName;
   final double price;
+  final int duration;
   final int maxUsers;
   final int maxMembers;
   final int maxStores;
   final Map<String, dynamic>? features;
   final bool isActive;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   SubscriptionPackage({
     required this.id,
     required this.name,
     required this.displayName,
     required this.price,
+    required this.duration,
     required this.maxUsers,
     required this.maxMembers,
     required this.maxStores,
     this.features,
     required this.isActive,
+    this.createdAt,
+    this.updatedAt,
   });
 
   factory SubscriptionPackage.fromJson(Map<String, dynamic> json) {
@@ -29,11 +35,18 @@ class SubscriptionPackage {
       name: json['name'] ?? '',
       displayName: json['displayName'] ?? '',
       price: double.tryParse(json['price']?.toString() ?? '0') ?? 0,
+      duration: json['duration'] ?? 1,
       maxUsers: json['maxUsers'] ?? 1,
       maxMembers: json['maxMembers'] ?? 3,
       maxStores: json['maxStores'] ?? 1,
       features: json['features'],
       isActive: json['isActive'] ?? true,
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'])
+          : null,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.tryParse(json['updatedAt'])
+          : null,
     );
   }
 
@@ -43,6 +56,7 @@ class SubscriptionPackage {
       'name': name,
       'displayName': displayName,
       'price': price,
+      'duration': duration,
       'maxUsers': maxUsers,
       'maxMembers': maxMembers,
       'maxStores': maxStores,
@@ -89,8 +103,10 @@ class UserSubscription {
       userId: json['userId'] ?? '',
       packageId: json['packageId'] ?? '',
       status: json['status'] ?? '',
-      startDate: DateTime.parse(json['startDate'] ?? DateTime.now().toIso8601String()),
-      endDate: DateTime.parse(json['endDate'] ?? DateTime.now().toIso8601String()),
+      startDate:
+          DateTime.parse(json['startDate'] ?? DateTime.now().toIso8601String()),
+      endDate:
+          DateTime.parse(json['endDate'] ?? DateTime.now().toIso8601String()),
       isTrial: json['isTrial'] ?? false,
       autoRenew: json['autoRenew'] ?? false,
       isNewUserPromo: json['isNewUserPromo'] ?? false,
@@ -134,8 +150,8 @@ class SubscriptionStatus {
     return SubscriptionStatus(
       isActive: json['isActive'] ?? false,
       status: json['status'] ?? 'NO_SUBSCRIPTION',
-      subscription: json['subscription'] != null 
-          ? UserSubscription.fromJson(json['subscription']) 
+      subscription: json['subscription'] != null
+          ? UserSubscription.fromJson(json['subscription'])
           : null,
       daysLeft: json['daysLeft'],
       isExpiring: json['isExpiring'] ?? false,

@@ -20,7 +20,7 @@ class SubscriptionServices {
       if (response.statusCode == 200) {
         return {
           'success': true,
-          'data': response.data['data'] ?? [],
+          'data': response.data['data'] ?? {},
           'message': response.data['message'] ?? 'Packages loaded successfully'
         };
       }
@@ -28,19 +28,19 @@ class SubscriptionServices {
       return {
         'success': false,
         'message': response.data['message'] ?? 'Failed to load packages',
-        'data': []
+        'data': {}
       };
     } on DioException catch (e) {
       return {
         'success': false,
         'message': e.response?.data['message'] ?? 'Network error occurred',
-        'data': []
+        'data': {}
       };
     } catch (e) {
       return {
         'success': false,
         'message': 'Unexpected error occurred',
-        'data': []
+        'data': {}
       };
     }
   }
