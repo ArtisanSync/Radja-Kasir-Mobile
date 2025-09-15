@@ -13,6 +13,7 @@ import 'package:kasir/models/product_model.dart';
 import 'package:kasir/providers/cart_providers.dart';
 import 'package:kasir/providers/product_providers.dart';
 import 'package:kasir/screens/cart/cart_page.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 // Define your static colors
 const Color primary = Color(0xFF00ADFE);
@@ -105,148 +106,97 @@ class HomeProductCard extends ConsumerWidget {
       child: Container(
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: theme.colorScheme.shadow.withOpacity(0.12),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-              spreadRadius: 0,
-            ),
-            BoxShadow(
-              color: theme.colorScheme.primary.withOpacity(0.05),
-              blurRadius: 8,
+              color: theme.colorScheme.shadow.withOpacity(0.08),
+              blurRadius: 12,
               offset: const Offset(0, 2),
-              spreadRadius: 0,
             ),
           ],
           border: Border.all(
-            color: theme.colorScheme.outline.withOpacity(0.08),
+            color: theme.colorScheme.outline.withOpacity(0.1),
             width: 1,
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Gambar produk atau ikon toko di tengah tanpa latar
-              Expanded(
-                child: Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: product.image != null
-                        ? CachedNetworkImage(
-                            imageUrl: product.image!,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Center(
-                              child: Icon(
-                                Icons.store,
-                                color: primary.withOpacity(0.5),
-                                size: 40,
-                              ),
-                            ),
-                            errorWidget: (context, url, error) => Center(
-                              child: Icon(
-                                Icons.broken_image_outlined,
-                                color: theme.colorScheme.onErrorContainer,
-                                size: 40,
-                              ),
-                            ),
-                          )
-                        : Center(
-                            child: Icon(
-                              Icons.store,
-                              size: 40,
-                              color: primary.withOpacity(0.5),
-                            ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+                child: product.image != null
+                    ? CachedNetworkImage(
+                        imageUrl: product.image!,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Center(
+                          child: Icon(
+                            Icons.store,
+                            color: primary.withOpacity(0.5),
+                            size: 40,
                           ),
-                  ),
-                ),
+                        ),
+                        errorWidget: (context, url, error) => Center(
+                          child: Icon(
+                            Icons.broken_image_outlined,
+                            color: theme.colorScheme.onErrorContainer,
+                            size: 40,
+                          ),
+                        ),
+                      )
+                    : Center(
+                        child: Icon(
+                          Icons.store,
+                          size: 40,
+                          color: primary.withOpacity(0.5),
+                        ),
+                      ),
               ),
-              const Gap(12),
-              Text(
-                product.name,
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
-                  height: 1.3,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const Gap(8),
-              // Badge kategori dengan background 10% opacity
-              if (product.category != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: badgeYellow.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: badgeYellow.withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    product.category!.name,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.name,
                     style: GoogleFonts.inter(
-                      fontSize: 11,
-                      color: theme.colorScheme.onSecondaryContainer,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              const Gap(12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Text(
-                      CurrencyFormat.formatPrice(
-                          double.tryParse(product.displayPrice) ?? 0.0),
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                        letterSpacing: -0.5,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  const Gap(4),
+                  Text(
+                    'Stok: ${product.totalQuantity}',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  // Badge stock dengan background 10% opacity
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: product.hasStock
-                          ? primary.withOpacity(0.3)
-                          : theme.colorScheme.error.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: product.hasStock
-                            ? primary.withOpacity(0.3)
-                            : theme.colorScheme.error.withOpacity(0.2),
-                        width: 1,
-                      ),
+                  const Gap(8),
+                  Text(
+                    CurrencyFormat.formatPrice(
+                        double.tryParse(product.displayPrice) ?? 0.0),
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
                     ),
-                    child: Text(
-                      product.hasStock ? '${product.totalQuantity}' : 'Habis',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: Colors.black,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -261,6 +211,10 @@ class ProductTabContent extends ConsumerStatefulWidget {
 }
 
 class _ProductTabContentState extends ConsumerState<ProductTabContent> {
+  final RefreshController _refreshController =
+      RefreshController(initialRefresh: false);
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
@@ -270,185 +224,246 @@ class _ProductTabContentState extends ConsumerState<ProductTabContent> {
     });
   }
 
+  void _onRefresh() async {
+    await ref.read(productProvider.notifier).loadProducts(refresh: true);
+    _refreshController.refreshCompleted();
+  }
+
   @override
   Widget build(BuildContext context) {
     final productState = ref.watch(productProvider);
+    final filteredProducts = productState.products
+        .where((p) => p.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
 
     return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: productState.isLoading
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Lottie.asset(
-                    'assets/animations/Loading.json',
-                    width: 120,
-                    height: 120,
-                    fit: BoxFit.contain,
-                  ),
-                  const Gap(16),
-                  Text(
-                    'Memuat produk...',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        children: [
+          const Gap(16),
+          TextField(
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
+            decoration: InputDecoration(
+              hintText: 'Cari produk...',
+              prefixIcon: const Icon(Icons.search, color: Colors.grey),
+              filled: true,
+              fillColor: Colors.grey.shade100,
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
               ),
-            )
-          : productState.error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: Colors.red.shade400,
-                      ),
-                      const Gap(16),
-                      Text(
-                        'Terjadi Kesalahan',
-                        style: GoogleFonts.inter(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.red.shade700,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade200),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Theme.of(context).primaryColor),
+              ),
+            ),
+          ),
+          const Gap(16),
+          Expanded(
+            child: productState.isLoading && _searchQuery.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Lottie.asset(
+                          'assets/animations/Loading.json',
+                          width: 120,
+                          height: 120,
+                          fit: BoxFit.contain,
                         ),
-                      ),
-                      const Gap(8),
-                      Text(
-                        productState.error!,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                )
-              : productState.products.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Lottie.asset(
-                            'assets/animations/no data.json',
-                            width: 200,
-                            height: 200,
+                        const Gap(16),
+                        Text(
+                          'Memuat produk...',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            color: Colors.grey.shade600,
                           ),
-                          const Gap(16),
-                          Text(
-                            'Belum Ada Produk',
-                            style: GoogleFonts.inter(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade700,
+                        ),
+                      ],
+                    ),
+                  )
+                : productState.error != null
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              size: 64,
+                              color: Colors.red.shade400,
                             ),
-                          ),
-                          const Gap(8),
-                          Text(
-                            'Tambahkan produk pertama Anda untuk mulai berjualan',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              color: Colors.grey.shade600,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    )
-                  : AnimationLimiter(
-                      child: GridView.builder(
-                        physics: const BouncingScrollPhysics(),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.7,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                        ),
-                        itemCount: productState.products.length,
-                        itemBuilder: (context, index) {
-                          final product = productState.products[index];
-                          return AnimationConfiguration.staggeredGrid(
-                            position: index,
-                            duration: const Duration(milliseconds: 375),
-                            columnCount: 2,
-                            child: ScaleAnimation(
-                              child: FadeInAnimation(
-                                child: HomeProductCard(
-                                  product: product,
-                                  onTap: () {
-                                    if (product.hasStock) {
-                                      final cartNotifier =
-                                          ref.read(cartProvider.notifier);
-                                      final variantId =
-                                          product.variants.isNotEmpty
-                                              ? product.variants.first.id
-                                              : product.id!;
-                                      cartNotifier.addItem(
-                                        productId: variantId,
-                                        name: product.name,
-                                        image: product.image ?? '',
-                                        price: double.tryParse(
-                                                product.displayPrice) ?? 0.0,
-                                        unit: product.displayUnit,
-                                      );
-
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Row(
-                                            children: [
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.all(4),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white
-                                                      .withOpacity(0.2),
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: const Icon(
-                                                  Icons.check,
-                                                  color: Colors.white,
-                                                  size: 16,
-                                                ),
-                                              ),
-                                              const Gap(12),
-                                              Expanded(
-                                                child: Text(
-                                                  '${product.name} ditambahkan ke keranjang',
-                                                  style: GoogleFonts.inter(
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          backgroundColor:
-                                              Colors.green.shade600,
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(16),
-                                          ),
-                                          margin: const EdgeInsets.all(16),
-                                          duration: const Duration(seconds: 2),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                ),
+                            const Gap(16),
+                            Text(
+                              'Terjadi Kesalahan',
+                              style: GoogleFonts.inter(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.red.shade700,
                               ),
                             ),
-                          );
-                        },
-                      ),
-                    ),
+                            const Gap(8),
+                            Text(
+                              productState.error!,
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                color: Colors.grey.shade600,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      )
+                    : filteredProducts.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Lottie.asset(
+                                  'assets/animations/no data.json',
+                                  width: 200,
+                                  height: 200,
+                                ),
+                                const Gap(16),
+                                Text(
+                                  _searchQuery.isEmpty
+                                      ? 'Belum Ada Produk'
+                                      : 'Produk tidak ditemukan',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                                if (_searchQuery.isEmpty) ...[
+                                  const Gap(8),
+                                  Text(
+                                    'Tambahkan produk pertama Anda untuk mulai berjualan',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ]
+                              ],
+                            ),
+                          )
+                        : SmartRefresher(
+                            controller: _refreshController,
+                            onRefresh: _onRefresh,
+                            header: const WaterDropHeader(),
+                            child: AnimationLimiter(
+                              child: GridView.builder(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                physics: const BouncingScrollPhysics(),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  childAspectRatio: 0.7,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                ),
+                                itemCount: filteredProducts.length,
+                                itemBuilder: (context, index) {
+                                  final product = filteredProducts[index];
+                                  return AnimationConfiguration.staggeredGrid(
+                                    position: index,
+                                    duration: const Duration(milliseconds: 375),
+                                    columnCount: 2,
+                                    child: ScaleAnimation(
+                                      child: FadeInAnimation(
+                                        child: HomeProductCard(
+                                          product: product,
+                                          onTap: () {
+                                            if (product.hasStock) {
+                                              final cartNotifier = ref.read(
+                                                  cartProvider.notifier);
+                                              final variantId = product
+                                                      .variants.isNotEmpty
+                                                  ? product.variants.first.id
+                                                  : product.id!;
+                                              cartNotifier.addItem(
+                                                productId: variantId,
+                                                name: product.name,
+                                                image: product.image ?? '',
+                                                price: double.tryParse(product
+                                                        .displayPrice) ??
+                                                    0.0,
+                                                unit: product.displayUnit,
+                                              );
+
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                SnackBar(
+                                                  content: Row(
+                                                    children: [
+                                                      Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(4),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.white
+                                                              .withOpacity(0.2),
+                                                          shape:
+                                                              BoxShape.circle,
+                                                        ),
+                                                        child: const Icon(
+                                                          Icons.check,
+                                                          color: Colors.white,
+                                                          size: 16,
+                                                        ),
+                                                      ),
+                                                      const Gap(12),
+                                                      Expanded(
+                                                        child: Text(
+                                                          '${product.name} ditambahkan ke keranjang',
+                                                          style: GoogleFonts
+                                                              .inter(
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: Colors.white,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  backgroundColor:
+                                                      Colors.green.shade600,
+                                                  behavior: SnackBarBehavior
+                                                      .floating,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            16),
+                                                  ),
+                                                  margin:
+                                                      const EdgeInsets.all(16),
+                                                  duration: const Duration(
+                                                      seconds: 2),
+                                                ),
+                                              );
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+          ),
+        ],
+      ),
     );
   }
 }
