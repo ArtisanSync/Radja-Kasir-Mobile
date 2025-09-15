@@ -5,6 +5,7 @@ import 'package:kasir/components/modern_card.dart';
 import 'package:kasir/helpers/currency_format.dart';
 import 'package:kasir/models/subscription_model.dart';
 import 'package:kasir/providers/subscription_providers.dart';
+import 'payment_page.dart';
 
 class SubscriptionPage extends ConsumerStatefulWidget {
   const SubscriptionPage({Key? key}) : super(key: key);
@@ -22,76 +23,13 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
     });
   }
 
-  void _showPaymentDialog(BuildContext context, SubscriptionPackage package) {
-    final theme = Theme.of(context);
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(
-            children: [
-              Icon(
-                CupertinoIcons.creditcard,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(width: 12),
-              const Text('Konfirmasi Pembayaran'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Paket: ${package.displayName}',
-                style: theme.textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Harga: ${CurrencyFormat.convertToIdr(package.price, 0)}',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Payment gateway akan segera tersedia.',
-                style: TextStyle(
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Batal'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            ElevatedButton(
-              child: const Text('Lanjutkan'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Payment gateway akan segera tersedia'),
-                    backgroundColor: theme.colorScheme.primary,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        );
-      },
+  void _navigateToPaymentPage(
+      BuildContext context, SubscriptionPackage package) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SubscriptionPaymentPage(package: package),
+      ),
     );
   }
 
@@ -369,8 +307,9 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
     }
 
     return GestureDetector(
-      onTap:
-          isCurrentPackage ? null : () => _showPaymentDialog(context, package),
+      onTap: isCurrentPackage
+          ? null
+          : () => _navigateToPaymentPage(context, package),
       child: Container(
         decoration: BoxDecoration(
           gradient: isCurrentPackage
@@ -555,7 +494,7 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
                 child: ElevatedButton(
                   onPressed: isCurrentPackage
                       ? null
-                      : () => _showPaymentDialog(context, package),
+                      : () => _navigateToPaymentPage(context, package),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isCurrentPackage
                         ? theme.colorScheme.surfaceVariant

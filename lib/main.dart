@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kasir/screens/payment/payment_callback_page.dart';
 import 'package:kasir/screens/splash_screen.dart';
 
 void main() async {
@@ -40,6 +41,18 @@ class MyApp extends StatelessWidget {
           data: _buildTheme(context),
           child: child!,
         );
+      },
+      onGenerateRoute: (settings) {
+        // Check if the route is for payment callback
+        if (settings.name != null &&
+            settings.name!.startsWith('/payment-callback')) {
+          final Uri uri = Uri.parse(settings.name!);
+          return MaterialPageRoute(
+            builder: (context) =>
+                PaymentCallbackPage(queryParameters: uri.queryParameters),
+          );
+        }
+        return null; // Let other routes be handled normally
       },
       home: const SplashScreen(),
     );

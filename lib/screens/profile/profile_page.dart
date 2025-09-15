@@ -4,6 +4,7 @@ import 'package:kasir/components/builder_menu.dart';
 import 'package:kasir/components/nav_drawer.dart';
 import 'package:kasir/helpers/store.dart';
 import 'package:kasir/screens/profile/business_profile_page.dart';
+import 'package:kasir/screens/profile/payment_history_page.dart';
 import 'package:kasir/screens/store/store_list_page.dart';
 import 'package:kasir/screens/subscription/subscription_page.dart';
 import 'package:kasir/screens/profile/invite_member_page.dart';
@@ -85,7 +86,8 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 // User profile header
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
                   color: theme.colorScheme.surface,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -101,7 +103,8 @@ class _ProfilePageState extends State<ProfilePage> {
                           child: _user['avatar'] == null
                               ? Text(
                                   _getInitials(_user['name'] ?? ''),
-                                  style: const TextStyle(color: Colors.white, fontSize: 32),
+                                  style: const TextStyle(
+                                      color: Colors.white, fontSize: 32),
                                 )
                               : null,
                         ),
@@ -125,38 +128,39 @@ class _ProfilePageState extends State<ProfilePage> {
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 10),
-                
+
                 // Ubah menu Profil Usaha
                 _currentStore != null && _currentStore!['id'] != null
-                ? _buildMenuItem(
-                    context: context,
-                    icon: CupertinoIcons.house_fill,
-                    title: 'Profil usaha: ${_currentStore!['name'] ?? 'Toko saya'}',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => BusinessProfilePage(
-                          storeId: _currentStore!['id'],
+                    ? _buildMenuItem(
+                        context: context,
+                        icon: CupertinoIcons.house_fill,
+                        title:
+                            'Profil usaha: ${_currentStore!['name'] ?? 'Toko saya'}',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BusinessProfilePage(
+                              storeId: _currentStore!['id'],
+                            ),
+                          ),
                         ),
+                      )
+                    : _buildMenuItem(
+                        context: context,
+                        icon: CupertinoIcons.house_fill,
+                        title: 'Daftar Toko',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const StoreListPage(),
+                          ),
+                        ).then((_) => _getCurrentStore()),
                       ),
-                    ),
-                  )
-                : _buildMenuItem(
-                    context: context,
-                    icon: CupertinoIcons.house_fill,
-                    title: 'Daftar Toko',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const StoreListPage(),
-                      ),
-                    ).then((_) => _getCurrentStore()),
-                  ),
-                
+
                 const SizedBox(height: 3),
-                
+
                 // Subscription Menu
                 _buildMenuItem(
                   context: context,
@@ -164,12 +168,27 @@ class _ProfilePageState extends State<ProfilePage> {
                   title: 'Langganan',
                   onTap: () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const SubscriptionPage()),
+                    MaterialPageRoute(
+                        builder: (context) => const SubscriptionPage()),
                   ),
                 ),
-                
+
                 const SizedBox(height: 3),
-                
+
+                // Payment History Menu
+                _buildMenuItem(
+                  context: context,
+                  icon: CupertinoIcons.time,
+                  title: 'Riwayat Pembayaran',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const PaymentHistoryPage()),
+                  ),
+                ),
+
+                const SizedBox(height: 3),
+
                 if (!_isMember)
                   _buildMenuItem(
                     context: context,
@@ -177,7 +196,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     title: 'Undang Anggota',
                     onTap: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const InviteMemberPage()),
+                      MaterialPageRoute(
+                          builder: (context) => const InviteMemberPage()),
                     ),
                   ),
               ],
@@ -192,7 +212,7 @@ class _ProfilePageState extends State<ProfilePage> {
     required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 3),
       child: InkWell(
@@ -237,13 +257,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   String _getInitials(String name) {
     if (name.isEmpty) return 'U';
-    
+
     final nameParts = name.trim().split(' ');
     if (nameParts.length > 1) {
       return '${nameParts.first[0].toUpperCase()}${nameParts.last[0].toUpperCase()}';
     } else {
-      return nameParts.first.isNotEmpty 
-          ? nameParts.first[0].toUpperCase() 
+      return nameParts.first.isNotEmpty
+          ? nameParts.first[0].toUpperCase()
           : 'U';
     }
   }
