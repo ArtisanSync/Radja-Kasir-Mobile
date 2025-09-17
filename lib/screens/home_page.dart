@@ -162,6 +162,28 @@ class HomeProductCard extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (product.category?.name != null &&
+                      product.category!.name.isNotEmpty) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: badgeYellow.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        product.category!.name,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFFca8a04), // a darker yellow
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const Gap(8),
+                  ],
                   Text(
                     product.name,
                     style: GoogleFonts.inter(
@@ -172,26 +194,38 @@ class HomeProductCard extends ConsumerWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const Gap(4),
-                  Text(
-                    'Stok: ${product.totalQuantity}',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
                   const Gap(8),
-                  Text(
-                    CurrencyFormat.formatPrice(
-                        double.tryParse(product.displayPrice) ?? 0.0),
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        CurrencyFormat.formatPrice(
+                            double.tryParse(product.displayPrice) ?? 0.0),
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${product.totalQuantity}',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: Colors.blue.shade800,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -385,8 +419,8 @@ class _ProductTabContentState extends ConsumerState<ProductTabContent> {
                                           product: product,
                                           onTap: () {
                                             if (product.hasStock) {
-                                              final cartNotifier = ref.read(
-                                                  cartProvider.notifier);
+                                              final cartNotifier = ref
+                                                  .read(cartProvider.notifier);
                                               final variantId = product
                                                       .variants.isNotEmpty
                                                   ? product.variants.first.id
@@ -395,8 +429,8 @@ class _ProductTabContentState extends ConsumerState<ProductTabContent> {
                                                 productId: variantId,
                                                 name: product.name,
                                                 image: product.image ?? '',
-                                                price: double.tryParse(product
-                                                        .displayPrice) ??
+                                                price: double.tryParse(
+                                                        product.displayPrice) ??
                                                     0.0,
                                                 unit: product.displayUnit,
                                               );
@@ -410,7 +444,8 @@ class _ProductTabContentState extends ConsumerState<ProductTabContent> {
                                                         padding:
                                                             const EdgeInsets
                                                                 .all(4),
-                                                        decoration: BoxDecoration(
+                                                        decoration:
+                                                            BoxDecoration(
                                                           color: Colors.white
                                                               .withOpacity(0.2),
                                                           shape:
@@ -426,8 +461,8 @@ class _ProductTabContentState extends ConsumerState<ProductTabContent> {
                                                       Expanded(
                                                         child: Text(
                                                           '${product.name} ditambahkan ke keranjang',
-                                                          style: GoogleFonts
-                                                              .inter(
+                                                          style:
+                                                              GoogleFonts.inter(
                                                             fontWeight:
                                                                 FontWeight.w600,
                                                             color: Colors.white,
@@ -438,8 +473,8 @@ class _ProductTabContentState extends ConsumerState<ProductTabContent> {
                                                   ),
                                                   backgroundColor:
                                                       Colors.green.shade600,
-                                                  behavior: SnackBarBehavior
-                                                      .floating,
+                                                  behavior:
+                                                      SnackBarBehavior.floating,
                                                   shape: RoundedRectangleBorder(
                                                     borderRadius:
                                                         BorderRadius.circular(
@@ -468,52 +503,84 @@ class _ProductTabContentState extends ConsumerState<ProductTabContent> {
   }
 }
 
-class FavoriteTabContent extends StatelessWidget {
+class FavoriteTabContent extends ConsumerWidget {
   const FavoriteTabContent({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                shape: BoxShape.circle,
-              ),
-              child: Lottie.asset(
-                'assets/animations/no data.json',
-                width: 120,
-                height: 120,
-              ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final productState = ref.watch(productProvider);
+    final favoriteProducts =
+        productState.products.where((p) => p.isFavorite).toList();
+
+    // Automatically fetch favorites when the tab is viewed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (productState.products.isEmpty && !productState.isLoading) {
+        ref.read(productProvider.notifier).loadProducts(isFavorite: true);
+      }
+    });
+
+    return favoriteProducts.isEmpty
+        ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Lottie.asset(
+                  'assets/animations/no data.json',
+                  width: 200,
+                  height: 200,
+                ),
+                const Gap(16),
+                Text(
+                  'Belum Ada Favorit',
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+                const Gap(8),
+                Text(
+                  'Produk yang Anda favoritkan akan muncul di sini.',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
-            const Gap(24),
-            Text(
-              'Belum Ada Favorit',
-              style: GoogleFonts.inter(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade700,
+          )
+        : AnimationLimiter(
+            child: GridView.builder(
+              padding: const EdgeInsets.all(16),
+              physics: const BouncingScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.7,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
               ),
+              itemCount: favoriteProducts.length,
+              itemBuilder: (context, index) {
+                final product = favoriteProducts[index];
+                return AnimationConfiguration.staggeredGrid(
+                  position: index,
+                  duration: const Duration(milliseconds: 375),
+                  columnCount: 2,
+                  child: ScaleAnimation(
+                    child: FadeInAnimation(
+                      child: HomeProductCard(
+                        product: product,
+                        onTap: () {
+                          // Navigate to product detail or add to cart
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
-            const Gap(12),
-            Text(
-              'Produk yang Anda favoritkan akan muncul di sini.\nMulai jelajahi produk dan tambahkan ke favorit!',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: Colors.grey.shade600,
-                height: 1.5,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
+          );
   }
 }
 
