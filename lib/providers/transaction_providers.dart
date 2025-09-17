@@ -97,7 +97,7 @@ class CustomerInfo {
 
 // Payment Information Model
 class PaymentInfo {
-  final String method; // 'cash', 'credit', 'other'
+  final String method; // 'cash', 'credit', 'other' 
   final double totalAmount;
   final double? receivedAmount;
   final double? changeAmount;

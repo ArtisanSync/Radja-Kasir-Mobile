@@ -46,6 +46,7 @@ class ProductServices {
         queryParams['lowStock'] = 'true';
         queryParams['stockThreshold'] = stockThreshold.toString();
       }
+      queryParams['includeCategory'] = 'true';
 
       final response = await _dio.get(
         "$_baseUrl/products/store/${store['id']}",
@@ -238,7 +239,7 @@ class ProductServices {
       if (discountRp != null) updateData['discountRp'] = discountRp;
       if (discountPercent != null)
         updateData['discountPercent'] = discountPercent;
-      
+
       FormData formData = FormData.fromMap(updateData);
 
       if (imageFile != null) {
@@ -525,7 +526,8 @@ class ProductServices {
       price: body['price']?.toString() ?? '0',
       tax: int.tryParse(body['tax']?.toString() ?? '0') ?? 0,
       discountRp: body['dic_rp']?.toString() ?? '0',
-      discountPercent: int.tryParse(body['dic_percent']?.toString() ?? '0') ?? 0,
+      discountPercent:
+          int.tryParse(body['dic_percent']?.toString() ?? '0') ?? 0,
     );
   }
 
@@ -576,4 +578,3 @@ class ProductServices {
     );
   }
 }
-
