@@ -227,7 +227,7 @@ class _StockReportPageState extends State<StockReportPage> {
               Expanded(
                 child: _buildSummaryItem(
                   'Nilai Stok',
-                  CurrencyFormat.convertToIdr(summary['totalStockValue'], 0),
+                  CurrencyFormat.formatPrice(summary['totalStockValue']),
                   Icons.attach_money,
                   Colors.purple,
                 ),
@@ -365,7 +365,7 @@ class _StockReportPageState extends State<StockReportPage> {
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 subtitle: Text(
-                  '${product['category']} • ${product['totalQuantity']} unit • ${CurrencyFormat.convertToIdr(product['totalStockValue'], 0)}',
+                  '${product['category']} • ${product['totalQuantity']} unit • ${CurrencyFormat.formatPrice(product['totalStockValue'])}',
                 ),
                 leading: product['isLowStock']
                     ? Icon(Icons.warning, color: Colors.orange[600])
@@ -381,11 +381,11 @@ class _StockReportPageState extends State<StockReportPage> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                CurrencyFormat.convertToIdr(variant['price'], 0),
+                                CurrencyFormat.formatPrice(variant['price']),
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                               Text(
-                                'Modal: ${CurrencyFormat.convertToIdr(variant['capitalPrice'], 0)}',
+                                'Modal: ${CurrencyFormat.formatPrice(variant['capitalPrice'])}',
                                 style: const TextStyle(fontSize: 10, color: Colors.grey),
                               ),
                             ],
