@@ -4,6 +4,8 @@ import 'package:kasir/components/nav_drawer.dart';
 import 'package:kasir/screens/report/sales_report_page.dart';
 import 'package:kasir/screens/report/stock_report_page.dart';
 import 'package:kasir/screens/report/dashboard_report_page.dart';
+import 'package:kasir/screens/report/margin_report_page.dart';
+import 'package:kasir/screens/report/profit_report_page.dart';
 
 class ReportPage extends StatefulWidget {
   const ReportPage({super.key});
@@ -70,6 +72,34 @@ class _ReportPageState extends State<ReportPage> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const StockReportPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 3),
+          _buildMenuItem(
+            title: 'Laporan Profit',
+            subtitle: 'Analisis keuntungan produk',
+            icon: Icons.attach_money,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ProfitReportPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 3),
+          _buildMenuItem(
+            title: 'Laporan Margin',
+            subtitle: 'Perbandingan harga jual dan modal',
+            icon: Icons.pie_chart,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MarginReportPage(),
                 ),
               );
             },
