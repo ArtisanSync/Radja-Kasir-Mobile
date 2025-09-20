@@ -153,12 +153,11 @@ class TransactionServices {
 
       
       if (resp.statusCode == 200) {
-        // Extract the nested data structure
         final responseData = resp.data['data'];
         return {
           'success': true,
-          'data': responseData['data'], // Extract the actual transaction array
-          'pagination': responseData['pagination'], // Extract pagination from nested data
+          'data': responseData['data'],
+          'pagination': responseData['pagination'],
           'message': resp.data['message'] ?? 'Transaction history loaded successfully',
         };
       } else {

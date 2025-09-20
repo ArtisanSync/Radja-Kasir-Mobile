@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir/core/use_store.dart';
+import 'package:kasir/providers/store_providers.dart';
+import 'package:kasir/providers/product_providers.dart';
 import 'package:kasir/screens/admin/admin_dashboard_page.dart';
 import 'package:kasir/screens/admin/admin_subscribers_page.dart';
 import 'package:kasir/screens/history_page.dart';
@@ -11,30 +13,38 @@ import 'package:kasir/screens/profile/profile_page.dart';
 import 'package:kasir/screens/report/report_page.dart';
 import 'package:kasir/screens/login_page.dart';
 import 'package:kasir/helpers/colors_theme.dart';
-class NavDrawer extends StatefulWidget {
-  final String? currentRoute;
+import 'package:shared_preferences/shared_preferences.dart';
 
+class NavDrawer extends ConsumerStatefulWidget {
+  final String? currentRoute;
   const NavDrawer({super.key, this.currentRoute});
 
   @override
-  State<NavDrawer> createState() => _NavDrawerState();
+  ConsumerState<NavDrawer> createState() => _NavDrawerState();
 }
 
-class _NavDrawerState extends State<NavDrawer> {
+class _NavDrawerState extends ConsumerState<NavDrawer> {
   String _userName = 'Loading...';
-  String _storeName = 'Loading...';
   String _userRole = 'USER';
   bool _isAdmin = false;
 
-  Future setUser() async {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadUserData();
+      if (ref.read(storeProvider).stores.isEmpty) {
+        ref.read(storeProvider.notifier).loadMyStores();
+      }
+    });
+  }
+
+  Future<void> _loadUserData() async {
     try {
       final user = await Store.getUser();
-      final store = await Store.getStore();
-
       if (mounted) {
         setState(() {
           _userName = user?['name'] ?? 'User';
-          _storeName = store?['name'] ?? 'Store';
           _userRole = user?['role'] ?? 'USER';
           _isAdmin = _userRole == 'ADMIN';
         });
@@ -43,7 +53,6 @@ class _NavDrawerState extends State<NavDrawer> {
       if (mounted) {
         setState(() {
           _userName = 'User';
-          _storeName = 'Store';
           _userRole = 'USER';
           _isAdmin = false;
         });
@@ -52,14 +61,12 @@ class _NavDrawerState extends State<NavDrawer> {
   }
 
   @override
-  void initState() {
-    setUser();
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final storeState = ref.watch(storeProvider);
+    final currentStore = storeState.currentStore;
+    final otherStores =
+        storeState.stores.where((s) => s.id != currentStore?.id).toList();
 
     return Drawer(
       backgroundColor: theme.colorScheme.surface,
@@ -69,7 +76,7 @@ class _NavDrawerState extends State<NavDrawer> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [Color(0xFF00ADFE), Color(0xFF1E40AF)],
                 begin: Alignment.topLeft,
@@ -117,7 +124,9 @@ class _NavDrawerState extends State<NavDrawer> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _isAdmin ? 'Administrator' : _storeName,
+                  _isAdmin
+                      ? 'Administrator'
+                      : (currentStore?.name ?? 'Memuat toko...'),
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.9),
                     fontSize: 14,
@@ -125,24 +134,6 @@ class _NavDrawerState extends State<NavDrawer> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (_isAdmin) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      'ADMIN',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -151,7 +142,39 @@ class _NavDrawerState extends State<NavDrawer> {
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              children: _isAdmin ? _buildAdminMenuItems() : _buildUserMenuItems(),
+              children: [
+                if (!_isAdmin && otherStores.isNotEmpty)
+                  Theme(
+                    data:
+                        Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                    child: ExpansionTile(
+                      leading: const Icon(CupertinoIcons.building_2_fill,
+                          color: AppColor.primary),
+                      title: const Text('Pindah Toko'),
+                      children: otherStores.map((store) {
+                        return ListTile(
+                          contentPadding:
+                              const EdgeInsets.only(left: 70, right: 16),
+                          title: Text(store.name),
+                          onTap: () {
+                            ref.read(storeProvider.notifier).switchStore(store);
+                            Navigator.pop(context);
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const MyHomePage()),
+                              (route) => false,
+                            );
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                if (!_isAdmin && otherStores.isNotEmpty)
+                  const Divider(indent: 16, endIndent: 16),
+
+                ...(_isAdmin ? _buildAdminMenuItems() : _buildUserMenuItems()),
+              ],
             ),
           ),
 
@@ -194,7 +217,7 @@ class _NavDrawerState extends State<NavDrawer> {
         route: 'profile',
         onTap: () => _navigateToPage(context, const ProfilePage()),
       ),
-      const Divider(height: 32),
+      const Divider(height: 32, indent: 16, endIndent: 16),
       _buildMenuItem(
         context,
         icon: CupertinoIcons.square_arrow_right,
@@ -243,7 +266,7 @@ class _NavDrawerState extends State<NavDrawer> {
         route: 'profile',
         onTap: () => _navigateToPage(context, const ProfilePage()),
       ),
-      const Divider(height: 32),
+      const Divider(height: 32, indent: 16, endIndent: 16),
       _buildMenuItem(
         context,
         icon: CupertinoIcons.square_arrow_right,
@@ -265,12 +288,7 @@ class _NavDrawerState extends State<NavDrawer> {
   }) {
     final theme = Theme.of(context);
     final isActive = widget.currentRoute == route;
-    final isAdmin = _userRole == 'ADMIN';
-
-    // Set color for icons consistently across the app
-    Color primaryColor = isDestructive
-        ? Colors.red.shade600
-        : (isAdmin ? AppColor.primary : AppColor.primary);
+    final primaryColor = isDestructive ? Colors.red.shade600 : AppColor.primary;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
@@ -283,7 +301,8 @@ class _NavDrawerState extends State<NavDrawer> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: isActive ? primaryColor.withOpacity(0.1) : Colors.transparent,
+              color:
+                  isActive ? primaryColor.withOpacity(0.1) : Colors.transparent,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -337,9 +356,9 @@ class _NavDrawerState extends State<NavDrawer> {
     );
   }
 
+
   Future<void> _handleLogout(BuildContext context) async {
     Navigator.pop(context);
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -370,17 +389,18 @@ class _NavDrawerState extends State<NavDrawer> {
 
   Future<void> _performLogout(BuildContext context) async {
     try {
-      // Clear all stored data
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.clear();
-
-      // Navigate to login page
+      ref.invalidate(storeProvider);
+      ref.invalidate(productProvider);
       if (context.mounted) {
         Navigator.pushAndRemoveUntil(
           context,
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const LoginPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const LoginPage(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
               return FadeTransition(
                 opacity: animation,
                 child: child,
@@ -392,7 +412,6 @@ class _NavDrawerState extends State<NavDrawer> {
         );
       }
     } catch (e) {
-      // Still navigate to login even if clearing fails
       if (context.mounted) {
         Navigator.pushAndRemoveUntil(
           context,
@@ -405,7 +424,6 @@ class _NavDrawerState extends State<NavDrawer> {
 
   String _getInitials(String name) {
     if (name.isEmpty || name == 'Loading...' || name == 'User') return 'U';
-
     final words = name.trim().split(' ');
     if (words.length >= 2) {
       return '${words.first[0].toUpperCase()}${words.last[0].toUpperCase()}';

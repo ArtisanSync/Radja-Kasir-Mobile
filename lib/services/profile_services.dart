@@ -12,8 +12,6 @@ class ProfileServices {
   }
 
   final String _baseUrl = ServiceUtils().baseUrl;
-
-  // Correct the endpoint for user profile
   Future<dynamic> profile() async {
     final user = await Store.getUser();
     try {

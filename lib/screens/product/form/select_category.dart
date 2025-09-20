@@ -1,49 +1,20 @@
 // ignore_for_file: must_be_immutable
-
 import 'package:flutter/material.dart';
-import 'package:kasir/services/product_services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kasir/models/product_model.dart';
+import 'package:kasir/providers/category_providers.dart';
 
-class SelectCategory extends StatefulWidget {
+class SelectCategory extends ConsumerWidget {
   SelectCategory({
     super.key,
   });
 
   @override
-  State<SelectCategory> createState() => _SelectCategoryState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final categoryState = ref.watch(categoryProvider);
+    final List<CategoryModel> categories = categoryState.categories;
+    final bool loading = categoryState.isLoading;
 
-class _SelectCategoryState extends State<SelectCategory> {
-  ProductServices productServices = ProductServices();
-  List<dynamic> categories = [];
-  bool loading = false;
-
-  void fetchCategory() async {
-    setState(() {
-      loading = true;
-    });
-    try {
-      var resp = await productServices.listCategory();
-      setState(() {
-        categories = resp['data'] as List<dynamic>;
-        loading = false;
-      });
-    } catch (e) {
-      debugPrint(e.toString());
-      setState(() {
-        loading = false;
-      });
-    }
-  }
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    fetchCategory();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -65,7 +36,7 @@ class _SelectCategoryState extends State<SelectCategory> {
               itemBuilder: (context, index) {
                 var item = categories[index];
                 return ListTile(
-                  title: Text('${item!['name']}'),
+                  title: Text(item.name),
                   onTap: () {
                     Navigator.pop(context, item);
                   },

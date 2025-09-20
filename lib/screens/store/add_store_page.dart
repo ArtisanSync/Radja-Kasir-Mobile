@@ -79,8 +79,6 @@ class _AddStorePageState extends ConsumerState<AddStorePage> {
         "whatsapp": _whatsappController.text,
         "email": _emailController.text
       };
-
-      // --- [PERBAIKAN UTAMA] Kirim _logoImageFile (XFile) langsung ke provider ---
       final result = widget.isFirstStore
           ? await ref.read(storeProvider.notifier).createFirstStore(storeData, _logoImageFile)
           : await ref.read(storeProvider.notifier).createStore(storeData, _logoImageFile);
@@ -245,12 +243,12 @@ class _AddStorePageState extends ConsumerState<AddStorePage> {
                   ],
                 ),
               ),
-               const SizedBox(height: 16),
+              const SizedBox(height: 16),
               ModernCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                     Text(
+                    Text(
                       'Kontak (Opsional)',
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
