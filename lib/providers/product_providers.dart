@@ -1,15 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kasir/models/product_model.dart';
+import 'package:kasir/providers/store_providers.dart';
 import 'package:kasir/services/product_services.dart';
-import 'package:kasir/core/use_store.dart';
 
-// Product Services Provider
 final productServicesProvider = Provider<ProductServices>((ref) {
   return ProductServices();
 });
 
-// Product State Classes
 class ProductState {
   final List<Product> products;
   final ProductPagination? pagination;
@@ -75,7 +73,14 @@ class ProductState {
 // Product Notifier
 class ProductNotifier extends StateNotifier<ProductState> {
   final ProductServices _productServices;
-  ProductNotifier(this._productServices) : super(const ProductState());
+  final String? _storeId;
+
+  ProductNotifier(this._productServices, this._storeId)
+      : super(const ProductState()) {
+    if (_storeId != null) {
+      loadProducts(refresh: true);
+    }
+  }
 
   Future<void> loadProducts({
     bool refresh = false,
@@ -84,9 +89,14 @@ class ProductNotifier extends StateNotifier<ProductState> {
     bool? isFavorite,
     bool? lowStock,
   }) async {
+    if (_storeId == null) {
+      state = state.copyWith(isLoading: false, products: []);
+      return;
+    }
     if (refresh) {
       state = state.copyWith(currentPage: 1, products: []);
     }
+
     state = state.copyWith(
       isLoading: refresh || state.currentPage == 1,
       isLoadingMore: !refresh && state.currentPage > 1,
@@ -96,17 +106,10 @@ class ProductNotifier extends StateNotifier<ProductState> {
       showFavorites: isFavorite ?? state.showFavorites,
       showLowStock: lowStock ?? state.showLowStock,
     );
+
     try {
-      final store = await Store.getStore();
-      if (store == null || store['id'] == null) {
-        state = state.copyWith(
-          error: 'Store information not found. Please login again.',
-          isLoading: false,
-          isLoadingMore: false,
-        );
-        return;
-      }
       final response = await _productServices.listProduct(
+        storeId: _storeId!,
         search: state.searchQuery.isEmpty ? null : state.searchQuery,
         categoryId: state.selectedCategoryId,
         page: state.currentPage,
@@ -114,23 +117,20 @@ class ProductNotifier extends StateNotifier<ProductState> {
         isFavorite: state.showFavorites,
         lowStock: state.showLowStock,
       );
+
       if (response['success'] == true && response['data'] != null) {
         final data = response['data'];
         final productList = (data['products'] ?? []) as List;
         final newProducts =
             productList.map((json) => Product.fromJson(json)).toList();
-
-        List<Product> updatedProducts;
-        if (refresh || state.currentPage == 1) {
-          updatedProducts = newProducts;
-        } else {
-          updatedProducts = [...state.products, ...newProducts];
-        }
+        
+        final updatedProducts = (refresh || state.currentPage == 1)
+            ? newProducts
+            : [...state.products, ...newProducts];
 
         final pagination = data['pagination'] != null
             ? ProductPagination.fromJson(data['pagination'])
-            : const ProductPagination(
-                total: 0, page: 1, limit: 20, totalPages: 1);
+            : const ProductPagination(total: 0, page: 1, limit: 20, totalPages: 1);
 
         state = state.copyWith(
           products: updatedProducts,
@@ -140,26 +140,20 @@ class ProductNotifier extends StateNotifier<ProductState> {
         );
       } else {
         state = state.copyWith(
-          error: response['message'] ?? 'Failed to load products',
+          error: response['message'] ?? 'Gagal memuat produk',
           isLoading: false,
           isLoadingMore: false,
         );
       }
     } catch (e) {
       state = state.copyWith(
-        error: 'Error loading products: $e',
+        error: 'Error: $e',
         isLoading: false,
         isLoadingMore: false,
       );
     }
   }
-
-  Future<void> loadMoreProducts() async {
-    if (!state.canLoadMore || state.isLoadingMore) return;
-    state = state.copyWith(currentPage: state.currentPage + 1);
-    await loadProducts();
-  }
-
+  
   Future<bool> createProduct({
     required String name,
     String? code,
@@ -174,30 +168,34 @@ class ProductNotifier extends StateNotifier<ProductState> {
     String discountRp = '0',
     int discountPercent = 0,
   }) async {
-    try {
-      final response = await _productServices.storeProduct(
-        name: name,
-        code: code,
-        brand: brand,
-        categoryId: categoryId,
-        imageFile: imageFile,
-        unitId: unitId,
-        quantity: quantity,
-        capitalPrice: capitalPrice,
-        price: price,
-        tax: tax,
-        discountRp: discountRp,
-        discountPercent: discountPercent,
-      );
-      if (response['success'] == true) {
-        await refresh();
-        return true;
-      } else {
-        state = state.copyWith(error: response['message']);
-        return false;
-      }
-    } catch (e) {
-      state = state.copyWith(error: 'Error creating product: $e');
+    if (_storeId == null) {
+      state = state.copyWith(isLoading: false, error: "Toko aktif tidak ditemukan.");
+      return false;
+    }
+
+    state = state.copyWith(isLoading: true, error: null);
+    final result = await _productServices.storeProduct(
+      storeId: _storeId!,
+      name: name,
+      code: code,
+      brand: brand,
+      categoryId: categoryId,
+      imageFile: imageFile,
+      unitId: unitId,
+      quantity: quantity,
+      capitalPrice: capitalPrice,
+      price: price,
+      tax: tax,
+      discountRp: discountRp,
+      discountPercent: discountPercent,
+    );
+
+    if (result['success'] == true) {
+      await refresh();
+      state = state.copyWith(isLoading: false);
+      return true;
+    } else {
+      state = state.copyWith(isLoading: false, error: result['message'] ?? "Gagal membuat produk");
       return false;
     }
   }
@@ -219,114 +217,66 @@ class ProductNotifier extends StateNotifier<ProductState> {
     String? discountRp,
     int? discountPercent,
   }) async {
-    try {
-      final response = await _productServices.updateProduct(
-        id,
-        name: name,
-        code: code,
-        brand: brand,
-        categoryId: categoryId,
-        imageFile: imageFile,
-        active: active,
-        isFavorite: isFavorite,
-        unitId: unitId,
-        quantity: quantity,
-        capitalPrice: capitalPrice,
-        price: price,
-        tax: tax,
-        discountRp: discountRp,
-        discountPercent: discountPercent,
-      );
-      if (response['success'] == true) {
-        final index = state.products.indexWhere((p) => p.id == id);
-        if (index != -1 && response['data'] != null) {
-          final updatedProduct = Product.fromJson(response['data']);
-          final updatedProducts = [...state.products];
-          updatedProducts[index] = updatedProduct;
-
-          state = state.copyWith(products: updatedProducts);
-        }
-        return true;
-      } else {
-        state = state.copyWith(error: response['message']);
-        return false;
-      }
-    } catch (e) {
-      state = state.copyWith(error: 'Error updating product: $e');
+    state = state.copyWith(isLoading: true, error: null);
+    final result = await _productServices.updateProduct(
+      id,
+      name: name,
+      code: code,
+      brand: brand,
+      categoryId: categoryId,
+      imageFile: imageFile,
+      active: active,
+      isFavorite: isFavorite,
+      unitId: unitId,
+      quantity: quantity,
+      capitalPrice: capitalPrice,
+      price: price,
+      tax: tax,
+      discountRp: discountRp,
+      discountPercent: discountPercent,
+    );
+    if (result['success'] == true) {
+      await refresh();
+      state = state.copyWith(isLoading: false);
+      return true;
+    } else {
+      state = state.copyWith(isLoading: false, error: result['message'] ?? "Gagal memperbarui produk");
       return false;
     }
   }
 
   Future<bool> deleteProduct(String id) async {
-    try {
-      final response = await _productServices.destroyProduct(id);
-      if (response['success'] == true) {
-        final updatedProducts = state.products.where((p) => p.id != id).toList();
-
-        state = state.copyWith(
-          products: updatedProducts,
-          pagination: state.pagination?.copyWith(
-            total: state.pagination!.total - 1,
-          ),
-        );
-
-        return true;
-      } else {
-        state = state.copyWith(error: response['message']);
-        return false;
-      }
-    } catch (e) {
-      state = state.copyWith(error: 'Error deleting product: $e');
+    state = state.copyWith(isLoading: true, error: null);
+    final result = await _productServices.destroyProduct(id);
+    if (result['success'] == true) {
+      await refresh();
+      state = state.copyWith(isLoading: false);
+      return true;
+    } else {
+      state = state.copyWith(isLoading: false, error: result['message'] ?? "Gagal menghapus produk");
       return false;
     }
   }
 
   Future<bool> toggleFavorite(String id) async {
-    try {
-      final response = await _productServices.setFavorite(id);
-      if (response['success'] == true) {
-        final index = state.products.indexWhere((p) => p.id == id);
-        if (index != -1 && response['data'] != null) {
-          final updatedProduct = Product.fromJson(response['data']);
-          final updatedProducts = [...state.products];
-          updatedProducts[index] = updatedProduct;
-
-          state = state.copyWith(products: updatedProducts);
-        }
-        return true;
-      } else {
-        state = state.copyWith(error: response['message']);
-        return false;
-      }
-    } catch (e) {
-      state = state.copyWith(error: 'Error toggling favorite: $e');
+    final result = await _productServices.setFavorite(id);
+    if (result['success'] == true) {
+      await refresh();
+      return true;
+    } else {
+      state = state.copyWith(error: result['message'] ?? "Gagal mengubah favorit");
       return false;
     }
   }
 
+  Future<void> loadMoreProducts() async {
+    if (!state.canLoadMore || state.isLoadingMore) return;
+    state = state.copyWith(currentPage: state.currentPage + 1);
+    await loadProducts();
+  }
+
   Future<void> searchProducts(String query) async {
-    state = state.copyWith(searchQuery: query, currentPage: 1);
     await loadProducts(refresh: true, search: query);
-  }
-
-  Future<void> filterByCategory(String? categoryId) async {
-    state = state.copyWith(selectedCategoryId: categoryId, currentPage: 1);
-    await loadProducts(refresh: true, categoryId: categoryId);
-  }
-
-  Future<void> filterFavorites(bool? showFavorites) async {
-    state = state.copyWith(showFavorites: showFavorites, currentPage: 1);
-    await loadProducts(refresh: true, isFavorite: showFavorites);
-  }
-
-  Future<void> filterLowStock(bool? showLowStock) async {
-    state = state.copyWith(showLowStock: showLowStock, currentPage: 1);
-    await loadProducts(refresh: true, lowStock: showLowStock);
-  }
-
-  Future<void> clearFilters() async {
-    state = const ProductState();
-    await loadProducts(refresh: true);
   }
 
   void clearError() {
@@ -338,17 +288,18 @@ class ProductNotifier extends StateNotifier<ProductState> {
   }
 }
 
-// Product Provider
-final productProvider = StateNotifierProvider<ProductNotifier, ProductState>((ref) {
+// Provider utama
+final productProvider =
+    StateNotifierProvider.autoDispose<ProductNotifier, ProductState>((ref) {
+  final activeStoreId = ref.watch(storeProvider.select((s) => s.currentStore?.id));
   final productServices = ref.watch(productServicesProvider);
-  return ProductNotifier(productServices);
+  return ProductNotifier(productServices, activeStoreId);
 });
 
 // Units Provider
-final unitsProvider = FutureProvider<List<UnitModel>>((ref) async {
+final unitsProvider = FutureProvider.autoDispose<List<UnitModel>>((ref) async {
   final productServices = ref.watch(productServicesProvider);
   final response = await productServices.getUnits();
-
   if (response['success'] == true && response['data'] != null) {
     final unitList = response['data'] as List;
     return unitList.map((json) => UnitModel.fromJson(json)).toList();

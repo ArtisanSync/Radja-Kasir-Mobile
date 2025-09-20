@@ -18,6 +18,7 @@ class ProductServices {
 
   /// Get all products with filters and pagination
   Future<Map<String, dynamic>> listProduct({
+    required String storeId,
     String? search,
     String? categoryId,
     int page = 1,
@@ -26,14 +27,6 @@ class ProductServices {
     bool? lowStock,
     int stockThreshold = 10,
   }) async {
-    final store = await Store.getStore();
-    if (store == null || store['id'] == null) {
-      return {
-        'success': false,
-        'message': 'Store information not found. Please login again.',
-        'data': null
-      };
-    }
     try {
       Map<String, dynamic> queryParams = {
         'page': page.toString(),
@@ -49,22 +42,11 @@ class ProductServices {
       queryParams['includeCategory'] = 'true';
 
       final response = await _dio.get(
-        "$_baseUrl/products/store/${store['id']}",
+        "$_baseUrl/products/store/$storeId",
         queryParameters: queryParams,
       );
-      if (response.data['success'] == true) {
-        return {
-          'success': true,
-          'message': response.data['message'],
-          'data': response.data['data']
-        };
-      } else {
-        return {
-          'success': false,
-          'message': response.data['message'] ?? 'Failed to fetch products',
-          'data': null
-        };
-      }
+      
+      return response.data;
     } on DioException catch (e) {
       debugPrint('DioException in listProduct: ${e.message}');
       return {
@@ -86,19 +68,7 @@ class ProductServices {
   Future<Map<String, dynamic>> detailProduct(String id) async {
     try {
       final response = await _dio.get("$_baseUrl/products/$id");
-      if (response.data['success'] == true) {
-        return {
-          'success': true,
-          'message': response.data['message'],
-          'data': response.data['data']
-        };
-      } else {
-        return {
-          'success': false,
-          'message': response.data['message'] ?? 'Product not found',
-          'data': null
-        };
-      }
+      return response.data;
     } on DioException catch (e) {
       debugPrint('DioException in detailProduct: ${e.message}');
       return {
@@ -119,6 +89,7 @@ class ProductServices {
 
   /// Create new product
   Future<Map<String, dynamic>> storeProduct({
+    required String storeId,
     required String name,
     String? code,
     String? brand,
@@ -132,18 +103,10 @@ class ProductServices {
     String discountRp = '0',
     int discountPercent = 0,
   }) async {
-    final store = await Store.getStore();
-    if (store == null || store['id'] == null) {
-      return {
-        'success': false,
-        'message': 'Store information not found. Please login again.',
-        'data': null
-      };
-    }
     try {
       FormData formData = FormData.fromMap({
         'name': name,
-        'storeId': store['id'],
+        'storeId': storeId,
         if (code != null && code.isNotEmpty) 'code': code,
         if (brand != null && brand.isNotEmpty) 'brand': brand,
         if (categoryId != null && categoryId.isNotEmpty)
@@ -175,19 +138,7 @@ class ProductServices {
         data: formData,
       );
 
-      if (response.data['success'] == true) {
-        return {
-          'success': true,
-          'message': response.data['message'],
-          'data': response.data['data']
-        };
-      } else {
-        return {
-          'success': false,
-          'message': response.data['message'] ?? 'Failed to create product',
-          'data': null
-        };
-      }
+      return response.data;
     } on DioException catch (e) {
       debugPrint('DioException in storeProduct: ${e.message}');
       return {
@@ -204,7 +155,7 @@ class ProductServices {
       };
     }
   }
-
+  
   /// Update product
   Future<Map<String, dynamic>> updateProduct(
     String id, {
@@ -260,19 +211,7 @@ class ProductServices {
         data: formData,
       );
 
-      if (response.data['success'] == true) {
-        return {
-          'success': true,
-          'message': response.data['message'],
-          'data': response.data['data']
-        };
-      } else {
-        return {
-          'success': false,
-          'message': response.data['message'] ?? 'Failed to update product',
-          'data': null
-        };
-      }
+      return response.data;
     } on DioException catch (e) {
       debugPrint('DioException in updateProduct: ${e.message}');
       return {
@@ -295,19 +234,7 @@ class ProductServices {
     try {
       final response =
           await _dio.patch("$_baseUrl/products/$productId/favorite");
-      if (response.data['success'] == true) {
-        return {
-          'success': true,
-          'message': response.data['message'],
-          'data': response.data['data']
-        };
-      } else {
-        return {
-          'success': false,
-          'message': response.data['message'] ?? 'Failed to toggle favorite',
-          'data': null
-        };
-      }
+      return response.data;
     } on DioException catch (e) {
       debugPrint('DioException in setFavorite: ${e.message}');
       return {
@@ -329,19 +256,7 @@ class ProductServices {
   Future<Map<String, dynamic>> destroyProduct(String id) async {
     try {
       final response = await _dio.delete("$_baseUrl/products/$id");
-      if (response.data['success'] == true) {
-        return {
-          'success': true,
-          'message': response.data['message'],
-          'data': response.data['data']
-        };
-      } else {
-        return {
-          'success': false,
-          'message': response.data['message'] ?? 'Failed to delete product',
-          'data': null
-        };
-      }
+      return response.data;
     } on DioException catch (e) {
       debugPrint('DioException in destroyProduct: ${e.message}');
       return {
@@ -363,19 +278,7 @@ class ProductServices {
   Future<Map<String, dynamic>> getUnits() async {
     try {
       final response = await _dio.get("$_baseUrl/products/units");
-      if (response.data['success'] == true) {
-        return {
-          'success': true,
-          'message': response.data['message'],
-          'data': response.data['data']
-        };
-      } else {
-        return {
-          'success': false,
-          'message': response.data['message'] ?? 'Failed to fetch units',
-          'data': []
-        };
-      }
+      return response.data;
     } on DioException catch (e) {
       debugPrint('DioException in getUnits: ${e.message}');
       return {
@@ -395,31 +298,10 @@ class ProductServices {
 
   // ============ CATEGORY METHODS ============
 
-  Future<Map<String, dynamic>> listCategory() async {
-    final store = await Store.getStore();
-    if (store == null || store['id'] == null) {
-      return {
-        'success': false,
-        'message': 'Store information not found. Please login again.',
-        'data': []
-      };
-    }
+  Future<Map<String, dynamic>> listCategory({required String storeId}) async {
     try {
-      final response =
-          await _dio.get("$_baseUrl/categories/store/${store['id']}");
-      if (response.data['success'] == true) {
-        return {
-          'success': true,
-          'data': response.data['data'],
-          'message': response.data['message']
-        };
-      } else {
-        return {
-          'success': false,
-          'message': response.data['message'] ?? 'Failed to fetch categories',
-          'data': []
-        };
-      }
+      final response = await _dio.get("$_baseUrl/categories/store/$storeId");
+      return response.data;
     } on DioException catch (e) {
       return {
         'success': false,
@@ -429,31 +311,11 @@ class ProductServices {
     }
   }
 
-  Future<Map<String, dynamic>> storeCategory(String name) async {
-    final store = await Store.getStore();
-    if (store == null || store['id'] == null) {
-      return {
-        'success': false,
-        'message': 'Store information not found. Please login again.',
-        'data': null
-      };
-    }
+  Future<Map<String, dynamic>> storeCategory({required String storeId, required String name}) async {
     try {
       final response = await _dio.post("$_baseUrl/categories",
-          data: {"storeId": store['id'], 'name': name});
-      if (response.data['success'] == true) {
-        return {
-          'success': true,
-          'data': response.data['data'],
-          'message': response.data['message']
-        };
-      } else {
-        return {
-          'success': false,
-          'message': response.data['message'] ?? 'Failed to create category',
-          'data': null
-        };
-      }
+          data: {"storeId": storeId, 'name': name});
+      return response.data;
     } on DioException catch (e) {
       return {
         'success': false,
@@ -466,19 +328,7 @@ class ProductServices {
   Future<Map<String, dynamic>> removeCategory(String id) async {
     try {
       final response = await _dio.delete("$_baseUrl/categories/$id");
-      if (response.data['success'] == true) {
-        return {
-          'success': true,
-          'data': response.data['data'],
-          'message': response.data['message']
-        };
-      } else {
-        return {
-          'success': false,
-          'message': response.data['message'] ?? 'Failed to delete category',
-          'data': null
-        };
-      }
+      return response.data;
     } on DioException catch (e) {
       return {
         'success': false,
@@ -492,19 +342,7 @@ class ProductServices {
       Map<String, dynamic> body, String id) async {
     try {
       final response = await _dio.put("$_baseUrl/categories/$id", data: body);
-      if (response.data['success'] == true) {
-        return {
-          'success': true,
-          'data': response.data['data'],
-          'message': response.data['message']
-        };
-      } else {
-        return {
-          'success': false,
-          'message': response.data['message'] ?? 'Failed to update category',
-          'data': null
-        };
-      }
+      return response.data;
     } on DioException catch (e) {
       return {
         'success': false,
@@ -515,10 +353,14 @@ class ProductServices {
   }
 
   // ============ LEGACY VARIANT METHODS ============
-  // For backward compatibility with existing UI
-
+  
   Future<Map<String, dynamic>> storeVariant(Map<String, dynamic> body) async {
+    final store = await Store.getStore();
+    if (store == null || store['id'] == null) {
+      return {'success': false, 'message': 'Store not found'};
+    }
     return await storeProduct(
+      storeId: store['id'],
       name: body['name'] ?? '',
       unitId: body['unitId'] ?? '',
       quantity: int.tryParse(body['quantity']?.toString() ?? '0') ?? 0,
@@ -544,7 +386,6 @@ class ProductServices {
   Future<Map<String, dynamic>> updateVariant(
       dynamic id, Map<String, dynamic> body) async {
     String productId = id.toString();
-
     return await updateProduct(
       productId,
       name: body['name'],
