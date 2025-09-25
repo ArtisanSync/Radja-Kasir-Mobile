@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir/core/use_store.dart';
 import 'package:kasir/providers/store_providers.dart';
 import 'package:kasir/providers/product_providers.dart';
+import 'package:kasir/providers/member_provider.dart';
 import 'package:kasir/screens/admin/admin_dashboard_page.dart';
 import 'package:kasir/screens/admin/admin_subscribers_page.dart';
 import 'package:kasir/screens/history_page.dart';
@@ -12,8 +13,10 @@ import 'package:kasir/screens/product/product.dart';
 import 'package:kasir/screens/profile/profile_page.dart';
 import 'package:kasir/screens/report/report_page.dart';
 import 'package:kasir/screens/login_page.dart';
+import 'package:kasir/screens/setting_member/member_page.dart';
 import 'package:kasir/helpers/colors_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 
 class NavDrawer extends ConsumerStatefulWidget {
   final String? currentRoute;
@@ -27,15 +30,13 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
   String _userName = 'Loading...';
   String _userRole = 'USER';
   bool _isAdmin = false;
+  bool _isMember = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUserData();
-      if (ref.read(storeProvider).stores.isEmpty) {
-        ref.read(storeProvider.notifier).loadMyStores();
-      }
     });
   }
 
@@ -47,16 +48,12 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
           _userName = user?['name'] ?? 'User';
           _userRole = user?['role'] ?? 'USER';
           _isAdmin = _userRole == 'ADMIN';
+          _isMember = _userRole == 'MEMBER';
         });
+        ref.read(storeProvider.notifier).loadMyStores();
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _userName = 'User';
-          _userRole = 'USER';
-          _isAdmin = false;
-        });
-      }
+      // Handle error
     }
   }
 
@@ -72,7 +69,6 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
       backgroundColor: theme.colorScheme.surface,
       child: Column(
         children: [
-          // Header
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
@@ -137,19 +133,16 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
               ],
             ),
           ),
-
-          // Menu Items
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
-                if (!_isAdmin && otherStores.isNotEmpty)
+                if (!_isMember && !_isAdmin && otherStores.isNotEmpty)
                   Theme(
                     data:
                         Theme.of(context).copyWith(dividerColor: Colors.transparent),
                     child: ExpansionTile(
-                      leading: const Icon(CupertinoIcons.building_2_fill,
-                          color: AppColor.primary),
+                      leading: const Icon(CupertinoIcons.building_2_fill, color: AppColor.primary),
                       title: const Text('Pindah Toko'),
                       children: otherStores.map((store) {
                         return ListTile(
@@ -170,15 +163,12 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
                       }).toList(),
                     ),
                   ),
-                if (!_isAdmin && otherStores.isNotEmpty)
+                if (!_isMember && !_isAdmin && otherStores.isNotEmpty)
                   const Divider(indent: 16, endIndent: 16),
-
                 ...(_isAdmin ? _buildAdminMenuItems() : _buildUserMenuItems()),
               ],
             ),
           ),
-
-          // App Version
           Container(
             padding: const EdgeInsets.all(16),
             child: Text(
@@ -259,6 +249,14 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
         route: 'history',
         onTap: () => _navigateToPage(context, const HistoryPage()),
       ),
+      if (!_isMember)
+        _buildMenuItem(
+          context,
+          icon: CupertinoIcons.person_2_fill,
+          title: 'Pengaturan Anggota',
+          route: 'member',
+          onTap: () => _navigateToPage(context, const MemberPage()),
+        ),
       _buildMenuItem(
         context,
         icon: CupertinoIcons.person_circle_fill,
@@ -277,7 +275,42 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
       ),
     ];
   }
-
+  Future<void> _performLogout(BuildContext context) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      
+      ref.invalidate(storeProvider);
+      ref.invalidate(productProvider);
+      ref.invalidate(memberProvider);
+      if (context.mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const LoginPage(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 300),
+          ),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+          (route) => false,
+        );
+      }
+    }
+  }
   Widget _buildMenuItem(
     BuildContext context, {
     required IconData icon,
@@ -289,7 +322,6 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
     final theme = Theme.of(context);
     final isActive = widget.currentRoute == route;
     final primaryColor = isDestructive ? Colors.red.shade600 : AppColor.primary;
-
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       child: Material(
@@ -356,9 +388,8 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
     );
   }
 
-
   Future<void> _handleLogout(BuildContext context) async {
-    Navigator.pop(context);
+      Navigator.pop(context);
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -387,42 +418,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
     );
   }
 
-  Future<void> _performLogout(BuildContext context) async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-      ref.invalidate(storeProvider);
-      ref.invalidate(productProvider);
-      if (context.mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const LoginPage(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-              return FadeTransition(
-                opacity: animation,
-                child: child,
-              );
-            },
-            transitionDuration: const Duration(milliseconds: 300),
-          ),
-          (route) => false,
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-          (route) => false,
-        );
-      }
-    }
-  }
-
-  String _getInitials(String name) {
+    String _getInitials(String name) {
     if (name.isEmpty || name == 'Loading...' || name == 'User') return 'U';
     final words = name.trim().split(' ');
     if (words.length >= 2) {

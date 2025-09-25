@@ -1,159 +1,66 @@
-import 'package:confirm_dialog/confirm_dialog.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:kasir/core/use_store.dart';
-import 'package:kasir/models/member_model.dart';
-import 'package:kasir/screens/setting_member/member_create.dart';
-import 'package:kasir/services/user_services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kasir/components/nav_drawer.dart';
+import 'package:kasir/providers/member_provider.dart';
+import 'package:kasir/screens/setting_member/widgets/invitation_list_tab.dart';
+import 'package:kasir/screens/setting_member/widgets/invite_member_sheet.dart';
+import 'package:kasir/screens/setting_member/widgets/member_list_tab.dart';
 
-class MemberPage extends StatefulWidget {
-  const MemberPage({Key? key}) : super(key: key);
-
-  @override
-  State<MemberPage> createState() => _MemberPageState();
-}
-
-class _MemberPageState extends State<MemberPage> {
-  UserServices userServices = UserServices();
-  List<ListMember> member = [];
-  bool btnAdd = false;
-  int countAdd = 0;
-
-  void refresh() {
-    getSubs();
-    fetchData();
-  }
-
-  Future<void> getSubs() async {
-    var store = await Store.getSubscribe();
-    setState(() {
-      btnAdd = store['add_member']!['enable'];
-      countAdd = store['add_member']!['count'];
-    });
-  }
-
-  Future<void> fetchData() async {
-    var resp = await userServices.getUsers();
-    var data = Member.fromJson(resp['data']);
-
-    if (resp['success'] == true && resp['statusCode'] == 200) {
-      setState(() {
-        member = data.data!;
-      });
-    }
-  }
-
-  Future<void> delete(int id) async {
-    var resp = await userServices.deleteMember(id);
-    if (resp['success'] == true) {
-      refresh();
-    }
-  }
+class MemberPage extends ConsumerWidget {
+  const MemberPage({super.key});
 
   @override
-  void initState() {
-    fetchData();
-    getSubs();
-    super.initState();
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final memberState = ref.watch(memberProvider);
+    final theme = Theme.of(context);
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: const Text(
-          "Pengaturan Member",
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        drawer: const NavDrawer(currentRoute: 'member'),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          title: const Text(
+            "Pengaturan Anggota",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
-        ),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                separatorBuilder: (context, index) =>
-                    Container(height: 1, color: Colors.grey[300]),
-                itemCount: member.length,
-                itemBuilder: (context, index) {
-                  ListMember user = member[index];
-                  if (member.isNotEmpty) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 10),
-                      color: Colors.white,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "${user.name}",
-                                style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              Text("${user.email}"),
-                            ],
-                          ),
-                          CircleAvatar(
-                            backgroundColor: Colors.red[50],
-                            child: IconButton(
-                              onPressed: () async {
-                                if (await confirm(
-                                  context,
-                                  title: const Text('Confirm'),
-                                  content: const Text(
-                                      'Apakah anda ingin menghapus data ini?'),
-                                  textOK: const Text('Yes'),
-                                  textCancel: const Text('No'),
-                                )) {
-                                  delete(user.id as int);
-                                }
-                                return print('pressedCancel');
-                              },
-                              icon: Icon(
-                                Icons.delete,
-                                color: Colors.red[800],
-                              ),
-                            ),
-                          )
-                        ],
-                      ),
-                    );
-                  }
-                },
-              ),
+          centerTitle: true,
+          bottom: TabBar(
+            labelColor: theme.primaryColor,
+            unselectedLabelColor: Colors.grey,
+            tabs: [
+              Tab(text: 'Anggota (${memberState.members.length})'),
+              Tab(text: 'Undangan (${memberState.invitations.length})'),
             ],
           ),
         ),
-      ),
-      floatingActionButton: btnAdd == true && member.length < countAdd
-          ? FloatingActionButton(
-              onPressed: () {
-                Route detail = MaterialPageRoute(
-                  builder: (context) => const MemberCreate(),
-                );
-
-                Navigator.push(context, detail).then(
-                  (value) => refresh(),
-                );
-              },
-              backgroundColor: Colors.green,
-              child: const Icon(
-                Icons.add,
-                color: Colors.white,
+        body: const TabBarView(
+          children: [
+            MemberListTab(),
+            InvitationListTab(),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.white,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
-            )
-          : const SizedBox(),
+              builder: (_) => const InviteMemberSheet(),
+            );
+          },
+          backgroundColor: Colors.green,
+          child: const Icon(Icons.add, color: Colors.white),
+        ),
+      ),
     );
   }
 }

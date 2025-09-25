@@ -19,7 +19,7 @@ class ProductState {
   final bool? showFavorites;
   final bool? showLowStock;
   final int currentPage;
-
+  
   const ProductState({
     this.products = const [],
     this.pagination,
@@ -69,19 +69,12 @@ class ProductState {
   List<Product> get lowStockProducts =>
       products.where((p) => p.isLowStock).toList();
 }
-
-// Product Notifier
 class ProductNotifier extends StateNotifier<ProductState> {
   final ProductServices _productServices;
   final String? _storeId;
 
-  ProductNotifier(this._productServices, this._storeId)
-      : super(const ProductState()) {
-    if (_storeId != null) {
-      loadProducts(refresh: true);
-    }
-  }
-
+  ProductNotifier(this._productServices, this._storeId) : super(const ProductState());
+  
   Future<void> loadProducts({
     bool refresh = false,
     String? search,
@@ -90,9 +83,10 @@ class ProductNotifier extends StateNotifier<ProductState> {
     bool? lowStock,
   }) async {
     if (_storeId == null) {
-      state = state.copyWith(isLoading: false, products: []);
+      state = state.copyWith(isLoading: false, products: [], error: 'Toko belum dipilih.');
       return;
     }
+
     if (refresh) {
       state = state.copyWith(currentPage: 1, products: []);
     }
@@ -117,7 +111,6 @@ class ProductNotifier extends StateNotifier<ProductState> {
         isFavorite: state.showFavorites,
         lowStock: state.showLowStock,
       );
-
       if (response['success'] == true && response['data'] != null) {
         final data = response['data'];
         final productList = (data['products'] ?? []) as List;
@@ -127,11 +120,9 @@ class ProductNotifier extends StateNotifier<ProductState> {
         final updatedProducts = (refresh || state.currentPage == 1)
             ? newProducts
             : [...state.products, ...newProducts];
-
         final pagination = data['pagination'] != null
             ? ProductPagination.fromJson(data['pagination'])
             : const ProductPagination(total: 0, page: 1, limit: 20, totalPages: 1);
-
         state = state.copyWith(
           products: updatedProducts,
           pagination: pagination,
@@ -153,7 +144,6 @@ class ProductNotifier extends StateNotifier<ProductState> {
       );
     }
   }
-  
   Future<bool> createProduct({
     required String name,
     String? code,
@@ -172,7 +162,6 @@ class ProductNotifier extends StateNotifier<ProductState> {
       state = state.copyWith(isLoading: false, error: "Toko aktif tidak ditemukan.");
       return false;
     }
-
     state = state.copyWith(isLoading: true, error: null);
     final result = await _productServices.storeProduct(
       storeId: _storeId!,
@@ -189,7 +178,6 @@ class ProductNotifier extends StateNotifier<ProductState> {
       discountRp: discountRp,
       discountPercent: discountPercent,
     );
-
     if (result['success'] == true) {
       await refresh();
       state = state.copyWith(isLoading: false);
@@ -268,7 +256,7 @@ class ProductNotifier extends StateNotifier<ProductState> {
       return false;
     }
   }
-
+  
   Future<void> loadMoreProducts() async {
     if (!state.canLoadMore || state.isLoadingMore) return;
     state = state.copyWith(currentPage: state.currentPage + 1);
@@ -288,9 +276,7 @@ class ProductNotifier extends StateNotifier<ProductState> {
   }
 }
 
-// Provider utama
-final productProvider =
-    StateNotifierProvider.autoDispose<ProductNotifier, ProductState>((ref) {
+final productProvider = StateNotifierProvider.autoDispose<ProductNotifier, ProductState>((ref) {
   final activeStoreId = ref.watch(storeProvider.select((s) => s.currentStore?.id));
   final productServices = ref.watch(productServicesProvider);
   return ProductNotifier(productServices, activeStoreId);

@@ -1,56 +1,79 @@
 import 'dart:convert';
 
-Member memberFromJson(String str) => Member.fromJson(json.decode(str));
+class MemberModel {
+  final String id;
+  final String role;
+  final DateTime joinedAt;
+  final User user;
 
-String memberToJson(Member data) => json.encode(data.toJson());
-
-class Member {
-  List<ListMember>? data;
-
-  Member({
-    this.data,
+  MemberModel({
+    required this.id,
+    required this.role,
+    required this.joinedAt,
+    required this.user,
   });
 
-  factory Member.fromJson(Map<String, dynamic> json) => Member(
-        data: json["data"] == null
-            ? []
-            : List<ListMember>.from(
-                json["data"]!.map((x) => ListMember.fromJson(x))),
-      );
-
-  Map<String, dynamic> toJson() => {
-        "data": data == null
-            ? []
-            : List<dynamic>.from(data!.map((x) => x.toJson())),
-      };
+  factory MemberModel.fromJson(Map<String, dynamic> json) {
+    return MemberModel(
+      id: json['id'],
+      role: json['role'] ?? 'CASHIER',
+      joinedAt: DateTime.parse(json['joinedAt']),
+      user: User.fromJson(json['user']),
+    );
+  }
 }
 
-class ListMember {
-  int? id;
-  String? name;
-  String? email;
-  List<String>? roles;
+class User {
+  final String id;
+  final String name;
+  final String email;
+  final String? avatar;
 
-  ListMember({
-    this.id,
-    this.name,
-    this.email,
-    this.roles,
+  User({
+    required this.id,
+    required this.name,
+    required this.email,
+    this.avatar,
   });
 
-  factory ListMember.fromJson(Map<String, dynamic> json) => ListMember(
-        id: json["id"],
-        name: json["name"],
-        email: json["email"],
-        roles: json["roles"] == null
-            ? []
-            : List<String>.from(json["roles"]!.map((x) => x)),
-      );
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['id'],
+      name: json['name'],
+      email: json['email'],
+      avatar: json['avatar'],
+    );
+  }
+}
 
-  Map<String, dynamic> toJson() => {
-        "id": id,
-        "name": name,
-        "email": email,
-        "roles": roles == null ? [] : List<dynamic>.from(roles!.map((x) => x)),
-      };
+class InvitationModel {
+  final String id;
+  final String invitedEmail;
+  final String invitedName;
+  final String role;
+  final String status;
+  final DateTime expiresAt;
+  final DateTime createdAt;
+
+  InvitationModel({
+    required this.id,
+    required this.invitedEmail,
+    required this.invitedName,
+    required this.role,
+    required this.status,
+    required this.expiresAt,
+    required this.createdAt,
+  });
+
+  factory InvitationModel.fromJson(Map<String, dynamic> json) {
+    return InvitationModel(
+      id: json['id'],
+      invitedEmail: json['invitedEmail'],
+      invitedName: json['invitedName'],
+      role: json['role'],
+      status: json['status'],
+      expiresAt: DateTime.parse(json['expiresAt']),
+      createdAt: DateTime.parse(json['createdAt']),
+    );
+  }
 }

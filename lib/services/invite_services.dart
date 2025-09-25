@@ -11,103 +11,81 @@ class InviteServices {
   }
 
   final String _baseUrl = ServiceUtils().baseUrl;
-
-  // Invite member
-  Future<Map<String, dynamic>> inviteMember(Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> acceptInvitation({
+    required String email,
+    required String password,
+    required String name,
+  }) async {
     try {
-      final response = await _dio.post("$_baseUrl/invites", data: data);
-      
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        return {
-          'success': true,
-          'message': response.data['message'] ?? 'Undangan berhasil dikirim',
-          'data': response.data['data']
-        };
-      }
-      
-      return {
-        'success': false,
-        'message': response.data['message'] ?? 'Gagal mengirim undangan',
-        'data': null
-      };
+      final response = await _dio.post("$_baseUrl/invites/accept", data: {
+        'email': email,
+        'password': password,
+        'name': name,
+      });
+      return response.data;
     } on DioException catch (e) {
-      return {
-        'success': false,
-        'message': e.response?.data['message'] ?? 'Gagal mengirim undangan',
-        'data': null
-      };
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan: ${e.toString()}',
-        'data': null
-      };
+      return ServiceUtils.handleDioError(e, "Gagal menerima undangan");
+    }
+  }
+  Future<Map<String, dynamic>> inviteMember({
+    required String storeId,
+    required String name,
+    required String email,
+  }) async {
+    try {
+      final response = await _dio.post("$_baseUrl/invites", data: {
+        'storeId': storeId,
+        'invitedName': name,
+        'invitedEmail': email,
+        'role': 'CASHIER',
+      });
+      return response.data;
+    } on DioException catch (e) {
+      return ServiceUtils.handleDioError(e, "Gagal mengirim undangan");
     }
   }
 
-  // Get store members
+  /// Mendapatkan daftar anggota yang sudah bergabung
   Future<Map<String, dynamic>> getStoreMembers(String storeId) async {
     try {
-      final response = await _dio.get("$_baseUrl/invites/store/$storeId/members");
-      
-      if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'message': response.data['message'] ?? 'Daftar member berhasil diambil',
-          'data': response.data['data'] ?? []
-        };
-      }
-      
-      return {
-        'success': false,
-        'message': response.data['message'] ?? 'Gagal mendapatkan daftar member',
-        'data': []
-      };
+      final response =
+          await _dio.get("$_baseUrl/invites/store/$storeId/members");
+      return response.data;
     } on DioException catch (e) {
-      return {
-        'success': false,
-        'message': e.response?.data['message'] ?? 'Gagal mendapatkan daftar member',
-        'data': []
-      };
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan: ${e.toString()}',
-        'data': []
-      };
+      return ServiceUtils.handleDioError(e, "Gagal memuat anggota");
+    }
+  }
+
+  /// Mendapatkan daftar undangan yang masih pending
+  Future<Map<String, dynamic>> getStoreInvitations(String storeId) async {
+    try {
+      final response = await _dio.get("$_baseUrl/invites/store/$storeId");
+      return response.data;
+    } on DioException catch (e) {
+      return ServiceUtils.handleDioError(e, "Gagal memuat undangan");
     }
   }
   
-  // Revoke invitation
+  /// Membatalkan undangan yang masih pending
   Future<Map<String, dynamic>> revokeInvitation(String inviteId) async {
     try {
       final response = await _dio.delete("$_baseUrl/invites/$inviteId");
-      
-      if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'message': response.data['message'] ?? 'Undangan berhasil dibatalkan',
-          'data': response.data['data']
-        };
-      }
-      
-      return {
-        'success': false,
-        'message': response.data['message'] ?? 'Gagal membatalkan undangan',
-        'data': null
-      };
+      return response.data;
     } on DioException catch (e) {
-      return {
-        'success': false,
-        'message': e.response?.data['message'] ?? 'Gagal membatalkan undangan',
-        'data': null
-      };
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan: ${e.toString()}',
-        'data': null
-      };
+      return ServiceUtils.handleDioError(e, "Gagal membatalkan undangan");
+    }
+  }
+
+  Future<Map<String, dynamic>> removeMember({
+    required String storeId,
+    required String memberId,
+  }) async {
+    try {
+      final response = await _dio
+          .delete("$_baseUrl/invites/store/$storeId/members/$memberId");
+      return response.data;
+    } on DioException catch (e) {
+      return ServiceUtils.handleDioError(e, "Gagal mengeluarkan anggota");
     }
   }
 }

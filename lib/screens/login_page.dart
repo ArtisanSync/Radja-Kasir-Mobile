@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:kasir/screens/email_verification_page.dart';
+import 'package:kasir/screens/auth/change_password_page.dart';
 import 'package:kasir/screens/home_page.dart';
 import 'package:kasir/screens/register_page.dart';
 import 'package:kasir/screens/reset_password_page.dart';
@@ -21,11 +21,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _obscureText = true;
-  bool _isLoading = false;
 
   final AuthServices _authServices = AuthServices();
 
-  // Define the primary color
   static const Color primary = Color(0xFF00ADFE);
 
   @override
@@ -39,48 +37,30 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+    final response = await _authServices.login({
+      'email': _emailController.text.trim(),
+      'password': _passwordController.text.trim(),
+    }, context);
 
-    setState(() => _isLoading = true);
-    context.loaderOverlay.show();
-
-    try {
-      final response = await _authServices.login({
-        'email': _emailController.text.trim(),
-        'password': _passwordController.text.trim(),
-      }, context);
-
-      if (response['success'] == true) {
+    if (response['success'] == true) {
+      if (response['mustChangePassword'] == true) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ChangePasswordPage()),
+        );
+      } else {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const MyHomePage()),
         );
-      } else if (response['needVerification'] == true) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => EmailVerificationPage(
-              email: _emailController.text.trim(),
-            ),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response['message'] ?? 'Login failed'),
-            backgroundColor: Colors.red,
-          ),
-        );
       }
-    } catch (e) {
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: ${e.toString()}'),
+          content: Text(response['message'] ?? 'Login failed'),
           backgroundColor: Colors.red,
         ),
       );
-    } finally {
-      setState(() => _isLoading = false);
-      context.loaderOverlay.hide();
     }
   }
 
@@ -165,8 +145,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               ),
                             ),
                             const SizedBox(height: 12),
-
-                            // Login Form Card
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 24, vertical: 30),
@@ -195,7 +173,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                       ),
                                     ),
                                     const SizedBox(height: 8),
-                                    TextField(
+                                    TextFormField(
                                       controller: _emailController,
                                       decoration: const InputDecoration(
                                         hintText: 'Enter your email',
@@ -214,10 +192,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                             EdgeInsets.symmetric(vertical: 8),
                                       ),
                                       keyboardType: TextInputType.emailAddress,
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Email tidak boleh kosong';
+                                        }
+                                        return null;
+                                      },
                                     ),
                                     const SizedBox(height: 24),
-
-                                    // Password TextField
                                     Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
@@ -260,57 +242,52 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                       ],
                                     ),
                                     const SizedBox(height: 8),
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Expanded(
-                                          child: TextField(
-                                            controller: _passwordController,
-                                            obscureText: _obscureText,
-                                            decoration: const InputDecoration(
-                                              hintText: 'Enter your password',
-                                              hintStyle: TextStyle(
-                                                  color: Color(0xFFA0AEC0),
-                                                  fontSize: 14),
-                                              enabledBorder:
-                                                  UnderlineInputBorder(
-                                                borderSide: BorderSide(
-                                                    color: Color(0xFFE2E8F0)),
-                                              ),
-                                              focusedBorder:
-                                                  UnderlineInputBorder(
-                                                borderSide:
-                                                    BorderSide(color: primary),
-                                              ),
-                                              contentPadding:
-                                                  EdgeInsets.symmetric(
-                                                      vertical: 8),
-                                              border: InputBorder.none,
+                                    TextFormField(
+                                      controller: _passwordController,
+                                      obscureText: _obscureText,
+                                      decoration: InputDecoration(
+                                        hintText: 'Enter your password',
+                                        hintStyle: TextStyle(
+                                            color: Color(0xFFA0AEC0),
+                                            fontSize: 14),
+                                        enabledBorder:
+                                            UnderlineInputBorder(
+                                          borderSide: BorderSide(
+                                              color: Color(0xFFE2E8F0)),
+                                        ),
+                                        focusedBorder:
+                                            UnderlineInputBorder(
+                                          borderSide:
+                                              BorderSide(color: primary),
+                                        ),
+                                        contentPadding:
+                                            EdgeInsets.symmetric(
+                                                vertical: 8),
+                                        suffixIcon: IconButton(
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                            onPressed: () {
+                                              setState(() {
+                                                _obscureText = !_obscureText;
+                                              });
+                                            },
+                                            icon: Icon(
+                                              _obscureText
+                                                  ? Icons.visibility_off_outlined
+                                                  : Icons.visibility_outlined,
+                                              color: Colors.grey,
+                                              size: 22,
                                             ),
                                           ),
-                                        ),
-                                        IconButton(
-                                          padding: EdgeInsets.zero,
-                                          constraints: const BoxConstraints(),
-                                          onPressed: () {
-                                            setState(() {
-                                              _obscureText = !_obscureText;
-                                            });
-                                          },
-                                          icon: Icon(
-                                            _obscureText
-                                                ? Icons.visibility_off_outlined
-                                                : Icons.visibility_outlined,
-                                            color: Colors.grey,
-                                            size: 22,
-                                          ),
-                                        ),
-                                      ],
+                                      ),
+                                       validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Password tidak boleh kosong';
+                                        }
+                                        return null;
+                                      },
                                     ),
                                     const SizedBox(height: 30),
-
-                                    // Sign In Button
                                     SizedBox(
                                       width: double.infinity,
                                       height: 50,
@@ -324,18 +301,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                           ),
                                           elevation: 0,
                                         ),
-                                        onPressed: _isLoading ? null : _login,
-                                        child: _isLoading
-                                            ? const SizedBox(
-                                                height: 20,
-                                                width: 20,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  color: Colors.white,
-                                                ),
-                                              )
-                                            : const Text(
+                                        onPressed: _login,
+                                        child: const Text(
                                                 'Sign in',
                                                 style: TextStyle(
                                                   fontSize: 16,
@@ -344,7 +311,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                               ),
                                       ),
                                     ),
-
                                     const SizedBox(height: 20),
                                     const Center(
                                       child: Text(
@@ -356,8 +322,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                       ),
                                     ),
                                     const SizedBox(height: 20),
-
-                                    // Create account/Sign up row
                                     Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
@@ -414,15 +378,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 }
 
-// Custom clipper for the diagonal background
 class DiagonalClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    path.lineTo(0, size.height * 0.65); // Start from bottom-left
-    path.lineTo(size.width, size.height * 0.35); // Diagonal line to right side
-    path.lineTo(size.width, 0); // Line to top-right
-    path.close(); // Close the path
+    path.lineTo(0, size.height * 0.65);
+    path.lineTo(size.width, size.height * 0.35);
+    path.lineTo(size.width, 0);
+    path.close();
     return path;
   }
 

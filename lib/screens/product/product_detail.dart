@@ -324,11 +324,12 @@ class ProductDetail extends ConsumerWidget {
                   ),
                   const Gap(16),
                   
+                  // [PERBAIKAN] Mengganti product.active menjadi product.isActive
                   _buildInfoRow(
                     context,
                     'Status',
-                    product.active ? 'Aktif' : 'Nonaktif',
-                    valueColor: product.active ? Colors.green : Colors.red,
+                    product.isActive ? 'Aktif' : 'Nonaktif',
+                    valueColor: product.isActive ? Colors.green : Colors.red,
                   ),
                   
                   const Gap(12),
@@ -357,69 +358,6 @@ class ProductDetail extends ConsumerWidget {
                   ),
                 ],
               ),
-            ),
-
-            const Gap(32),
-
-            // Action Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: ModernOutlinedButton(
-                    text: 'Edit Produk',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => FormProduct(product: product),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.edit),
-                  ),
-                ),
-                const Gap(12),
-                Expanded(
-                  child: ModernButton(
-                    text: 'Hapus',
-                    onPressed: () async {
-                      final confirmed = await confirm(
-                        context,
-                        title: const Text('Hapus Produk'),
-                        content: Text('Apakah Anda yakin ingin menghapus "${product.name}"?'),
-                        textOK: const Text('Hapus'),
-                        textCancel: const Text('Batal'),
-                      );
-                      
-                      if (confirmed) {
-                        final success = await ref.read(productProvider.notifier).deleteProduct(product.id!);
-                        if (success) {
-                          Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Produk berhasil dihapus'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        } else {
-                          final error = ref.read(productProvider).error;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(error ?? 'Gagal menghapus produk'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      }
-                    },
-                    icon: const Icon(Icons.delete),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
             ),
 
             const Gap(16),
