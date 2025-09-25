@@ -1,3 +1,6 @@
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+
 class ServiceUtils {
   final String webUrl = 'http://localhost:3000/api/v1';
   final String baseUrl =
@@ -10,4 +13,12 @@ class ServiceUtils {
   }
 
   ServiceUtils._internal();
+  static Map<String, dynamic> handleDioError(DioException e, String defaultMessage) {
+    debugPrint('DioException: ${e.message}');
+    return {
+      'success': false,
+      'message': e.response?.data?['message'] ?? defaultMessage,
+      'data': null,
+    };
+  }
 }

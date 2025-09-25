@@ -7,401 +7,111 @@ import 'package:loader_overlay/loader_overlay.dart';
 
 class AuthServices {
   late final Dio _dio;
-
   AuthServices() {
     _dio = Dio();
     _dio.interceptors.add(DioInterceptor());
   }
-
   final String _baseUrl = ServiceUtils().baseUrl;
-
-  // Login user
   Future<Map<String, dynamic>> login(
-    Map<String, dynamic> body, BuildContext context) async {
-  context.loaderOverlay.show();
-  try {
-    final response = await _dio.post("$_baseUrl/users/login", data: body);
-
-    if (response.statusCode == 200) {
-      final responseData = response.data['data'];
-      
-      // Save user data
-      await Store.saveUser(responseData['user']);
-      
-      // Save token
-      await Store.setToken(responseData['token']);
-      
-      // Save store if exists
-      if (responseData['user']['firstStore'] != null) {
-        await Store.saveStore(responseData['user']['firstStore']);
-      }
-      
-      // Save subscription if exists
-      if (responseData['user']['currentSubscription'] != null) {
-        await Store.saveSubscribe({
-          'isSubscribed': responseData['user']['isSubscribed'],
-          'subscription': responseData['user']['currentSubscription']
-        });
-      }
-
-      context.loaderOverlay.hide();
-      return {
-        'success': true,
-        'statusCode': response.statusCode,
-        'message': response.data['message'],
-        'data': responseData,
-        'accessType': responseData['accessType'] ?? 'USER',
-        'userType': responseData['userType'] ?? 'USER',
-      };
-    }
-
-    context.loaderOverlay.hide();
-    return {
-      'success': false,
-      'statusCode': response.statusCode,
-      'message': response.data['message'] ?? 'Login gagal'
-    };
-  } on DioException catch (e) {
-    context.loaderOverlay.hide();
-    
-    String errorMessage = 'Login gagal';
-    if (e.response?.data != null && e.response!.data['message'] != null) {
-      errorMessage = e.response!.data['message'];
-    }
-
-    return {
-      'success': false,
-      'statusCode': e.response?.statusCode ?? 500,
-      'message': errorMessage
-    };
-  }
-}
-
-  // Register user
-  Future<Map<String, dynamic>> register(
       Map<String, dynamic> body, BuildContext context) async {
     context.loaderOverlay.show();
     try {
-      final response = await _dio.post("$_baseUrl/users/register", data: body);
+      final response = await _dio.post("$_baseUrl/users/login", data: body);
 
-      context.loaderOverlay.hide();
-      if (response.statusCode == 201) {
-        return {
-          'success': true,
-          'statusCode': response.statusCode,
-          'message': response.data['message'],
-          'data': response.data['data']
-        };
-      }
-
-      return {
-        'success': false,
-        'statusCode': response.statusCode,
-        'message': response.data['message'] ?? 'Registration failed'
-      };
-    } on DioException catch (e) {
-      context.loaderOverlay.hide();
-
-      String errorMessage = 'Registration failed';
-      if (e.response?.data != null && e.response!.data['message'] != null) {
-        errorMessage = e.response!.data['message'];
-      }
-
-      return {
-        'success': false,
-        'statusCode': e.response?.statusCode ?? 400,
-        'message': errorMessage
-      };
-    }
-  }
-
-  // Verify email
-  Future<Map<String, dynamic>> verifyEmail(
-      Map<String, dynamic> body, BuildContext context) async {
-    context.loaderOverlay.show();
-    try {
-      final response =
-          await _dio.post("$_baseUrl/users/verify-email", data: body);
-
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && response.data['success'] == true) {
         final responseData = response.data['data'];
-
-        // Simpan data user dan token dengan benar
-        await Store.saveUser(responseData['user']);
+        final user = responseData['user'];
+        await Store.saveUser(user);
         await Store.setToken(responseData['token']);
-
-        // Jika ada store pertama, simpan juga
-        if (responseData['user']['firstStore'] != null) {
-          await Store.saveStore(responseData['user']['firstStore']);
+        if (user['role'] == 'MEMBER' && user['storeMembers'] != null && (user['storeMembers'] as List).isNotEmpty) {
+          final storeData = user['storeMembers'][0]['store'];
+          if (storeData != null) {
+            await Store.saveStore(storeData);
+          }
+        } else if (user['stores'] != null && (user['stores'] as List).isNotEmpty) {
+        await Store.saveStore(user['stores'][0]);
+        }
+        
+        if (user['currentSubscription'] != null) {
+          await Store.saveSubscribe({
+            'isSubscribed': user['isSubscribed'],
+            'subscription': user['currentSubscription']
+          });
         }
 
         context.loaderOverlay.hide();
         return {
           'success': true,
-          'statusCode': response.statusCode,
           'message': response.data['message'],
-          'data': responseData
+          'data': responseData,
+          'mustChangePassword': user['mustChangePassword'] ?? false,
         };
       }
 
       context.loaderOverlay.hide();
       return {
         'success': false,
-        'statusCode': response.statusCode,
-        'message': response.data['message'] ?? 'Verifikasi email gagal'
+        'message': response.data['message'] ?? 'Login gagal'
       };
     } on DioException catch (e) {
       context.loaderOverlay.hide();
+      return ServiceUtils.handleDioError(e, 'Login gagal');
+    }
+  }
+  Future<Map<String, dynamic>> changePassword(
+      String newPassword, BuildContext context) async {
+    context.loaderOverlay.show();
+    try {
+      final response = await _dio.put("$_baseUrl/users/profile",
+          data: {'password': newPassword});
 
-      String errorMessage = 'Verifikasi email gagal';
-      if (e.response?.data != null && e.response!.data['message'] != null) {
-        errorMessage = e.response!.data['message'];
-      }
-
-      return {
-        'success': false,
-        'statusCode': e.response?.statusCode ?? 400,
-        'message': errorMessage
-      };
+      context.loaderOverlay.hide();
+      return response.data;
+    } on DioException catch (e) {
+      context.loaderOverlay.hide();
+      return ServiceUtils.handleDioError(e, "Gagal mengganti password");
     }
   }
 
-  // Resend verification email
+  Future<Map<String, dynamic>> register(
+      Map<String, dynamic> body, BuildContext context) async {
+    return {};
+  }
+  
+  Future<Map<String, dynamic>> verifyEmail(
+      Map<String, dynamic> body, BuildContext context) async {
+    return {};
+  }
+  
   Future<Map<String, dynamic>> resendVerification(
       Map<String, dynamic> body, BuildContext context) async {
-    context.loaderOverlay.show();
-    try {
-      final response =
-          await _dio.post("$_baseUrl/users/resend-verification", data: body);
-
-      context.loaderOverlay.hide();
-      if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'statusCode': response.statusCode,
-          'message': response.data['message'],
-        };
-      }
-
-      return {
-        'success': false,
-        'statusCode': response.statusCode,
-        'message':
-            response.data['message'] ?? 'Failed to send verification email'
-      };
-    } on DioException catch (e) {
-      context.loaderOverlay.hide();
-
-      String errorMessage = 'Failed to send verification email';
-      if (e.response?.data != null && e.response!.data['message'] != null) {
-        errorMessage = e.response!.data['message'];
-      }
-
-      return {
-        'success': false,
-        'statusCode': e.response?.statusCode ?? 400,
-        'message': errorMessage
-      };
-    }
+    return {};
   }
-
-  // Forgot password
+  
   Future<Map<String, dynamic>> forgotPassword(
       Map<String, dynamic> body, BuildContext context) async {
-    context.loaderOverlay.show();
-    try {
-      final response =
-          await _dio.post("$_baseUrl/users/forgot-password", data: body);
-
-      context.loaderOverlay.hide();
-      if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'statusCode': response.statusCode,
-          'message': response.data['message'],
-        };
-      }
-
-      return {
-        'success': false,
-        'statusCode': response.statusCode,
-        'message':
-            response.data['message'] ?? 'Failed to send password reset email'
-      };
-    } on DioException catch (e) {
-      context.loaderOverlay.hide();
-
-      String errorMessage = 'Failed to send password reset email';
-      if (e.response?.data != null && e.response!.data['message'] != null) {
-        errorMessage = e.response!.data['message'];
-      }
-
-      return {
-        'success': false,
-        'statusCode': e.response?.statusCode ?? 400,
-        'message': errorMessage
-      };
-    }
+    return {};
   }
 
-  // Resend reset password token
   Future<Map<String, dynamic>> resendResetPassword(
       Map<String, dynamic> body, BuildContext context) async {
-    context.loaderOverlay.show();
-    try {
-      final response =
-          await _dio.post("$_baseUrl/users/resend-reset", data: body);
-
-      context.loaderOverlay.hide();
-      if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'statusCode': response.statusCode,
-          'message': response.data['message'],
-        };
-      }
-
-      return {
-        'success': false,
-        'statusCode': response.statusCode,
-        'message': response.data['message'] ?? 'Failed to send reset token'
-      };
-    } on DioException catch (e) {
-      context.loaderOverlay.hide();
-
-      String errorMessage = 'Failed to send reset token';
-      if (e.response?.data != null && e.response!.data['message'] != null) {
-        errorMessage = e.response!.data['message'];
-      }
-
-      return {
-        'success': false,
-        'statusCode': e.response?.statusCode ?? 400,
-        'message': errorMessage
-      };
-    }
+    return {};
   }
 
-  // Reset password
   Future<Map<String, dynamic>> resetPassword(
       Map<String, dynamic> body, BuildContext context) async {
-    context.loaderOverlay.show();
-    try {
-      final response =
-          await _dio.post("$_baseUrl/users/reset-password", data: body);
-
-      context.loaderOverlay.hide();
-      if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'statusCode': response.statusCode,
-          'message': response.data['message'],
-        };
-      }
-
-      return {
-        'success': false,
-        'statusCode': response.statusCode,
-        'message': response.data['message'] ?? 'Password reset failed'
-      };
-    } on DioException catch (e) {
-      context.loaderOverlay.hide();
-
-      String errorMessage = 'Password reset failed';
-      if (e.response?.data != null && e.response!.data['message'] != null) {
-        errorMessage = e.response!.data['message'];
-      }
-
-      return {
-        'success': false,
-        'statusCode': e.response?.statusCode ?? 400,
-        'message': errorMessage
-      };
-    }
+    return {};
   }
-
-  // Get profile (requires authentication)
+  
   Future<Map<String, dynamic>> getProfile(BuildContext context) async {
-    context.loaderOverlay.show();
-    try {
-      final response = await _dio.get("$_baseUrl/users/profile");
-
-      context.loaderOverlay.hide();
-      if (response.statusCode == 200) {
-        // Update stored user data
-        await Store.saveUser(response.data['data']);
-
-        return {
-          'success': true,
-          'statusCode': response.statusCode,
-          'message': response.data['message'],
-          'data': response.data['data']
-        };
-      }
-
-      return {
-        'success': false,
-        'statusCode': response.statusCode,
-        'message': response.data['message'] ?? 'Failed to get profile'
-      };
-    } on DioException catch (e) {
-      context.loaderOverlay.hide();
-
-      String errorMessage = 'Failed to get profile';
-      if (e.response?.data != null && e.response!.data['message'] != null) {
-        errorMessage = e.response!.data['message'];
-      }
-
-      return {
-        'success': false,
-        'statusCode': e.response?.statusCode ?? 400,
-        'message': errorMessage
-      };
-    }
+    return {};
   }
 
-  // Update profile (requires authentication)
   Future<Map<String, dynamic>> updateProfile(
       Map<String, dynamic> body, BuildContext context) async {
-    context.loaderOverlay.show();
-    try {
-      final response = await _dio.put("$_baseUrl/users/profile", data: body);
-
-      context.loaderOverlay.hide();
-      if (response.statusCode == 200) {
-        // Update stored user data
-        await Store.saveUser(response.data['data']);
-
-        return {
-          'success': true,
-          'statusCode': response.statusCode,
-          'message': response.data['message'],
-          'data': response.data['data']
-        };
-      }
-
-      return {
-        'success': false,
-        'statusCode': response.statusCode,
-        'message': response.data['message'] ?? 'Failed to update profile'
-      };
-    } on DioException catch (e) {
-      context.loaderOverlay.hide();
-
-      String errorMessage = 'Failed to update profile';
-      if (e.response?.data != null && e.response!.data['message'] != null) {
-        errorMessage = e.response!.data['message'];
-      }
-
-      return {
-        'success': false,
-        'statusCode': e.response?.statusCode ?? 400,
-        'message': errorMessage
-      };
-    }
+    return {};
   }
 
-  // Logout
   Future<void> logout() async {
     await Store.clear();
   }

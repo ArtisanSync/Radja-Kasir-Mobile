@@ -12,6 +12,7 @@ import 'package:kasir/helpers/currency_format.dart';
 import 'package:kasir/models/product_model.dart';
 import 'package:kasir/providers/cart_providers.dart';
 import 'package:kasir/providers/product_providers.dart';
+import 'package:kasir/providers/store_providers.dart';
 import 'package:kasir/screens/cart/cart_page.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
@@ -86,157 +87,6 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
   }
 }
 
-// Product Card untuk home page dengan add to cart
-class HomeProductCard extends ConsumerWidget {
-  final Product product;
-  final VoidCallback onTap;
-
-  const HomeProductCard({
-    Key? key,
-    required this.product,
-    required this.onTap,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: theme.colorScheme.shadow.withOpacity(0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 2),
-            ),
-          ],
-          border: Border.all(
-            color: theme.colorScheme.outline.withOpacity(0.1),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
-                child: product.image != null
-                    ? CachedNetworkImage(
-                        imageUrl: product.image!,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Center(
-                          child: Icon(
-                            Icons.store,
-                            color: primary.withOpacity(0.5),
-                            size: 40,
-                          ),
-                        ),
-                        errorWidget: (context, url, error) => Center(
-                          child: Icon(
-                            Icons.broken_image_outlined,
-                            color: theme.colorScheme.onErrorContainer,
-                            size: 40,
-                          ),
-                        ),
-                      )
-                    : Center(
-                        child: Icon(
-                          Icons.store,
-                          size: 40,
-                          color: primary.withOpacity(0.5),
-                        ),
-                      ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (product.category?.name != null &&
-                      product.category!.name.isNotEmpty) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: badgeYellow.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        product.category!.name,
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFFca8a04), // a darker yellow
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const Gap(8),
-                  ],
-                  Text(
-                    product.name,
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const Gap(8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        CurrencyFormat.formatPrice(
-                            double.tryParse(product.displayPrice) ?? 0.0),
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade100,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '${product.totalQuantity}',
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: Colors.blue.shade800,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class ProductTabContent extends ConsumerStatefulWidget {
   const ProductTabContent({Key? key}) : super(key: key);
 
@@ -252,10 +102,12 @@ class _ProductTabContentState extends ConsumerState<ProductTabContent> {
   @override
   void initState() {
     super.initState();
-    // Load products when the tab is first opened
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(productProvider.notifier).loadProducts(refresh: true);
-    });
+  }
+  
+  @override
+  void dispose() {
+    _refreshController.dispose();
+    super.dispose();
   }
 
   void _onRefresh() async {
@@ -265,7 +117,13 @@ class _ProductTabContentState extends ConsumerState<ProductTabContent> {
 
   @override
   Widget build(BuildContext context) {
+    final storeState = ref.watch(storeProvider);
     final productState = ref.watch(productProvider);
+    if (storeState.currentStore != null && productState.products.isEmpty && !productState.isLoading && productState.error == null) {
+      Future.microtask(() =>
+          ref.read(productProvider.notifier).loadProducts(refresh: true));
+    }
+    
     final filteredProducts = productState.products
         .where((p) => p.name.toLowerCase().contains(_searchQuery.toLowerCase()))
         .toList();
@@ -303,7 +161,7 @@ class _ProductTabContentState extends ConsumerState<ProductTabContent> {
           ),
           const Gap(16),
           Expanded(
-            child: productState.isLoading && _searchQuery.isEmpty
+            child: (productState.isLoading && productState.products.isEmpty)
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -325,7 +183,7 @@ class _ProductTabContentState extends ConsumerState<ProductTabContent> {
                       ],
                     ),
                   )
-                : productState.error != null
+                : productState.error != null && productState.products.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -411,7 +269,8 @@ class _ProductTabContentState extends ConsumerState<ProductTabContent> {
                                   final product = filteredProducts[index];
                                   return AnimationConfiguration.staggeredGrid(
                                     position: index,
-                                    duration: const Duration(milliseconds: 375),
+                                    duration:
+                                        const Duration(milliseconds: 375),
                                     columnCount: 2,
                                     child: ScaleAnimation(
                                       child: FadeInAnimation(
@@ -434,7 +293,6 @@ class _ProductTabContentState extends ConsumerState<ProductTabContent> {
                                                     0.0,
                                                 unit: product.displayUnit,
                                               );
-
                                               ScaffoldMessenger.of(context)
                                                   .showSnackBar(
                                                 SnackBar(
@@ -502,7 +360,6 @@ class _ProductTabContentState extends ConsumerState<ProductTabContent> {
     );
   }
 }
-
 class FavoriteTabContent extends ConsumerWidget {
   const FavoriteTabContent({Key? key}) : super(key: key);
 
@@ -511,13 +368,6 @@ class FavoriteTabContent extends ConsumerWidget {
     final productState = ref.watch(productProvider);
     final favoriteProducts =
         productState.products.where((p) => p.isFavorite).toList();
-
-    // Automatically fetch favorites when the tab is viewed
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (productState.products.isEmpty && !productState.isLoading) {
-        ref.read(productProvider.notifier).loadProducts(isFavorite: true);
-      }
-    });
 
     return favoriteProducts.isEmpty
         ? Center(
@@ -572,7 +422,6 @@ class FavoriteTabContent extends ConsumerWidget {
                       child: HomeProductCard(
                         product: product,
                         onTap: () {
-                          // Navigate to product detail or add to cart
                         },
                       ),
                     ),
@@ -581,6 +430,155 @@ class FavoriteTabContent extends ConsumerWidget {
               },
             ),
           );
+  }
+}
+
+class HomeProductCard extends ConsumerWidget {
+  final Product product;
+  final VoidCallback onTap;
+
+  const HomeProductCard({
+    Key? key,
+    required this.product,
+    required this.onTap,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: theme.colorScheme.shadow.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 2),
+            ),
+          ],
+          border: Border.all(
+            color: theme.colorScheme.outline.withOpacity(0.1),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+                child: product.image != null && product.image!.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: product.image!,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Center(
+                          child: Icon(
+                            Icons.store,
+                            color: primary.withOpacity(0.5),
+                            size: 40,
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Center(
+                          child: Icon(
+                            Icons.broken_image_outlined,
+                            color: theme.colorScheme.onErrorContainer,
+                            size: 40,
+                          ),
+                        ),
+                      )
+                    : Center(
+                        child: Icon(
+                          Icons.store,
+                          size: 40,
+                          color: primary.withOpacity(0.5),
+                        ),
+                      ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (product.category?.name != null &&
+                      product.category!.name.isNotEmpty) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: badgeYellow.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        product.category!.name,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFFca8a04),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const Gap(8),
+                  ],
+                  Text(
+                    product.name,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const Gap(8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        CurrencyFormat.formatPrice(
+                            double.tryParse(product.displayPrice) ?? 0.0),
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${product.totalQuantity}',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: Colors.blue.shade800,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
