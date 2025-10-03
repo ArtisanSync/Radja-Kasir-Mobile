@@ -47,47 +47,49 @@ class StoreNotifier extends StateNotifier<StoreState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final localUser = await Store.getUser();
-      final userRole = localUser?['role'] ?? 'USER';
+      if (localUser == null) {
+        throw Exception("Sesi pengguna tidak ditemukan. Silakan login ulang.");
+      }
+      
+      final userRole = localUser['role'] ?? 'USER';
       List<StoreModel> stores = [];
       StoreModel? activeStore;
       if (userRole == 'MEMBER') {
-        final List<dynamic> memberStoresData = localUser?['storeMembers'] ?? [];
+        final List<dynamic> memberStoresData = localUser['storeMembers'] ?? [];
         if (memberStoresData.isNotEmpty) {
           stores = memberStoresData
-              .map((memberData) {
-                final storeData = memberData['store'];
-                return storeData != null ? StoreModel.fromJson(storeData) : null;
-              })
-              .where((store) => store != null)
-              .cast<StoreModel>()
+              .map((data) => StoreModel.fromJson(data['store']))
               .toList();
         }
-      } else {
+      } else { // OWNER
+        final List<dynamic> ownerStoresData = localUser['stores'] ?? [];
+        if (ownerStoresData.isNotEmpty) {
+          stores = ownerStoresData
+              .map((data) => StoreModel.fromJson(data))
+              .toList();
+        }
+      }
+      if (stores.isEmpty && userRole != 'MEMBER') {
         final result = await _storeServices.getMyStores();
         if (result['success'] == true) {
           final List<dynamic> data = result['data'] ?? [];
           stores = data.map((json) => StoreModel.fromJson(json)).toList();
-        } else {
-          throw Exception(result['message'] ?? 'Gagal memuat toko');
         }
       }
-      final prefs = await SharedPreferences.getInstance();
-      final currentStoreJson = prefs.getString(_currentStoreKey);
-
-      if (currentStoreJson != null) {
-        final storeMap = jsonDecode(currentStoreJson);
-        try {
-          activeStore = stores.firstWhere((s) => s.id == storeMap['id']);
-        } catch (e) {
-          activeStore = null; 
+      if (stores.isNotEmpty) {
+        final prefs = await SharedPreferences.getInstance();
+        final currentStoreJson = prefs.getString(_currentStoreKey);
+        if (currentStoreJson != null) {
+            final storeMap = jsonDecode(currentStoreJson);
+            try {
+                activeStore = stores.firstWhere((s) => s.id == storeMap['id']);
+            } catch(e) {
+                activeStore = null;
+            }
         }
-      }
-      
-      if (activeStore == null && stores.isNotEmpty) {
-        activeStore = stores.first;
-      }
-
-      if (activeStore != null) {
+        if (activeStore == null) {
+          activeStore = stores.first;
+        }
         await _saveCurrentStoreToPrefs(activeStore);
       }
       
@@ -99,10 +101,10 @@ class StoreNotifier extends StateNotifier<StoreState> {
 
     } catch (e) {
       state = state.copyWith(
-          error: 'Terjadi kesalahan: ${e.toString()}', isLoading: false);
+          error: 'Gagal memuat data toko: ${e.toString()}', isLoading: false);
     }
   }
-
+  
   Future<void> switchStore(StoreModel newStore) async {
     await _saveCurrentStoreToPrefs(newStore);
     state = state.copyWith(currentStore: newStore);
@@ -113,24 +115,12 @@ class StoreNotifier extends StateNotifier<StoreState> {
     await prefs.setString(_currentStoreKey, jsonEncode(store.toJson()));
     await Store.saveStore(store.toJson()); 
   }
-
-  Future<void> loadStoreDetail(String storeId) async {
-  }
-  Future<Map<String, dynamic>> createFirstStore(Map<String, dynamic> storeData, XFile? logo) async {
-    return {};
-  }
-  Future<Map<String, dynamic>> createStore(Map<String, dynamic> storeData, XFile? logo) async {
-    return {};
-  }
-  Future<Map<String, dynamic>> updateStore(String storeId, Map<String, dynamic> updateData, XFile? logo) async {
-    return {};
-  }
-  Future<Map<String, dynamic>> deleteStore(String storeId) async {
-    return {};
-  }
-  void clearError() {
-    state = state.copyWith(error: null);
-  }
+  Future<void> loadStoreDetail(String storeId) async { /* ... */ }
+  Future<Map<String, dynamic>> createFirstStore(Map<String, dynamic> storeData, XFile? logo) async { /* ... */ return {}; }
+  Future<Map<String, dynamic>> createStore(Map<String, dynamic> storeData, XFile? logo) async { /* ... */ return {}; }
+  Future<Map<String, dynamic>> updateStore(String storeId, Map<String, dynamic> updateData, XFile? logo) async { /* ... */ return {}; }
+  Future<Map<String, dynamic>> deleteStore(String storeId) async { /* ... */ return {}; }
+  void clearError() { state = state.copyWith(error: null); }
 }
 
 final storeProvider = StateNotifierProvider<StoreNotifier, StoreState>((ref) {

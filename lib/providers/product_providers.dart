@@ -19,7 +19,7 @@ class ProductState {
   final bool? showFavorites;
   final bool? showLowStock;
   final int currentPage;
-  
+
   const ProductState({
     this.products = const [],
     this.pagination,
@@ -74,7 +74,7 @@ class ProductNotifier extends StateNotifier<ProductState> {
   final String? _storeId;
 
   ProductNotifier(this._productServices, this._storeId) : super(const ProductState());
-  
+
   Future<void> loadProducts({
     bool refresh = false,
     String? search,
@@ -83,7 +83,7 @@ class ProductNotifier extends StateNotifier<ProductState> {
     bool? lowStock,
   }) async {
     if (_storeId == null) {
-      state = state.copyWith(isLoading: false, products: [], error: 'Toko belum dipilih.');
+      // Don't load if the store isn't ready
       return;
     }
 
@@ -144,6 +144,8 @@ class ProductNotifier extends StateNotifier<ProductState> {
       );
     }
   }
+
+  // --- ALL OTHER FUNCTIONS (createProduct, updateProduct, etc.) DO NOT NEED CHANGES ---
   Future<bool> createProduct({
     required String name,
     String? code,
@@ -279,7 +281,9 @@ class ProductNotifier extends StateNotifier<ProductState> {
 final productProvider = StateNotifierProvider.autoDispose<ProductNotifier, ProductState>((ref) {
   final activeStoreId = ref.watch(storeProvider.select((s) => s.currentStore?.id));
   final productServices = ref.watch(productServicesProvider);
-  return ProductNotifier(productServices, activeStoreId);
+  final notifier = ProductNotifier(productServices, activeStoreId);
+  notifier.loadProducts(refresh: true);
+  return notifier;
 });
 
 // Units Provider

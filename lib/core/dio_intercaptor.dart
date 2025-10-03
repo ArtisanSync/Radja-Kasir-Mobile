@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:kasir/core/use_store.dart';
-
+import 'package:kasir/helpers/store.dart';
 class DioInterceptor extends Interceptor {
   @override
   Future<void> onRequest(
@@ -9,21 +8,16 @@ class DioInterceptor extends Interceptor {
     if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
     }
-
-    options.headers['Content-Type'] = 'application/json';
-    super.onRequest(options, handler);
+    return handler.next(options);
   }
 
-  // void onResponse(Response response, ResponseInterceptorHandler handler) {
-  //   print(
-  //       'RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}');
-  //   super.onResponse(response, handler);
-  // }
+  @override
+  void onResponse(Response response, ResponseInterceptorHandler handler) {
+    return handler.next(response);
+  }
 
   @override
-  Future<void> onError(
-      DioException err, ErrorInterceptorHandler handler) async {
-    print('ERROR[${err.response?.statusCode}]');
-    super.onError(err, handler);
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    return handler.next(err);
   }
 }

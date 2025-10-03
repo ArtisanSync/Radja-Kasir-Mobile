@@ -16,7 +16,7 @@ import 'package:kasir/screens/login_page.dart';
 import 'package:kasir/screens/setting_member/member_page.dart';
 import 'package:kasir/helpers/colors_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:cached_network_image/cached_network_image.dart';
 
 class NavDrawer extends ConsumerStatefulWidget {
   final String? currentRoute;
@@ -50,6 +50,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
           _isAdmin = _userRole == 'ADMIN';
           _isMember = _userRole == 'MEMBER';
         });
+        // Pemicu ini sudah benar, memastikan data toko dimuat saat drawer dibuka
         ref.read(storeProvider.notifier).loadMyStores();
       }
     } catch (e) {
@@ -60,6 +61,7 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // [PERBAIKAN] Ambil data toko dari storeProvider
     final storeState = ref.watch(storeProvider);
     final currentStore = storeState.currentStore;
     final otherStores =
@@ -82,29 +84,19 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
+                SizedBox(
                   width: 60,
                   height: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
+                  child: ClipRRect(
                     borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      _getInitials(_userName),
-                      style: TextStyle(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                    ),
+                    child: (currentStore?.logo != null && currentStore!.logo!.isNotEmpty)
+                      ? CachedNetworkImage(
+                          imageUrl: currentStore.logo!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(color: Colors.white.withOpacity(0.2)),
+                          errorWidget: (context, url, error) => _buildInitialsAvatar(theme),
+                        )
+                      : _buildInitialsAvatar(theme),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -183,7 +175,35 @@ class _NavDrawerState extends ConsumerState<NavDrawer> {
       ),
     );
   }
+  Widget _buildInitialsAvatar(ThemeData theme) {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          _getInitials(_userName),
+          style: TextStyle(
+            color: theme.colorScheme.primary,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+      ),
+    );
+  }
 
+  // --- Sisa file tidak ada perubahan ---
   List<Widget> _buildAdminMenuItems() {
     return [
       _buildMenuItem(
