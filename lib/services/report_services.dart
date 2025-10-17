@@ -3,6 +3,8 @@ import 'package:kasir/core/dio_intercaptor.dart';
 import 'package:kasir/core/use_store.dart';
 import 'package:kasir/services/service_utils.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:kasir/services/download_helper.dart';
 
 class ReportServices {
   late final Dio _dio;
@@ -311,29 +313,45 @@ class ReportServices {
         return false;
       }
 
-      Map<String, dynamic> queryParams = {
+      final Map<String, dynamic> queryParams = {
         'period': period,
       };
-
       if (startDate != null && endDate != null) {
         queryParams['startDate'] = startDate;
         queryParams['endDate'] = endDate;
       }
 
-      // Build URL with query parameters
-      final uri = Uri.parse("$_baseUrl/reports/${store['id']}/sales/download");
-      final finalUri = uri.replace(queryParameters: queryParams);
+      // Ambil file lewat Dio agar Authorization ikut terkirim
+      final response = await _dio.get(
+        "$_baseUrl/reports/${store['id']}/sales/download",
+        queryParameters: queryParams,
+        options: Options(responseType: ResponseType.bytes),
+      );
 
-      // Launch URL to download file
-      if (await canLaunchUrl(finalUri)) {
-        await launchUrl(
-          finalUri,
-          mode: LaunchMode.externalApplication,
-          webOnlyWindowName: '_blank',
-        );
+      final bytes = response.data as List<int>;
+      final contentType = response.headers.value('content-type') ??
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      String filename = 'Laporan_Penjualan.xlsx';
+      final cd = response.headers.value('content-disposition');
+      final match = cd != null
+          ? RegExp(r'filename=\"?([^\";]+)\"?').firstMatch(cd)
+          : null;
+      if (match != null) {
+        filename = match.group(1)!;
+      }
+
+      if (kIsWeb) {
+        await saveBytes(filename, bytes, contentType);
         return true;
       }
 
+      // Fallback non-web: buka URL di aplikasi eksternal.
+      final uri = Uri.parse("$_baseUrl/reports/${store['id']}/sales/download");
+      final finalUri = uri.replace(queryParameters: queryParams);
+      if (await canLaunchUrl(finalUri)) {
+        await launchUrl(finalUri, mode: LaunchMode.externalApplication, webOnlyWindowName: '_blank');
+        return true;
+      }
       return false;
     } catch (e) {
       print('Download sales report error: $e');
@@ -350,25 +368,42 @@ class ReportServices {
         return false;
       }
 
-      Map<String, dynamic> queryParams = {};
+      final Map<String, dynamic> queryParams = {};
       if (categoryId != null) {
         queryParams['categoryId'] = categoryId;
       }
 
-      // Build URL with query parameters
-      final uri = Uri.parse("$_baseUrl/reports/${store['id']}/stock/download");
-      final finalUri = uri.replace(queryParameters: queryParams);
+      // Ambil file lewat Dio agar Authorization ikut terkirim
+      final response = await _dio.get(
+        "$_baseUrl/reports/${store['id']}/stock/download",
+        queryParameters: queryParams,
+        options: Options(responseType: ResponseType.bytes),
+      );
 
-      // Launch URL to download file
-      if (await canLaunchUrl(finalUri)) {
-        await launchUrl(
-          finalUri,
-          mode: LaunchMode.externalApplication,
-          webOnlyWindowName: '_blank',
-        );
+      final bytes = response.data as List<int>;
+      final contentType = response.headers.value('content-type') ??
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      String filename = 'Laporan_Stok.xlsx';
+      final cd = response.headers.value('content-disposition');
+      final match = cd != null
+          ? RegExp(r'filename=\"?([^\";]+)\"?').firstMatch(cd)
+          : null;
+      if (match != null) {
+        filename = match.group(1)!;
+      }
+
+      if (kIsWeb) {
+        await saveBytes(filename, bytes, contentType);
         return true;
       }
 
+      // Fallback non-web: buka URL di aplikasi eksternal.
+      final uri = Uri.parse("$_baseUrl/reports/${store['id']}/stock/download");
+      final finalUri = uri.replace(queryParameters: queryParams);
+      if (await canLaunchUrl(finalUri)) {
+        await launchUrl(finalUri, mode: LaunchMode.externalApplication, webOnlyWindowName: '_blank');
+        return true;
+      }
       return false;
     } catch (e) {
       print('Download stock report error: $e');
