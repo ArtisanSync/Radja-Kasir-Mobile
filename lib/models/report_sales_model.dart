@@ -17,21 +17,45 @@ class SalesReportModel {
     required this.topProducts,
   });
 
+  static List<dynamic> _toList(dynamic value) {
+    if (value == null) return const [];
+    if (value is List) return value;
+    if (value is Map) return value.values.toList();
+    return const [];
+  }
+
   factory SalesReportModel.fromJson(Map<String, dynamic> json) {
+    // Handle topProducts which may be a Map with lists (most/leastProfitable)
+    final dynamic tp = json['topProducts'] ?? json['top_products'];
+    final List<Map<String, dynamic>> tpList = <Map<String, dynamic>>[];
+    if (tp is List) {
+      for (final item in tp) {
+        if (item is Map<String, dynamic>) tpList.add(item);
+      }
+    } else if (tp is Map) {
+      for (final value in tp.values) {
+        if (value is List) {
+          for (final item in value) {
+            if (item is Map<String, dynamic>) tpList.add(item);
+          }
+        }
+      }
+    }
+
     return SalesReportModel(
       period: json['period'] ?? '',
       dateRange: DateRange.fromJson(json['dateRange'] ?? {}),
       store: StoreInfo.fromJson(json['store'] ?? {}),
       summary: SalesSummary.fromJson(json['summary'] ?? {}),
-      transactions: (json['transactions'] as List<dynamic>? ?? [])
+      transactions: _toList(json['transactions'] ?? json['list'])
+          .whereType<Map<String, dynamic>>()
           .map((x) => TransactionData.fromJson(x))
           .toList(),
-      dailyData: (json['dailyData'] as List<dynamic>? ?? [])
+      dailyData: _toList(json['dailyData'] ?? json['daily_data'])
+          .whereType<Map<String, dynamic>>()
           .map((x) => DailyData.fromJson(x))
           .toList(),
-      topProducts: (json['topProducts'] as List<dynamic>? ?? [])
-          .map((x) => TopProduct.fromJson(x))
-          .toList(),
+      topProducts: tpList.map((x) => TopProduct.fromJson(x)).toList(),
     );
   }
 
