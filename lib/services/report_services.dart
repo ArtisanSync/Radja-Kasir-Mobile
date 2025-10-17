@@ -326,7 +326,11 @@ class ReportServices {
 
       // Launch URL to download file
       if (await canLaunchUrl(finalUri)) {
-        await launchUrl(finalUri, mode: LaunchMode.externalApplication);
+        await launchUrl(
+          finalUri,
+          mode: LaunchMode.externalApplication,
+          webOnlyWindowName: '_blank',
+        );
         return true;
       }
 
@@ -357,7 +361,11 @@ class ReportServices {
 
       // Launch URL to download file
       if (await canLaunchUrl(finalUri)) {
-        await launchUrl(finalUri, mode: LaunchMode.externalApplication);
+        await launchUrl(
+          finalUri,
+          mode: LaunchMode.externalApplication,
+          webOnlyWindowName: '_blank',
+        );
         return true;
       }
 
