@@ -4,9 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir/models/subscription_model.dart';
 import 'package:kasir/providers/payment_provider.dart';
 import 'package:kasir/helpers/currency_format.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-import '../../models/payment_model.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class SubscriptionPaymentPage extends ConsumerStatefulWidget {
   final SubscriptionPackage package;
@@ -20,20 +18,43 @@ class SubscriptionPaymentPage extends ConsumerStatefulWidget {
 
 class _SubscriptionPaymentPageState
     extends ConsumerState<SubscriptionPaymentPage> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(paymentProvider.notifier)
-          .loadPaymentMethods(widget.package.price.toString());
-    });
+  void _handlePayment(BuildContext context) async {
+    final paymentNotifier = ref.read(paymentProvider.notifier);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final paymentUrl = await paymentNotifier.createSubscriptionPayment(
+      package: widget.package,
+    );
+
+    if (!mounted) return;
+    Navigator.pop(context);
+
+    if (paymentUrl != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentWebView(url: paymentUrl),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              ref.read(paymentProvider).error ?? 'Gagal membuat pembayaran.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final paymentState = ref.watch(paymentProvider);
 
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
@@ -48,7 +69,7 @@ class _SubscriptionPaymentPageState
           ),
         ),
         title: Text(
-          'Pilih Pembayaran',
+          'Konfirmasi Pembayaran',
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w600,
             color: theme.colorScheme.onSurface,
@@ -59,13 +80,8 @@ class _SubscriptionPaymentPageState
       body: Column(
         children: [
           _buildPackageSummary(theme),
-          Expanded(
-            child: paymentState.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : paymentState.error != null
-                    ? Center(child: Text('Error: ${paymentState.error}'))
-                    : _buildPaymentMethods(theme, paymentState.paymentMethods),
-          ),
+          const Spacer(),
+          _buildBottomSection(theme),
         ],
       ),
     );
@@ -91,12 +107,27 @@ class _SubscriptionPaymentPageState
       child: Column(
         children: [
           Text(
-            'Paket ${widget.package.name}',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+            'Anda akan berlangganan:',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 8),
+          Text(
+            widget.package.displayName,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Total Pembayaran',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 4),
           Text(
             CurrencyFormat.convertToIdr(widget.package.price, 0),
             style: theme.textTheme.headlineSmall?.copyWith(
@@ -106,94 +137,108 @@ class _SubscriptionPaymentPageState
           ),
           Text(
             '/ ${widget.package.duration} bulan',
-            style: theme.textTheme.bodyMedium,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPaymentMethods(ThemeData theme, List<PaymentMethod> methods) {
-    if (methods.isEmpty) {
-      return const Center(child: Text('Metode pembayaran tidak tersedia.'));
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: methods.length,
-      itemBuilder: (context, index) {
-        final method = methods[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          elevation: 2,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          child: ListTile(
-            leading: Image.network(
-              method.image,
-              width: 40,
-              height: 40,
-              errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.payment, size: 40),
-            ),
-            title: Text(method.name,
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w600)),
-            subtitle: Text(
-                'Biaya: ${CurrencyFormat.convertToIdr(double.tryParse(method.fee) ?? 0, 0)}'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              _handlePayment(method);
-            },
+  Widget _buildBottomSection(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          )
+        ],
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () => _handlePayment(context),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            textStyle:
+                const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
-        );
-      },
+          child: const Text('Lanjutkan Pembayaran'),
+        ),
+      ),
     );
   }
+}
 
-  void _handlePayment(PaymentMethod method) async {
-    // TODO: Replace with actual user data from your app's state
-    const email = 'testing@radjakasir.com';
-    const phoneNumber = '081234567890';
-    const customerName = 'Radja Kasir User';
+class PaymentWebView extends StatefulWidget {
+  final String url;
+  const PaymentWebView({Key? key, required this.url}) : super(key: key);
 
-    final paymentNotifier = ref.read(paymentProvider.notifier);
+  @override
+  State<PaymentWebView> createState() => _PaymentWebViewState();
+}
 
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+class _PaymentWebViewState extends State<PaymentWebView> {
+  late final WebViewController _controller;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(onPageStarted: (String url) {
+          setState(() {
+            _isLoading = true;
+          });
+        }, onPageFinished: (String url) {
+          setState(() {
+            _isLoading = false;
+          });
+          if (url.startsWith('http://localhost:3000/payment/success') ||
+              url.contains('payment/success')) {
+            Navigator.popUntil(context, (route) => route.isFirst);
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                    'Pembayaran sedang diproses. Status langganan akan segera diperbarui.'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 5),
+              ),
+            );
+          }
+        }, onWebResourceError: (WebResourceError error) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Gagal memuat halaman: ${error.description}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }),
+      )
+      ..loadRequest(Uri.parse(widget.url));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Pembayaran')),
+      body: Stack(
+        children: [
+          WebViewWidget(controller: _controller),
+          if (_isLoading)
+            const Center(
+              child: CircularProgressIndicator(),
+            ),
+        ],
+      ),
     );
-
-    final paymentResponse = await paymentNotifier.createSubscriptionPayment(
-      package: widget.package,
-      email: email,
-      phoneNumber: phoneNumber,
-      paymentMethod: method.code,
-      customerName: customerName,
-    );
-
-    Navigator.pop(context); // Close loading dialog
-
-    if (paymentResponse != null && paymentResponse.paymentUrl != null) {
-      final Uri url = Uri.parse(paymentResponse.paymentUrl!);
-      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Tidak bisa membuka URL: $url'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              ref.read(paymentProvider).error ?? 'Gagal membuat pembayaran.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
   }
 }
