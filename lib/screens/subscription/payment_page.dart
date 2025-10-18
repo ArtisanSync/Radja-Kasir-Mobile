@@ -5,6 +5,8 @@ import 'package:kasir/models/subscription_model.dart';
 import 'package:kasir/providers/payment_provider.dart';
 import 'package:kasir/helpers/currency_format.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:url_launcher/url_launcher.dart';
 
 class SubscriptionPaymentPage extends ConsumerStatefulWidget {
   final SubscriptionPackage package;
@@ -35,12 +37,46 @@ class _SubscriptionPaymentPageState
     Navigator.pop(context);
 
     if (paymentUrl != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PaymentWebView(url: paymentUrl),
-        ),
-      );
+      if (kIsWeb) {
+        // On Web, open in a new tab
+        final opened = await launchUrl(Uri.parse(paymentUrl), mode: LaunchMode.platformDefault);
+        if (!opened) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Gagal membuka pembayaran di browser'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else if (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS) {
+        // Mobile: use in-app WebView
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentWebView(url: paymentUrl),
+          ),
+        );
+      } else {
+        // Desktop (Windows, macOS, Linux): open external browser
+        final opened = await launchUrl(Uri.parse(paymentUrl),
+            mode: LaunchMode.externalApplication);
+        if (opened) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Pembayaran dibuka di browser. Selesaikan di sana.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Gagal membuka pembayaran di browser'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
